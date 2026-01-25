@@ -717,6 +717,795 @@ curl 'https://www.erepublik.com/en/main/shopItemsJson' \
 
 ---
 
+## Get Marketplace Offers
+
+**Method:** POST
+**URL:** `/en/economy/marketplaceAjax`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves filtered and sorted marketplace offers for a specific product type. Supports country filtering, product quality selection, pagination, and various sorting options. Returns active sell offers with seller details, pricing, and availability.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| countryId | number | Yes | Country ID where the market is located (e.g., 72 for Lithuania) |
+| industryId | number | Yes | Product industry type (1=Food, 2=Weapons, 23=Aircraft, 24=House) |
+| quality | number | Yes | Product quality level (1-7 for most products) |
+| orderBy | string | Yes | Sort order: `price_asc`, `price_desc`, `amount_asc`, `amount_desc` |
+| currentPage | number | Yes | Page number for pagination (starts at 1) |
+| ajaxMarket | number | Yes | AJAX flag, must be set to `1` |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/economy/marketplaceAjax' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw 'countryId=72&industryId=1&quality=1&orderBy=price_asc&currentPage=1&ajaxMarket=1&_token=YOUR_CSRF_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "offers": [
+    {
+      "id": 77924504,
+      "country_id": 72,
+      "industry_id": 1,
+      "citizen_id": 4641359,
+      "amount": 119998,
+      "price": 0.861386,
+      "customization_level": 1,
+      "name": "Z1mo",
+      "is_for_export": 0,
+      "priceWithTaxes": 0.87
+    },
+    {
+      "id": 77838777,
+      "country_id": 72,
+      "industry_id": 1,
+      "citizen_id": 2475653,
+      "amount": 4025,
+      "price": 0.915094,
+      "customization_level": 1,
+      "name": "chudziaczek",
+      "is_for_export": 35,
+      "priceWithTaxes": 0.97
+    },
+    {
+      "id": 77904984,
+      "country_id": 72,
+      "industry_id": 1,
+      "citizen_id": 5498697,
+      "amount": 135552,
+      "price": 0.960396,
+      "customization_level": 1,
+      "name": "Tepliotojas",
+      "is_for_export": 0,
+      "priceWithTaxes": 0.97
+    }
+  ],
+  "currency": "LTL",
+  "can_buy": true,
+  "pages": 1
+}
+```
+
+### Notes
+
+- **Industry IDs:**
+  - 1: Food
+  - 2: Weapons
+  - 23: Aircraft
+  - 24: House
+  - See raw materials for IDs 1-20 (documented in "Work as Manager" endpoint)
+
+- **Quality Levels:**
+  - Food, Weapons, Aircraft, House: Q1-Q7
+  - Higher quality provides better effects/energy restoration
+
+- **Country Filtering:**
+  - `countryId` determines which country's market to search
+  - Each country has its own marketplace with local currency
+  - Prices are displayed in the country's currency (e.g., LTL, USD, EUR, RON)
+
+- **Sorting Options:**
+  - `price_asc`: Lowest price first (most common for buyers)
+  - `price_desc`: Highest price first
+  - `amount_asc`: Lowest stock first
+  - `amount_desc`: Highest stock first
+
+- **Offer Fields:**
+  - `id`: Unique marketplace offer ID
+  - `citizen_id`: Seller's citizen ID
+  - `name`: Seller's display name
+  - `amount`: Available quantity in stock
+  - `price`: Base price per unit (before taxes)
+  - `priceWithTaxes`: Final price including import/VAT taxes
+  - `is_for_export`: Export tax percentage (0 if no export tax, >0 indicates export offer)
+  - `customization_level`: Product quality level (1-7)
+
+- **Pagination:**
+  - `pages`: Total number of pages available
+  - `currentPage`: Current page being viewed
+  - Typically 5-10 offers per page
+
+- **Purchase Eligibility:**
+  - `can_buy`: `true` if the citizen is eligible to make purchases
+  - May be `false` if banned, restricted, or lacking required citizenship
+
+- **Tax Calculations:**
+  - Import tax applies when buying from foreign countries
+  - VAT applies based on country settings
+  - `priceWithTaxes` includes all applicable taxes
+  - Export tax (`is_for_export`) is paid by the seller but affects buyer price
+
+- The CSRF `_token` can be obtained from the main marketplace page source
+- This endpoint is used by the marketplace UI for dynamic filtering without page reloads
+- Response times are typically fast (<100ms) due to database indexing
+
+---
+
+## Buy from Marketplace
+
+**Method:** POST
+**URL:** `/en/economy/marketplaceActions`
+**Auth Required:** Yes
+
+### Description
+
+Executes a purchase transaction on the marketplace. Buys a specified quantity of products from a specific offer, deducts currency from the citizen's account, adds products to storage, and returns updated marketplace offers and account balances.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| offerId | number | Yes | Unique ID of the marketplace offer to purchase from |
+| amount | number | Yes | Quantity of products to buy (must not exceed offer's available amount) |
+| orderBy | string | Yes | Sort order for refreshed offers: `price_asc`, `price_desc`, `amount_asc`, `amount_desc` |
+| currentPage | number | Yes | Current page number for refreshed offer list |
+| buyAction | number | Yes | Action flag, must be set to `1` for buy action |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/economy/marketplaceActions' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw 'offerId=77924504&amount=1&orderBy=price_asc&currentPage=1&buyAction=1&_token=YOUR_CSRF_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "error": false,
+  "message": "You have successfully bought 1 product for 0.87 LTL.",
+  "offerUpdate": {
+    "offers": [
+      {
+        "id": 77924504,
+        "country_id": 72,
+        "industry_id": 1,
+        "citizen_id": 4641359,
+        "amount": 119996,
+        "price": 0.861386,
+        "customization_level": 1,
+        "name": "Z1mo",
+        "is_for_export": 0,
+        "priceWithTaxes": 0.87
+      },
+      {
+        "id": 77838777,
+        "country_id": 72,
+        "industry_id": 1,
+        "citizen_id": 2475653,
+        "amount": 4025,
+        "price": 0.915094,
+        "customization_level": 1,
+        "name": "chudziaczek",
+        "is_for_export": 35,
+        "priceWithTaxes": 0.97
+      }
+    ],
+    "currency": "LTL",
+    "can_buy": true,
+    "pages": 1
+  },
+  "currency": 6274006,
+  "gold": 72916
+}
+```
+
+### Notes
+
+- **Transaction Processing:**
+  - Deducts `amount × priceWithTaxes` from citizen's currency balance
+  - Adds purchased products to citizen's storage
+  - Updates the offer's available amount (decreased by purchase quantity)
+  - If offer amount reaches 0, it's removed from marketplace
+
+- **Response Fields:**
+  - `error`: `false` on success, `true` on failure
+  - `message`: Success message with purchase details (quantity, total cost, currency)
+  - `offerUpdate`: Refreshed marketplace offers list (same format as `marketplaceAjax` endpoint)
+  - `currency`: Updated citizen's local currency balance (in smallest units, divide by 100)
+  - `gold`: Updated citizen's Gold balance (in smallest units, divide by 100)
+
+- **Currency Handling:**
+  - Purchases are made in the market country's local currency
+  - If citizen lacks sufficient currency, the transaction fails with an error
+  - Currency balance is returned in hundredths (e.g., `6274006` = 62,740.06 LTL)
+  - Gold balance is also returned in hundredths (e.g., `72916` = 729.16 Gold)
+
+- **Offer Updates:**
+  - The `offerUpdate.offers` array reflects the updated marketplace after purchase
+  - The purchased offer's `amount` is decreased by the purchase quantity
+  - Offers are re-sorted according to the `orderBy` parameter
+  - This allows the UI to refresh without making a separate `marketplaceAjax` call
+
+- **Error Cases:**
+  - Insufficient currency: `"error": true, "message": "You don't have enough money"`
+  - Insufficient stock: `"error": true, "message": "Insufficient stock available"`
+  - Invalid offer ID: `"error": true, "message": "Offer not found"`
+  - Storage full: `"error": true, "message": "Your storage is full"`
+  - Invalid CSRF token: Returns HTTP 403 or token validation error
+
+- **Storage Management:**
+  - Purchased items are automatically added to citizen's storage
+  - Storage has a capacity limit (default 5000 units, expandable via Shop)
+  - Each product type (Food Q1, Weapons Q5, etc.) counts toward the limit
+  - If storage is full, the purchase will fail
+
+- **Rate Limiting:**
+  - No explicit rate limit, but rapid purchases may trigger anti-bot checks
+  - Recommended to add small delays between automated purchases
+
+- The CSRF `_token` can be obtained from the marketplace page source
+- This endpoint is typically called after selecting an offer from the `marketplaceAjax` results
+- The `orderBy` and `currentPage` parameters ensure UI state is maintained after purchase
+
+---
+
+## Get My Market Offers
+
+**Method:** GET
+**URL:** `/en/economy/myMarketOffers`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves all active marketplace offers (sell listings) created by the authenticated citizen. Returns an array of offers with product details, pricing, stock levels, and sales statistics. If the citizen has no active offers, returns an empty array.
+
+### Parameters
+
+No parameters required.
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/economy/myMarketOffers' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Accept: application/json, text/plain, */*'
+```
+
+### Example Response
+
+**Empty offers (no active listings):**
+```json
+[]
+```
+
+**With active offers:**
+```json
+[
+  {
+    "id": 77924504,
+    "country_id": 72,
+    "industry_id": 1,
+    "quality": 1,
+    "amount": 119998,
+    "price": 0.861386,
+    "stock": 120000,
+    "sold": 2,
+    "created_at": "2026-01-24 10:30:00",
+    "updated_at": "2026-01-25 08:15:00",
+    "currency": "LTL",
+    "product_name": "Food Q1"
+  },
+  {
+    "id": 77838777,
+    "country_id": 72,
+    "industry_id": 2,
+    "quality": 7,
+    "amount": 4025,
+    "price": 15.50,
+    "stock": 5000,
+    "sold": 975,
+    "created_at": "2026-01-23 14:20:00",
+    "updated_at": "2026-01-25 06:45:00",
+    "currency": "LTL",
+    "product_name": "Ammunition Q7"
+  }
+]
+```
+
+### Notes
+
+- **Response Format:**
+  - Returns an empty array `[]` if the citizen has no active marketplace offers
+  - Returns an array of offer objects if the citizen has active listings
+
+- **Offer Fields:**
+  - `id`: Unique marketplace offer ID
+  - `country_id`: Country where the offer is listed (marketplace location)
+  - `industry_id`: Product industry type (1=Food, 2=Weapons, 23=Aircraft, 4=Houses)
+  - `quality`: Product quality level (1-7 for most products, null for raw materials)
+  - `amount`: Current available stock (decreases as items are purchased)
+  - `price`: Price per unit (in country's local currency)
+  - `stock`: Original stock when offer was created
+  - `sold`: Number of items sold from this offer
+  - `created_at`: Timestamp when offer was created
+  - `updated_at`: Timestamp of last modification (price change, stock update)
+  - `currency`: Currency code (LTL, USD, EUR, RON, etc.)
+  - `product_name`: Human-readable product name
+
+- **Use Cases:**
+  - Check status of your active marketplace listings
+  - Monitor sales and remaining stock
+  - Identify which offers need restocking
+  - Track pricing and sales performance
+
+- **Marketplace Management:**
+  - Offers remain active until stock is depleted or manually removed
+  - Price can be updated without recreating the offer
+  - Stock can be added to existing offers
+  - Multiple offers for the same product type can exist simultaneously
+
+- **Industry IDs:**
+  - 1: Food (Q1-Q11)
+  - 2: Weapons/Ammunition (Q1-Q7)
+  - 4: Houses (Q1-Q5)
+  - 23: Aircraft Weapons (Q1-Q5)
+  - 7, 12, 17, 24: Raw Materials
+
+- **Related Endpoints:**
+  - Use `marketplaceAjax` to browse offers from all sellers
+  - Use `marketplaceActions` to create new offers or update existing ones
+  - This endpoint is read-only (GET) - modifications require POST actions
+
+- This endpoint is used by the "My Offers" section on the marketplace/inventory pages
+- Response is typically very fast (<50ms) since it queries a single citizen's offers
+- No pagination - all active offers are returned in a single response
+
+---
+
+## Get Inventory
+
+**Method:** GET
+**URL:** `/en/economy/inventory-json`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves the complete inventory of the authenticated citizen, including all currencies, items (food, weapons, raw materials), boosters, active enhancements, items in production, and assembly components. This is a comprehensive endpoint that provides a full snapshot of the player's resources and possessions.
+
+### Parameters
+
+No parameters required.
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/economy/inventory-json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Accept: application/json, text/plain, */*'
+```
+
+### Example Response
+
+```json
+[
+  {
+    "id": "mainStorage",
+    "title": "Storage",
+    "items": [
+      {
+        "id": "gold",
+        "industryId": 1000,
+        "quality": 1,
+        "name": "Gold",
+        "type": "currency",
+        "rarity": "epic",
+        "icon": "https://www.erepublik.net/images/icons/rewards/128px/gold.png",
+        "attributes": {
+          "canDonate": true,
+          "currencyId": 62,
+          "currency": true
+        },
+        "tooltip": {
+          "attributes": [
+            {
+              "type": "quantity",
+              "text": "Quantity",
+              "value": "72,916"
+            }
+          ]
+        },
+        "description": "eRepublik's universal currency",
+        "amount": 72916,
+        "amountDisplay": "⁠72.9k⁠"
+      },
+      {
+        "id": "currency",
+        "industryId": 1000,
+        "quality": null,
+        "name": "Currency",
+        "type": "currency",
+        "rarity": "rare",
+        "attributes": {
+          "canDonate": true,
+          "currencyId": 1,
+          "currency": true
+        },
+        "description": "Your country's currency",
+        "amount": 6274006,
+        "amountDisplay": "⁠6.27M⁠"
+      },
+      {
+        "id": "1_3",
+        "industryId": 1,
+        "quality": 3,
+        "name": "Food Q3",
+        "type": "food",
+        "rarity": "common",
+        "attributes": {
+          "canBeSold": true,
+          "food": true,
+          "manufactured": true,
+          "storage": 2332968,
+          "energy": "⁠+6⁠",
+          "refillValue": "⁠+6⁠",
+          "highStorage": true
+        },
+        "description": "Consuming food recovers your Energy",
+        "amount": 2332968,
+        "amountDisplay": "⁠2.33M⁠",
+        "amountForSale": 2332968
+      },
+      {
+        "id": "2_7",
+        "industryId": 2,
+        "quality": 7,
+        "name": "Ammunition Q7",
+        "type": "groundWeapon",
+        "rarity": "epic",
+        "attributes": {
+          "canBeSold": true,
+          "groundWeapon": true,
+          "manufactured": true,
+          "storage": 47619,
+          "durability": "10 uses",
+          "battleDamageGnd": "⁠+200%⁠"
+        },
+        "description": "Using Ammunition improves your damage in battles",
+        "uses": 476183,
+        "amount": 47619,
+        "amountDisplay": "⁠47.6k⁠",
+        "amountForSale": 47618
+      }
+    ],
+    "status": {
+      "usedStorage": 4148795,
+      "totalStorage": 5622000,
+      "availableStorage": 1473205,
+      "storagePercentage": "73.8%",
+      "color": "yellow"
+    }
+  },
+  {
+    "id": "boosters",
+    "title": "Boosters",
+    "items": [
+      {
+        "id": "100_damage_10_7200",
+        "industryId": 100,
+        "quality": 10,
+        "name": "+100% Ground Damage",
+        "type": "booster",
+        "rarity": "rare",
+        "attributes": {
+          "booster": "damage",
+          "duration": "2h",
+          "durationSeconds": 7200,
+          "battleDamageGnd": "+100%",
+          "battleDamage": "+100%",
+          "damage": 100,
+          "actionable": true
+        },
+        "description": "Hit 100% stronger in Ground Battles for 2 hours",
+        "amount": 486,
+        "amountDisplay": "⁠486⁠",
+        "actionable": {
+          "url": "https://www.erepublik.com/en/main/activateBooster",
+          "params": {
+            "type": "damage",
+            "quality": 10,
+            "duration": 7200,
+            "amount": 1
+          },
+          "maxAmount": 486,
+          "confirmType": "inline"
+        }
+      }
+    ]
+  },
+  {
+    "id": "activeEnhancements",
+    "title": "Active Boosters",
+    "items": [
+      {
+        "id": "4_1_active",
+        "industryId": 4,
+        "quality": 1,
+        "name": "House Q1",
+        "type": "house",
+        "rarity": "common",
+        "attributes": {
+          "energyPool": "⁠+100⁠",
+          "active": {
+            "activeTimeLeft": 701048,
+            "activeUntil": 1770053964,
+            "showProgress": true,
+            "progress": 1.29,
+            "state": null
+          },
+          "overtimePoints": "⁠+1/h⁠",
+          "residenceBonus": "active"
+        },
+        "description": null,
+        "amount": 701048,
+        "amountDisplay": "⁠8d⁠"
+      }
+    ]
+  },
+  {
+    "id": "inProduction",
+    "title": "In Production",
+    "items": [
+      {
+        "id": "1_3_inProduction",
+        "industryId": 1,
+        "quality": 3,
+        "name": "Food Q3",
+        "type": "food",
+        "rarity": "common",
+        "attributes": {
+          "food": true,
+          "inProduction": true,
+          "component": true,
+          "energy": "⁠+6⁠",
+          "refillValue": "⁠+6⁠"
+        },
+        "description": "Consuming food recovers your Energy",
+        "amount": 0.71,
+        "amountDisplay": "⁠71%⁠"
+      }
+    ]
+  },
+  {
+    "id": "assembly",
+    "title": "Assembly",
+    "items": [
+      {
+        "finalProduct": {
+          "id": "2_10",
+          "industryId": 2,
+          "quality": 10,
+          "name": "Bazooka",
+          "type": "groundWeapon",
+          "rarity": "epic",
+          "attributes": {
+            "canBeSold": true,
+            "groundWeapon": true,
+            "durability": "3 uses",
+            "fixedDamage": true,
+            "firepowerGnd": "10k"
+          },
+          "description": null,
+          "uses": 13608,
+          "amount": 4536,
+          "amountDisplay": "⁠4.53k⁠",
+          "amountForSale": 4536
+        },
+        "components": [
+          {
+            "id": "collection_part_4",
+            "industryId": 1000,
+            "quality": null,
+            "name": "Bazooka Scope",
+            "type": "miscellaneous",
+            "rarity": "common",
+            "attributes": {
+              "miscellaneous": true,
+              "token": true,
+              "component": true
+            },
+            "description": "One of the 5 parts required to assemble Bazookas.",
+            "amount": 4536,
+            "amountDisplay": "⁠4.53k⁠"
+          }
+        ],
+        "buttonText": "Build Bazooka",
+        "canAssemble": true,
+        "componentsPerItem": 1,
+        "actionable": {
+          "url": "https://www.erepublik.com/en/main/assemble",
+          "params": {
+            "itemLevel": 1,
+            "isAjax": true
+          }
+        }
+      }
+    ]
+  }
+]
+```
+
+### Notes
+
+- **Inventory Structure:**
+  - The response is an array of inventory sections (Storage, Boosters, Active Boosters, In Production, Assembly)
+  - Each section has an `id`, `title`, and `items` array
+  - The mainStorage section also includes a `status` object with storage capacity information
+
+- **Main Storage Section:**
+  - Contains all currencies (Gold, Country Currency, Game Tokens, Loyalty Points)
+  - Contains all consumable items (Food Q1-Q11, Weapons Q1-Q7, Aircraft Q5, Houses, etc.)
+  - Contains raw materials (Food Raw, Weapon Raw, House Raw, Aircraft Raw)
+  - Contains special items (Vehicle Blueprints, Tokens, etc.)
+  - Storage status shows: `usedStorage`, `totalStorage`, `availableStorage`, `storagePercentage`, `color`
+  - Color indicates storage health: `green` (low), `yellow` (medium), `red` (nearly full)
+
+- **Item Types:**
+  - `currency`: Gold, Country Currency, Game Tokens, Loyalty Points
+  - `food`: Food Q1-Q11, Energy Bars, Double Energy Bars
+  - `groundWeapon`: Ammunition Q1-Q7, Bazookas, Bombs, Rockets, Missiles
+  - `airWeapon`: Air-to-Air Missiles Q1-Q5
+  - `house`: Houses Q1-Q5
+  - `ticket`: Moving Tickets Q1-Q5
+  - `raw`: Raw materials for production (Food, Weapon, House, Aircraft)
+  - `booster`: Temporary combat/production boosters
+  - `miscellaneous`: Tokens, Blueprints, special items
+  - `groundBomb`: Small Bomb, Big Bomb, Cruise Missile
+  - `vehicle_blueprint`: Tank and Aircraft blueprints
+
+- **Rarity Levels:**
+  - `common`: Basic items
+  - `uncommon`: Enhanced items
+  - `rare`: High-value items
+  - `epic`: Very rare items
+  - `legendary`: Unique/premium items
+
+- **Item Attributes:**
+  - `canBeSold`: Item can be sold on marketplace
+  - `canDonate`: Item can be donated
+  - `manufactured`: Item is produced in companies
+  - `storage`: Storage space occupied by this item stack
+  - `highStorage`: Warning flag for items using excessive storage
+  - `energy`: Energy restored when consumed (food)
+  - `durability`: Number of uses (weapons)
+  - `battleDamageGnd/Air`: Combat damage boost percentage
+  - `fixedDamage`: Weapon deals fixed damage (not affected by boosters)
+  - `firepowerGnd/Air`: Fixed damage value
+  - `temporary`: Time-limited item with expiration data
+  - `actionable`: Item can be activated/used (boosters, houses)
+  - `component`: Used in assembly/production
+
+- **Boosters Section:**
+  - Contains all available (inactive) boosters
+  - Types: Damage boosters, Speed boosters, Deploy Size boosters, Influence boosters, Rank boosters, Prestige boosters, Ghost boosters
+  - Each booster has `actionable` object with activation URL and parameters
+  - Duration ranges from 1 minute to 24 hours
+  - Quality levels indicate boost strength (e.g., Q10 = +100%, Q15 = +150%)
+
+- **Active Enhancements Section:**
+  - Shows currently active temporary effects (Houses, Pack Boosters)
+  - `active.activeTimeLeft`: Seconds remaining until expiration
+  - `active.activeUntil`: Unix timestamp of expiration
+  - `active.showProgress`: Whether to show progress bar
+  - `active.progress`: Progress percentage (can exceed 100%)
+  - Houses provide energy pool bonuses and overtime points
+
+- **In Production Section:**
+  - Shows items currently being produced in companies
+  - `amount` represents production progress as a decimal (0.0 to 1.0)
+  - `amountDisplay` shows percentage (e.g., "71%" for 0.71)
+  - Production completes when `amount` reaches 1.0
+
+- **Assembly Section:**
+  - Contains items that can be assembled from components (Bazookas, Rockets)
+  - `finalProduct`: The assembled item
+  - `components`: Array of required parts with current quantities
+  - `canAssemble`: `true` if all components are available in sufficient quantity
+  - `componentsPerItem`: Number of components needed per assembled item
+  - Bazookas require 5 parts (Stock, Barrel, Scope, Projectile, Trigger Kit)
+  - Rockets require 20 ammunition items (Q1-Q6)
+
+- **Amount Display:**
+  - `amount`: Raw numeric value
+  - `amountDisplay`: Formatted display string (e.g., "⁠72.9k⁠", "⁠2.33M⁠")
+  - Display uses K (thousands), M (millions) abbreviations
+
+- **Currency IDs:**
+  - 1: Country Currency
+  - 62: Gold
+
+- **Industry IDs:**
+  - 1: Food
+  - 2: Weapons (Ammunition)
+  - 4: Houses
+  - 7: Food Raw Materials
+  - 12: Weapon Raw Materials
+  - 17: House Raw Materials
+  - 23: Aircraft Weapons (Air-to-Air Missiles)
+  - 24: Aircraft Raw Materials
+  - 100: Boosters and special items
+  - 1000: Currencies and miscellaneous items
+
+- This endpoint is used by the Inventory page to display all player possessions
+- Very comprehensive response (can be 50KB+ for players with large inventories)
+- No pagination - returns entire inventory in a single response
+- Response time varies based on inventory size (typically 200-500ms)
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
