@@ -1506,6 +1506,305 @@ curl 'https://www.erepublik.com/en/economy/inventory-json' \
 
 ---
 
+## Get Job Market Listings
+
+**Method:** GET
+**URL:** `/en/economy/job-market-json/{countryId}/{page}/{sortOrder}`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves paginated job market listings for a specific country, showing available job offers sorted by salary. Returns information about the citizen's current employment status, available jobs from employers, salary details (gross/net), and whether the citizen is eligible to apply.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| countryId | number | Yes | Country ID where jobs are located (e.g., 72 for Lithuania) |
+| page | number | Yes | Page number for pagination (starts at 1) |
+| sortOrder | string | Yes | Sort order: `asc` (lowest salary first) or `desc` (highest salary first) |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/economy/job-market-json/72/1/desc' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Accept: application/json, text/plain, */*'
+```
+
+### Example Response
+
+```json
+{
+  "isEmployed": true,
+  "isOrganization": false,
+  "isFromThisCountry": true,
+  "citizenId": 4690052,
+  "currencyName": "LTL",
+  "employer": {
+    "id": 2580095,
+    "name": "Greenday_1989",
+    "salary": 7500,
+    "netSalary": 7425,
+    "message": "You already work for <a href='//www.erepublik.com/en/citizen/profile/2580095'>Greenday_1989</a>. To apply for this job you have to quit your current job."
+  },
+  "jobs": [
+    {
+      "citizen": {
+        "id": 1460339,
+        "name": "pogonici",
+        "img": "https://cdnt.erepublik.net/.../3f672edbae92cd310dd474294414e0cf.jpg",
+        "countryId": 24
+      },
+      "companyName": "Love is in the air 33",
+      "salary": 7111,
+      "netSalary": 7039.89,
+      "salaryLimit": 0,
+      "currency": "LTL"
+    },
+    {
+      "citizen": {
+        "id": 2629153,
+        "name": "Bob_Marley_BG",
+        "img": "https://cdnt.erepublik.net/.../d7d99181731a49635cadd3a94abb9aa1.jpg",
+        "countryId": 42
+      },
+      "companyName": "Riding High",
+      "salary": 7040,
+      "netSalary": 6969.6,
+      "salaryLimit": 0,
+      "currency": "LTL"
+    }
+  ],
+  "pages": 20
+}
+```
+
+### Notes
+
+- **Employment Status:**
+  - `isEmployed`: `true` if citizen is currently employed
+  - `isOrganization`: `true` if the citizen account is an organization (not a regular citizen)
+  - `isFromThisCountry`: `true` if citizen has citizenship in the job market's country
+  - `citizenId`: Authenticated citizen's ID
+  - `currencyName`: Country's currency code (LTL, USD, EUR, RON, etc.)
+
+- **Current Employer:**
+  - Only present if `isEmployed: true`
+  - `employer.id`: Current employer's citizen ID
+  - `employer.name`: Current employer's name
+  - `employer.salary`: Gross salary at current job
+  - `employer.netSalary`: Net salary after tax deduction
+  - `employer.message`: HTML message indicating employment status (citizen must quit current job to apply)
+
+- **Job Listings:**
+  - Array of available job offers from employers
+  - `citizen`: Employer's profile information (ID, name, avatar, country)
+  - `companyName`: Name of the company offering the job
+  - `salary`: Gross salary offered (before tax)
+  - `netSalary`: Net salary after tax deduction (actual amount received)
+  - `salaryLimit`: Maximum salary budget restriction (0 = no limit)
+  - `currency`: Currency code for salary payment
+
+- **Pagination:**
+  - `pages`: Total number of pages available
+  - Typically 10 jobs per page
+  - Use `page` parameter to navigate through results
+
+- **Sorting:**
+  - `desc`: Highest salary first (most common, shows best-paying jobs)
+  - `asc`: Lowest salary first (rarely used)
+
+- **Tax Calculations:**
+  - Tax rate varies by country (typically 1% in most countries)
+  - `netSalary = salary - (salary × taxRate)`
+  - Example: 7111 salary with 1% tax = 7039.89 net salary
+
+- **Country IDs (Common):**
+  - 24: Argentina
+  - 42: Bulgaria
+  - 72: Lithuania
+  - 79: Romania
+  - (See other endpoints for more country IDs)
+
+- **Application Flow:**
+  - If employed, citizen must quit current job first
+  - Quitting typically requires navigating to profile and clicking "Quit Job"
+  - After quitting, citizen can apply for any job in the market
+  - Application is instant (no approval process)
+
+- **Related Endpoints:**
+  - Use `/en/main/job-data` to get current employment details
+  - Use `/en/economy/work` to work at current job
+  - This endpoint is read-only (GET) - job applications require separate POST action
+
+- Response time is typically fast (<100ms) since data is cached and indexed
+- Job listings update in real-time as employers create or remove offers
+- Only shows jobs in companies that have available positions and sufficient funds
+
+---
+
+## Game Tokens Market Retrieve
+
+**Method:** POST
+**URL:** `/en/economy/gameTokensMarketAjax`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves game tokens market data for a specific country, showing top market offers, citizen's token balance, active sell offers, daily purchase limits, and market statistics. Game Tokens are a special currency used for premium features and can be bought/sold on the market using country currency.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| action | string | Yes | Must be set to `retrieve` to fetch market data |
+| countryId | number | Yes | Country ID where the market is located (e.g., 72 for Lithuania) |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/economy/gameTokensMarketAjax' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw 'action=retrieve&countryId=72&_token=YOUR_CSRF_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "error": false,
+  "topOffers": [
+    {
+      "sellers": "1 Seller(s)",
+      "amount": 179,
+      "price": 30999,
+      "id": "offer_1",
+      "canBuy": true,
+      "sellerCountries": [34]
+    },
+    {
+      "sellers": "2 Seller(s)",
+      "amount": 1302,
+      "price": 31000,
+      "id": "offer_2",
+      "canBuy": false,
+      "sellerCountries": [38, 65]
+    },
+    {
+      "sellers": "1 Seller(s)",
+      "amount": 9,
+      "price": 31148,
+      "id": "offer_3",
+      "canBuy": false,
+      "sellerCountries": [13]
+    },
+    {
+      "sellers": "1 Seller(s)",
+      "amount": 5,
+      "price": 31149,
+      "id": "offer_4",
+      "canBuy": false,
+      "sellerCountries": [53]
+    },
+    {
+      "sellers": "1 Seller(s)",
+      "amount": 938,
+      "price": 31150,
+      "id": "offer_5",
+      "canBuy": false,
+      "sellerCountries": [29]
+    }
+  ],
+  "citizenData": {
+    "availableTokens": 249,
+    "myOffers": [],
+    "offersLimit": 3
+  },
+  "histogram": [],
+  "stats": "There are 4591 items for sale, available from 31 sellers. Only the Top 5 offers are shown.",
+  "dailyLimit": "You acquire a maximum of 148 Game Tokens per day.",
+  "dailyLimitRemaining": 148
+}
+```
+
+### Notes
+
+- **Top Offers:**
+  - Only top 5 offers are displayed (sorted by price, lowest first)
+  - `sellers`: Count of sellers offering at this price point
+  - `amount`: Total quantity available at this price
+  - `price`: Price per game token in country currency (displayed in hundredths, divide by 100)
+  - `canBuy`: `true` if citizen can purchase from this offer (depends on citizenship, restrictions)
+  - `sellerCountries`: Array of country IDs where sellers are from
+  - `id`: Offer identifier (e.g., "offer_1", "offer_2")
+
+- **Citizen Data:**
+  - `availableTokens`: Current game tokens owned by the citizen
+  - `myOffers`: Array of citizen's active sell offers (empty if none)
+  - `offersLimit`: Maximum number of sell offers allowed (typically 3)
+
+- **Market Statistics:**
+  - `stats`: Human-readable summary of total market supply and sellers
+  - `histogram`: Price distribution data (typically empty in basic retrieve action)
+  - Total market size shown in stats (e.g., "4591 items for sale from 31 sellers")
+
+- **Daily Purchase Limits:**
+  - `dailyLimit`: Maximum game tokens that can be purchased per day (displayed as text)
+  - `dailyLimitRemaining`: Remaining tokens available for purchase today (resets at eRepublik day change)
+  - Prevents market manipulation by limiting daily purchases
+  - Limit varies by citizen level/VIP status
+
+- **Country IDs (Common):**
+  - 13: Spain
+  - 29: Bosnia and Herzegovina
+  - 34: China
+  - 38: Croatia
+  - 53: Indonesia
+  - 65: Poland
+  - 72: Lithuania
+  - (See other endpoints for more country IDs)
+
+- **Game Tokens Usage:**
+  - Premium currency used for VIP subscription, special items, and services
+  - Tradeable between citizens via the market
+  - Cannot be converted back to Gold
+  - Prices fluctuate based on supply/demand
+
+- **Related Actions:**
+  - `action=buy`: Purchase game tokens from market offers
+  - `action=sell`: Create a sell offer for game tokens
+  - `action=cancel`: Cancel an existing sell offer
+
+- The CSRF `_token` can be obtained from the game tokens market page source
+- Response time is typically fast (<100ms) due to caching
+- Market data updates in real-time as transactions occur
+- Only citizens with citizenship in the specified country can buy/sell in that market
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
