@@ -178,6 +178,174 @@ curl 'https://www.erepublik.com/en/military/campaignsJson/list' \
 
 ---
 
+### List Country Campaigns
+
+**Method:** GET
+**URL:** `/en/military/campaignsJson/countryId/{countryId}`
+**Auth Required:** No
+
+#### Description
+
+Returns a JSON object containing all currently active battles/campaigns filtered for a specific country. This is a variant of `/en/military/campaignsJson/list` that only returns battles where the specified country is either the invader or defender. This is a public endpoint that does not require authentication.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| countryId | number | Yes | The country ID to filter battles for (URL path parameter) |
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Accept | `application/json` | No |
+| X-Requested-With | `XMLHttpRequest` | Recommended |
+| User-Agent | Browser user agent | Recommended |
+
+#### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/military/campaignsJson/countryId/29' \
+  -H 'Accept: application/json' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+#### Example Response
+
+```json
+{
+  "battles": {
+    "863688": {
+      "id": 863688,
+      "war_id": 223123,
+      "zone_id": 1,
+      "is_rw": false,
+      "is_as": false,
+      "type": "tanks",
+      "start": 1769353943,
+      "det": 1,
+      "region": { "id": 260, "name": "Aosta Valley" },
+      "city": { "id": 368, "name": "Aosta" },
+      "is_dict": false,
+      "is_lib": false,
+      "war_type": "direct",
+      "inv": { "id": 10, "allies": [], "ally_list": [], "points": 0 },
+      "def": { "id": 29, "allies": [], "ally_list": [], "points": 0 },
+      "div": {
+        "37861141": {
+          "id": 37861141,
+          "div": 1,
+          "end": null,
+          "division_end": false,
+          "epic": 0,
+          "epic_type": 0,
+          "intensity_scale": "cold_war",
+          "co": { "inv": [], "def": [] },
+          "wall": { "for": 29, "dom": 100 },
+          "terrain": 4
+        },
+        "37861142": {
+          "id": 37861142,
+          "div": 2,
+          "end": null,
+          "division_end": false,
+          "epic": 0,
+          "epic_type": 0,
+          "intensity_scale": "cold_war",
+          "co": { "inv": [], "def": [] },
+          "wall": { "for": 29, "dom": 50 },
+          "terrain": 4
+        },
+        "37861145": {
+          "id": 37861145,
+          "div": 11,
+          "end": null,
+          "division_end": false,
+          "epic": 0,
+          "epic_type": 0,
+          "intensity_scale": "cold_war",
+          "co": { "inv": [], "def": [] },
+          "wall": { "for": 10, "dom": 100 },
+          "terrain": 0
+        }
+      },
+      "terrainTypes": [4, 0],
+      "effects": null,
+      "hasMultipleTerrains": false,
+      "isMultiZone": true
+    },
+    "863663": {
+      "id": 863663,
+      "war_id": 224176,
+      "zone_id": 3,
+      "is_rw": false,
+      "is_as": false,
+      "type": "tanks",
+      "start": 1769355665,
+      "det": 1,
+      "region": { "id": 110, "name": "Central Transdanubia" },
+      "city": { "id": 276, "name": "Szekesfehervar" },
+      "is_dict": false,
+      "is_lib": false,
+      "war_type": "direct",
+      "inv": { "id": 29, "allies": [], "ally_list": [], "points": 0 },
+      "def": { "id": 13, "allies": [], "ally_list": [], "points": 36 },
+      "div": {
+        "37861411": {
+          "id": 37861411,
+          "div": 1,
+          "end": null,
+          "division_end": false,
+          "epic": 0,
+          "epic_type": 0,
+          "intensity_scale": "cold_war",
+          "co": { "inv": [], "def": [] },
+          "wall": { "for": 13, "dom": 50 },
+          "terrain": 0
+        },
+        "37861415": {
+          "id": 37861415,
+          "div": 11,
+          "end": null,
+          "division_end": false,
+          "epic": 0,
+          "epic_type": 0,
+          "intensity_scale": "cold_war",
+          "co": { "inv": [], "def": [] },
+          "wall": { "for": 13, "dom": 56.45 },
+          "terrain": 0
+        }
+      },
+      "terrainTypes": [0],
+      "effects": null,
+      "hasMultipleTerrains": false,
+      "isMultiZone": true
+    }
+  },
+  "countries": {
+    "13": { "id": 13, "name": "Hungary", "allies": [], "is_empire": false, "cotd": 863670 },
+    "10": { "id": 10, "name": "Italy", "allies": [], "is_empire": false, "cotd": 0 },
+    "29": { "id": 29, "name": "United Kingdom", "allies": [], "is_empire": false, "cotd": 0 }
+  },
+  "last_updated": 1769358144,
+  "time": 1769358146
+}
+```
+
+#### Response Fields
+
+See [List Active Campaigns](#list-active-campaigns) for detailed field descriptions. The response structure is identical.
+
+#### Notes
+
+- Returns only battles where the specified country is invader (`inv.id`) or defender (`def.id`)
+- The `countries` object only includes countries relevant to the filtered battles
+- Useful for building country-specific battle dashboards or tracking a nation's active wars
+- Country IDs can be obtained from the full campaigns list or other API endpoints
+- Common country IDs: 29 = United Kingdom, 1 = Romania, 10 = Italy, 13 = Hungary, 72 = Lithuania
+
+---
+
 ### Get Citizen Campaigns Data
 
 **Method:** GET
