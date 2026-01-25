@@ -178,6 +178,113 @@ curl 'https://www.erepublik.com/en/military/campaignsJson/list' \
 
 ---
 
+### Get Citizen Campaigns Data
+
+**Method:** GET
+**URL:** `/en/military/campaignsJson/citizen`
+**Auth Required:** Yes
+
+#### Description
+
+Returns personalized campaign/battle data for the authenticated citizen, including their fighting eligibility (mercenary/freedom fighter status), battle zone selections, and combat stats for battles they've participated in. This is a companion endpoint to `/en/military/campaignsJson/list` - use both together to get complete battle information with citizen-specific context.
+
+#### Parameters
+
+None
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Accept | `application/json` | No |
+
+#### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/military/campaignsJson/citizen' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Accept: application/json'
+```
+
+#### Example Response
+
+```json
+{
+  "battles": {
+    "863498": {
+      "citizenStats": {
+        "72": {
+          "zones": 1,
+          "current": 0,
+          "damage": 24536,
+          "kills": 51,
+          "activeZones": []
+        }
+      },
+      "selectedBattleZoneId": 37858205,
+      "aircraftZoneId": 37858205,
+      "groundZoneId": 37858204,
+      "isMercenary": false,
+      "isFreedomFighter": false
+    },
+    "863565": {
+      "citizenStats": null,
+      "selectedBattleZoneId": 37858095,
+      "aircraftZoneId": 37858095,
+      "groundZoneId": 37858094,
+      "isMercenary": true,
+      "isFreedomFighter": false
+    },
+    "863465": {
+      "citizenStats": null,
+      "selectedBattleZoneId": 37858350,
+      "aircraftZoneId": 37858350,
+      "groundZoneId": 37858349,
+      "isMercenary": false,
+      "isFreedomFighter": true
+    }
+  },
+  "contributions": null,
+  "deployment": null,
+  "time": 1769345424
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `battles` | object | Map of battle ID → citizen-specific battle info |
+| `battles.*.citizenStats` | object/null | Citizen's stats in this battle (null if hasn't fought) |
+| `battles.*.citizenStats.{countryId}` | object | Stats keyed by country ID the citizen fought for |
+| `battles.*.citizenStats.*.zones` | number | Number of zones/rounds participated in |
+| `battles.*.citizenStats.*.current` | number | Current round participation (0 = not fighting) |
+| `battles.*.citizenStats.*.damage` | number | Total damage dealt in this battle |
+| `battles.*.citizenStats.*.kills` | number | Total kills in this battle |
+| `battles.*.citizenStats.*.activeZones` | array | Currently active zones |
+| `battles.*.selectedBattleZoneId` | number | Currently selected battle zone ID |
+| `battles.*.aircraftZoneId` | number | Air division zone ID |
+| `battles.*.groundZoneId` | number | Ground division zone ID |
+| `battles.*.isMercenary` | boolean | Whether citizen can fight as mercenary in this battle |
+| `battles.*.isFreedomFighter` | boolean | Whether citizen can fight as freedom fighter in this battle |
+| `contributions` | object/null | Citizen's contributions data (if applicable) |
+| `deployment` | object/null | Citizen's military unit deployment info (if applicable) |
+| `time` | number | Current server Unix timestamp |
+
+#### Notes
+
+- **Authentication required**: This endpoint requires a valid session cookie
+- **Complements list endpoint**: Use with `/en/military/campaignsJson/list` to get complete battle info with citizen context
+- **Mercenary eligibility**: `isMercenary: true` indicates the citizen can fight for either side (not a citizen of involved countries)
+- **Freedom Fighter eligibility**: `isFreedomFighter: true` indicates the citizen can support a resistance war
+- **citizenStats country key**: The key inside `citizenStats` (e.g., "72") is the country ID the citizen fought for in that battle
+- **Zone IDs**: The `groundZoneId` and `aircraftZoneId` reference division zones in the battle, corresponding to entries in the `/campaignsJson/list` response's `div` section
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
