@@ -1132,7 +1132,7 @@ Same structure as in "Get City Overview Data" endpoint - contains basic city inf
   - Q4: +300 energy pool
   - Q5: +400 energy pool
 - Houses must be activated to provide bonuses, with activation costs paid in local currency
-- `activeTimeRemaining` shows seconds until house expires (typically 30 days duration)
+- `activeTimeRemaining` shows seconds until house expires (typically 7 days duration)
 - Only one house quality can be active at a time in a city
 - `inventory` count shows how many houses of that quality the citizen owns
 - Button text indicates available action: "Use" (from inventory), "Buy" (need to purchase), "Extend" (renew active house)
