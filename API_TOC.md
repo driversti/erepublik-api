@@ -54,7 +54,11 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 ### Economy
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| *TBD* | - | Endpoints to be documented |
+| `/en/main/shopItemsJson` | GET | Get Gold Shop and VIP Shop items |
+| `/en/main/job-data` | GET | Get employment and work status |
+| `/en/economy/workOvertime` | POST | Work overtime for extra salary |
+| `/en/economy/work` | POST | Work as Manager (WAM) in companies |
+| `/en/main/training-grounds-json` | GET | Get training grounds status |
 
 ### Rewards
 | Endpoint | Method | Description |
