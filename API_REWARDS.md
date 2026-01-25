@@ -716,6 +716,79 @@ curl -X GET 'https://www.erepublik.com/en/main/weekly-challenge-data' \
 
 ---
 
+## Collect Weekly Challenge Reward
+
+**Method:** POST
+**URL:** `/en/main/weekly-challenge-collect-reward`
+**Auth Required:** Yes
+
+### Description
+
+Claims a specific reward from the weekly challenge system. When a player reaches a prestige point threshold, they can claim the associated reward (e.g., Energy Bars, Factory Reset Tokens). Returns an error if the reward has already been collected or if the threshold hasn't been reached yet.
+
+### Request Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| rewardId | number | Yes | The unique reward tier ID from the weekly challenge data |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+### Example Request (cURL)
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/weekly-challenge-collect-reward' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw 'rewardId=53&_token=YOUR_CSRF_TOKEN'
+```
+
+### Example Response (Already Collected)
+
+```json
+{
+  "status": "error",
+  "message": "Already collected"
+}
+```
+
+### Example Response (Success - Expected)
+
+```json
+{
+  "status": "success",
+  "message": "Reward collected"
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| status | string | Result status ("success" or "error") |
+| message | string | Human-readable result message |
+
+### Notes
+
+- The `rewardId` must match a valid reward tier ID from the `/en/main/weekly-challenge-data` response
+- Rewards can only be collected once per weekly challenge period
+- The reward must be unlocked (player must have reached the required prestige point threshold)
+- Returns `"Already collected"` error if the reward was previously claimed
+- Returns error if the prestige point threshold hasn't been reached yet
+- Works in conjunction with `weekly-challenge-data` endpoint which shows available rewards and their IDs
+- Reward IDs correspond to the `rewards.normal[].id` field from the weekly challenge data
+- Each `weeklyId` period has its own set of collectable rewards
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:

@@ -82,6 +82,8 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/main/objective-status` | POST | Get daily objective progress and rewards |
 | `/en/main/daily-missions-data` | POST | Get all daily missions with progress |
 | `/en/main/mission-solve` | POST | Claim rewards for a completed mission |
+| `/en/main/weekly-challenge-data` | GET | Get weekly challenge progress and rewards |
+| `/en/main/weekly-challenge-collect-reward` | POST | Collect a weekly challenge reward |
 
 ---
 
