@@ -168,6 +168,217 @@ curl -X POST 'https://www.erepublik.com/en/main/travelData' \
 
 ---
 
+## Get Travel Data (Filter by Country)
+
+**Method:** POST
+**URL:** `/en/main/travelData`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves travel data filtered by a specific country, showing all regions belonging to or occupied by that country. This variant uses the `check=getCountryRegions` parameter to filter results by `countryId`, returning a subset of regions instead of the full world map. Useful for building country-specific travel interfaces or displaying regions within a particular nation.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| check | string | Yes | Action type, must be `getCountryRegions` for this variant |
+| countryId | number | Yes | Country ID to filter regions by |
+| _token | string | Yes | CSRF token for the request |
+| holdingId | number | No | Holding company ID (use 0 if not applicable) |
+| regionId | number | No | Current/reference region ID (use 0 if not applicable) |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/travelData' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw 'check=getCountryRegions&countryId=72&_token=YOUR_CSRF_TOKEN&holdingId=0&regionId=0'
+```
+
+### Example Response
+
+```json
+{
+  "countries": {
+    "49": {
+      "id": 49,
+      "name": "Indonesia",
+      "permalink": "Indonesia",
+      "hasRegionsFromOthers": true,
+      "hasRegionsOccupiedByOthers": false,
+      "regions": [667]
+    },
+    "72": {
+      "id": 72,
+      "name": "Lithuania",
+      "permalink": "Lithuania",
+      "hasRegionsFromOthers": true,
+      "hasRegionsOccupiedByOthers": true,
+      "regions": [667, 664, 665, 478, 387, 372, 64, 43, 763, 120, 692, 333, 666]
+    },
+    "56": {
+      "id": 56,
+      "name": "Iran",
+      "permalink": "Iran",
+      "hasRegionsFromOthers": false,
+      "hasRegionsOccupiedByOthers": true,
+      "regions": [478]
+    }
+  },
+  "regions": {
+    "667": {
+      "id": 667,
+      "name": "Sudovia",
+      "permalink": "Sudovia",
+      "zoneName": "A3",
+      "distanceInZones": 1,
+      "distanceInKm": 190,
+      "isConquered": true,
+      "isConqueredFrom": 72,
+      "isConqueredBy": 49,
+      "countryId": 49,
+      "cityId": 714,
+      "cityName": "Marijampole",
+      "cost": 20,
+      "ticket": 5,
+      "ticketAmount": 1,
+      "canMove": true,
+      "isAlly": false,
+      "isDiscounted": false,
+      "isFree": false
+    },
+    "664": {
+      "id": 664,
+      "name": "Samogitia",
+      "permalink": "Samogitia",
+      "zoneName": "A3",
+      "distanceInZones": 1,
+      "distanceInKm": 77,
+      "isConquered": false,
+      "isConqueredFrom": 0,
+      "isConqueredBy": 0,
+      "countryId": 72,
+      "cityId": 711,
+      "cityName": "Telsiai",
+      "cost": 20,
+      "ticket": 5,
+      "ticketAmount": 1,
+      "canMove": true,
+      "isAlly": false,
+      "isDiscounted": false,
+      "isFree": false
+    }
+  },
+  "preselectCountryId": 72,
+  "preselectRegionId": false,
+  "alreadyInRegion": "",
+  "battleInfo": {
+    "battleInfoText": "",
+    "travelRequired": false,
+    "travelData": false
+  },
+  "citizen": {
+    "country": {
+      "id": 72,
+      "name": "Lithuania",
+      "permalink": "Lithuania"
+    },
+    "region": {
+      "id": 663,
+      "name": "Lithuania Minor",
+      "permalink": "Lithuania-Minor"
+    },
+    "city": {
+      "id": 710,
+      "name": "Klaipeda"
+    },
+    "residence": {
+      "hasResidence": 1,
+      "cityId": 710,
+      "regionId": 663,
+      "countryId": 72,
+      "bonuses": {
+        "hasResidence": 1,
+        "isInResidence": 1,
+        "validUntil": 0,
+        "timeRemaining": 0,
+        "numHouses": 1,
+        "energyBonus": 100,
+        "recoveryBonus": 4,
+        "description": "Residence bonuses available"
+      },
+      "cityInfo": {
+        "id": 710,
+        "name": "Klaipeda",
+        "permalink": "Klaipeda",
+        "regionId": 663,
+        "cityTypeId": 2,
+        "regionName": "Lithuania Minor",
+        "regionPermalink": "Lithuania-Minor",
+        "countryId": 72,
+        "countryName": "Lithuania",
+        "countryPermalink": "Lithuania"
+      }
+    },
+    "travelMethod": "preferCurrency"
+  }
+}
+```
+
+### Response Fields
+
+#### Top Level (Filtered Response)
+- `countries` - Object mapping country IDs to country data (only countries related to the specified `countryId`)
+- `regions` - Object mapping region IDs to region data (only regions owned/occupied by the specified country)
+- `preselectCountryId` - The requested country ID (echoed back)
+- `preselectRegionId` - Region to preselect (false if not specified)
+- `alreadyInRegion` - Empty string or region ID if citizen is already in target
+- `battleInfo` - Battle-related travel requirements (if applicable)
+- `citizen` - Current citizen information including country, region, city, and residence
+
+#### Country Object (Filtered View)
+- `hasRegionsFromOthers` - Whether this country has conquered regions from other nations
+- `hasRegionsOccupiedByOthers` - Whether this country has regions occupied by other nations
+- `regions` - Array of region IDs belonging to (or occupied by) this country
+
+#### Region Object
+Same structure as "Get Travel Data" endpoint - includes distance, cost, conquest status, etc.
+
+#### Citizen Object
+- `country` - Citizen's citizenship country (id, name, permalink)
+- `region` - Current region location
+- `city` - Current city location
+- `residence` - Residence details including bonuses and city info
+- `travelMethod` - Preferred payment method for travel ("preferCurrency" or "preferTicket")
+
+### Notes
+
+- This variant filters results to show only regions related to the specified `countryId`
+- Returns regions **owned by** the country (original regions)
+- Returns regions **occupied by** the country (conquered from others)
+- Returns regions **occupied from** the country (original regions now held by enemies)
+- Useful for building country-specific travel dropdowns or region selectors
+- Response is significantly smaller than the full world map variant (fewer countries/regions)
+- The `check=getCountryRegions` parameter is required to trigger this filtering behavior
+- `preselectRegionId` is `false` instead of a number when no specific region is targeted
+- All travel costs, distances, and conquest information are still included per region
+- Example shows Lithuania (country 72) with 13 regions including occupied territories across multiple continents
+
+---
+
 ## Travel to Region
 
 **Method:** POST
