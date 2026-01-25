@@ -568,6 +568,154 @@ curl -X POST 'https://www.erepublik.com/en/main/mission-solve' \
 
 ---
 
+## Get Weekly Challenge Data
+
+**Method:** GET
+**URL:** `/en/main/weekly-challenge-data`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves the player's progress in the weekly challenge system, including prestige point progression, unlocked/locked rewards at different thresholds, collected reward history, and time remaining until the next weekly reset. The weekly challenge tracks prestige points earned through daily missions and rewards players with items like energy bars and factory reset tokens at various milestones.
+
+### Parameters
+
+None (query parameters not required)
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+
+### Example Request (cURL)
+
+```bash
+curl -X GET 'https://www.erepublik.com/en/main/weekly-challenge-data' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+### Example Response
+
+```json
+{
+  "error": false,
+  "enabled": true,
+  "type": {
+    "anniversary": false,
+    "flavorPacks": false,
+    "springChallenge": false,
+    "summerChallenge": false,
+    "tropicalChallenge": false,
+    "blueElectric": false,
+    "autumnChallenge": false,
+    "shadowChallenge": false,
+    "halloweenChallenge": false,
+    "winterChallenge": false,
+    "skinChallenge": false,
+    "valentinesDay": false,
+    "lunarNewYear": false,
+    "childrensDay": false,
+    "cryptoChallenge": false,
+    "icarusChallenge": false
+  },
+  "title": "Weekly Challenge",
+  "timeLeft": 146658,
+  "nextReward": {
+    "maxReward": false,
+    "type": "icon_energy_bars",
+    "text": "20 Energy Bars"
+  },
+  "maxRewardId": 0,
+  "player": {
+    "avatar": "https://cdnt.erepublik.net/enQ9lXJMVlMaSYRgyEsa10ndQwA=/55x55/smart/avatars/Citizens/2011/04/12/1907aee62f42c11beba21159840cdc16.png?fa70b874e2f337186b979af9404828eb",
+    "name": "driver sti",
+    "prestigePoints": 38346
+  },
+  "progress": 0.95865,
+  "rewards": {
+    "normal": [
+      {
+        "id": 115,
+        "collectedBefore": 114,
+        "percent": 0.75,
+        "label": "You have already collected this reward",
+        "tooltip": "20 Energy Bars",
+        "status": "rewarded",
+        "icon": "energy_bars"
+      },
+      {
+        "id": 126,
+        "collectedBefore": 0,
+        "percent": 0.025,
+        "label": "Reach 39,000 Prestige Points to unlock the following reward: 20 Energy Bars",
+        "tooltip": "Reach 39000 Prestige Points to unlock the following reward: 20 Energy Bars",
+        "status": "",
+        "icon": "energy_bars"
+      }
+    ],
+    "extra": []
+  },
+  "skinId": null,
+  "weeklyId": 641
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| error | boolean | Whether an error occurred |
+| enabled | boolean | Whether weekly challenge is enabled for this player |
+| type | object | Active seasonal/themed challenge flags (most are false) |
+| title | string | Challenge title (typically "Weekly Challenge") |
+| timeLeft | number | Seconds remaining until weekly reset |
+| nextReward | object | Details about the next available reward |
+| nextReward.maxReward | boolean | Whether this is the final max reward |
+| nextReward.type | string | Icon type for the reward (e.g., "icon_energy_bars") |
+| nextReward.text | string | Reward description (e.g., "20 Energy Bars") |
+| maxRewardId | number | ID of the maximum reward tier |
+| player.avatar | string | Player's avatar image URL |
+| player.name | string | Player's name |
+| player.prestigePoints | number | Player's current prestige points |
+| progress | number | Progress percentage to next reward (0.0-1.0) |
+| rewards.normal | array | List of standard reward tiers |
+| rewards.normal[].id | number | Unique reward tier ID |
+| rewards.normal[].collectedBefore | number | How many times collected previously (for recurring rewards) |
+| rewards.normal[].percent | number | Progress percentage needed for this tier (0.0-1.0) |
+| rewards.normal[].label | string | Display label for this reward tier |
+| rewards.normal[].tooltip | string | Tooltip text with detailed reward info |
+| rewards.normal[].status | string | Reward status ("rewarded" if collected, "" if locked) |
+| rewards.normal[].icon | string | Icon identifier (e.g., "energy_bars", "factory_reset_token") |
+| rewards.extra | array | Additional special rewards (typically empty) |
+| skinId | number/null | ID of active themed skin (null for standard challenge) |
+| weeklyId | number | Unique identifier for this weekly challenge period |
+
+### Reward Icons
+
+| Icon | Description |
+|------|-------------|
+| energy_bars | Energy Bar rewards (typically 20 bars) |
+| factory_reset_token | Factory Reset Tokens (typically 2 tokens) |
+
+### Notes
+
+- The weekly challenge resets every week and rewards prestige points earned through daily missions
+- `progress` is calculated as `(currentPrestigePoints % thresholdIncrement) / thresholdIncrement`
+- In the example, progress is 0.95865 = (38346 % 39000) / (39000 - 38000) ≈ 346/1000
+- Rewards alternate between energy bars (75% and 2.5% thresholds) and factory reset tokens (0.25% thresholds)
+- The `type` object contains flags for seasonal/themed challenges (anniversary, spring, summer, etc.)
+- Most type flags are `false` during standard weekly challenges
+- `collectedBefore` tracks how many times the same reward tier was collected in previous weeks
+- `weeklyId` increments each week and can be used to track weekly challenge history
+- Players can claim rewards as they reach each threshold
+- The challenge continues indefinitely with repeating reward tiers
+- Prestige points are earned primarily through daily missions (see "Get Daily Missions Data" endpoint)
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
