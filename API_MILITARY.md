@@ -1361,6 +1361,123 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
 
 ---
 
+## Start Battle Deployment
+
+**Method:** POST
+**URL:** `/en/military/fightDeploy-startDeploy`
+**Auth Required:** Yes
+
+#### Description
+
+Initiates a battle deployment (auto-fight) for the authenticated citizen in a specific battle zone. This endpoint queues the citizen for combat with their specified energy allocation, weapon quality, and vehicle selection. The system will automatically fight using the configured resources until the energy is depleted or the battle round ends. This is the companion endpoint to `/en/military/fightDeploy-getInventory` - first retrieve available resources with getInventory, then start the deployment with this endpoint.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| _token | string | Yes | CSRF token for security |
+| battleId | number | Yes | The ID of the battle to deploy to |
+| battleZoneId | number | Yes | The specific battle zone ID to deploy to |
+| sideCountryId | number | Yes | The country ID for the side being joined |
+| weaponQuality | number | Yes | Weapon quality to use (-1 = no weapon, 1-7 for weapons) |
+| totalEnergy | number | Yes | Total energy to allocate for this deployment |
+| energySources[n][quality] | number | Yes | Quality/tier of the energy source (1-3 for food, 11 for energy bars) |
+| energySources[n][amount] | number | Yes | Amount of energy to consume from this source |
+| skinId | number | Yes | Vehicle/skin ID to use for combat |
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-startDeploy' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&battleId=863657&battleZoneId=37861650&sideCountryId=29&weaponQuality=-1&totalEnergy=340&energySources%5B0%5D%5Bquality%5D=3&energySources%5B0%5D%5Bamount%5D=0&skinId=18'
+```
+
+#### Example Response
+
+```json
+{
+  "error": false,
+  "message": "Successfully deployed",
+  "deploymentId": 122127169,
+  "data": {
+    "energyItems": {
+      "food": 0,
+      "energyBars": []
+    },
+    "energyTotal": 340,
+    "weaponType": "aircraft",
+    "chosenWeaponQuality": -1,
+    "weaponQuality": -1,
+    "battleId": 863657,
+    "sideCountryId": 29,
+    "battleZoneId": 37861650,
+    "skinId": 18,
+    "fuelLeft": 36
+  }
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `error` | boolean | Whether an error occurred (false = success) |
+| `message` | string | Human-readable status message |
+| `deploymentId` | number | Unique ID for this deployment session |
+| `data` | object | Deployment details |
+| `data.energyItems` | object | Energy sources consumed |
+| `data.energyItems.food` | number | Amount of food energy consumed |
+| `data.energyItems.energyBars` | array | Energy bars consumed |
+| `data.energyTotal` | number | Total energy allocated for this deployment |
+| `data.weaponType` | string | Type of combat ("aircraft" for air, "tanks" for ground) |
+| `data.chosenWeaponQuality` | number | The weapon quality selected by the user |
+| `data.weaponQuality` | number | The actual weapon quality being used |
+| `data.battleId` | number | The battle ID for this deployment |
+| `data.sideCountryId` | number | The country ID the citizen is fighting for |
+| `data.battleZoneId` | number | The battle zone ID for this deployment |
+| `data.skinId` | number | The vehicle/skin ID being used |
+| `data.fuelLeft` | number | Remaining fuel for the vehicle after deployment starts |
+
+#### Notes
+
+- **CSRF protection**: The `_token` parameter is required and must be a valid CSRF token from the current session
+- **Workflow**: This endpoint is typically called after `/en/military/fightDeploy-getInventory`:
+  1. Call `getInventory` to retrieve available weapons, energy sources, and vehicles
+  2. Select desired combat configuration
+  3. Call `startDeploy` to begin the auto-fight deployment
+- **Energy sources array**: The `energySources` parameter is an array of objects, each specifying a quality tier and amount:
+  - Format: `energySources[0][quality]=3&energySources[0][amount]=100`
+  - Multiple sources can be specified: `energySources[1][quality]=11&energySources[1][amount]=50`
+- **Weapon quality values**:
+  - `-1` = No weapon (base damage only)
+  - `1-7` = Weapon quality levels (Q1-Q7)
+- **Vehicle selection**: The `skinId` must be a vehicle the citizen owns and should be appropriate for the battle type:
+  - Aircraft skins for air divisions (division 11)
+  - Tank skins for ground divisions (divisions 1-4)
+- **Fuel consumption**: The `fuelLeft` value shows remaining vehicle fuel after deployment; fuel is consumed per hit
+- **Auto-fight behavior**: Once deployed, the system automatically executes combat until:
+  - All allocated energy is consumed
+  - The battle round ends
+  - The citizen cancels the deployment
+- **Energy allocation**: The `totalEnergy` should match the sum of energy from all sources in `energySources`
+- **Deployment ID**: Save the `deploymentId` to check deployment status or cancel the deployment later
+- **Country matching**: For optimal damage bonuses, use a vehicle enrolled for the `sideCountryId` country
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
