@@ -1805,6 +1805,184 @@ curl -X POST 'https://www.erepublik.com/en/economy/gameTokensMarketAjax' \
 
 ---
 
+## Manage Employees Data
+
+**Method:** GET
+**URL:** `/en/economy/manage-employees-json`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves comprehensive employee management data for the authenticated citizen's companies, including individual employee work histories, salary details, job offer information, and daily statistics. This endpoint provides a complete overview of employee performance, attendance, and company salary budget management.
+
+### Parameters
+
+No parameters required.
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/economy/manage-employees-json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Accept: application/json, text/plain, */*'
+```
+
+### Example Response
+
+```json
+{
+  "settings": {
+    "currency": "LTL",
+    "dayNumbers": [6635, 6636, 6637, 6638, 6639, 6640, 6641],
+    "daysToShow": 7
+  },
+  "employees": [
+    {
+      "citizenId": 5385502,
+      "name": "SP rider",
+      "avatar": "https://cdnt.erepublik.net/.../de8c10b2e136a296fbe88a5f4c8671ff.jpg",
+      "salary": 2100,
+      "hiredOn": 5372,
+      "workHistory": [1, 1, 2, 1, 1, 1, 1],
+      "salaryHistory": [2100, 2100, 4200, 2100, 2100, 2100, 2100],
+      "totalWorks": 8,
+      "totalSalary": 16800
+    }
+  ],
+  "overview": {
+    "jobOffer": {
+      "hasJobOffer": true,
+      "currentOffer": {
+        "citizenId": 4690052,
+        "countryId": 72,
+        "numberOfJobs": 100,
+        "salary": 2100,
+        "createdAt": 1745836141
+      },
+      "minimumSalary": 1,
+      "maxNumberOfJobs": 1335
+    },
+    "salaryLimit": 210000,
+    "totalSalaries": {
+      "amount": 2100,
+      "isCritical": false
+    },
+    "numEmployees": 1,
+    "maxEmployees": 1336,
+    "employeePresence": 100,
+    "employeeStats": {
+      "dailyStats": {
+        "6635": {
+          "employeePresence": 100,
+          "numEmployees": 1,
+          "presentEmployees": 1,
+          "worksReceived": 1,
+          "payedSalaries": 2100,
+          "averageSalaryPerWork": 2100,
+          "averageWorksPerEmployee": 1
+        },
+        "6636": {
+          "employeePresence": 100,
+          "numEmployees": 1,
+          "presentEmployees": 1,
+          "worksReceived": 1,
+          "payedSalaries": 2100,
+          "averageSalaryPerWork": 2100,
+          "averageWorksPerEmployee": 1
+        }
+      },
+      "overall": {
+        "employeePresence": 100,
+        "worksReceived": 8,
+        "payedSalaries": 16800,
+        "averageSalaryPerWork": 2100,
+        "averageWorksPerEmployee": 1.14
+      }
+    }
+  }
+}
+```
+
+### Notes
+
+- **Settings:**
+  - `currency`: Currency code used for salaries (LTL, USD, EUR, etc.)
+  - `dayNumbers`: Array of eRepublik day numbers (eDay) for the displayed period
+  - `daysToShow`: Number of days shown in history (typically 7 days)
+
+- **Employee Data:**
+  - `citizenId`: Unique identifier of the employee
+  - `name`: Employee's display name
+  - `avatar`: Profile picture URL
+  - `salary`: Current daily salary offered
+  - `hiredOn`: eDay number when employee was hired
+  - `workHistory`: Array showing number of works per day (corresponds to `dayNumbers` array)
+  - `salaryHistory`: Array showing total salary paid per day (corresponds to `dayNumbers` array)
+  - `totalWorks`: Total works received from this employee during the displayed period
+  - `totalSalary`: Total salary paid to this employee during the displayed period
+
+- **Job Offer Information:**
+  - `hasJobOffer`: `true` if an active job offer exists
+  - `currentOffer.citizenId`: Company owner's citizen ID
+  - `currentOffer.countryId`: Country where the job offer is posted
+  - `currentOffer.numberOfJobs`: Number of available positions
+  - `currentOffer.salary`: Offered salary per work
+  - `currentOffer.createdAt`: Unix timestamp when offer was created
+  - `minimumSalary`: Minimum allowed salary (typically 1)
+  - `maxNumberOfJobs`: Maximum employees allowed (based on company level/holding capacity)
+
+- **Salary Budget:**
+  - `salaryLimit`: Maximum daily salary budget before warnings appear
+  - `totalSalaries.amount`: Total daily salary expenses
+  - `totalSalaries.isCritical`: `true` if salary expenses exceed safe thresholds
+
+- **Employee Capacity:**
+  - `numEmployees`: Current number of employees
+  - `maxEmployees`: Maximum employee capacity (based on company buildings)
+  - `employeePresence`: Overall attendance percentage (0-100)
+
+- **Daily Statistics:**
+  - `dailyStats`: Object keyed by eDay number with per-day metrics
+  - `employeePresence`: Percentage of employees who worked that day
+  - `presentEmployees`: Count of employees who worked
+  - `worksReceived`: Total works completed that day (can exceed employee count due to overtime)
+  - `payedSalaries`: Total salaries paid that day
+  - `averageSalaryPerWork`: Average salary paid per work completed
+  - `averageWorksPerEmployee`: Average works per employee (includes overtime)
+
+- **Overall Statistics:**
+  - `overall`: Aggregated stats across the entire displayed period
+  - Includes total works, total salaries, and averages
+
+- **Work History Arrays:**
+  - Arrays are ordered chronologically matching the `dayNumbers` array
+  - Example: `dayNumbers[0]=6635` corresponds to `workHistory[0]=1` (1 work on day 6635)
+  - Works can exceed 1 per day if employee worked overtime
+  - Salary history shows gross salary paid (includes overtime payments)
+
+- **Use Cases:**
+  - Monitor employee attendance and productivity
+  - Track salary expenses across time
+  - Identify inactive or low-performing employees
+  - Manage job offer settings and capacity
+  - Calculate average costs and efficiency metrics
+
+- This endpoint is used by the "Manage Employees" page in the Economy section
+- Response time is typically fast (<100ms)
+- Data covers the last 7 days by default
+- Employee data is only visible to the company owner
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
