@@ -20,8 +20,10 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 |--------|-------------|------|
 | Authentication | Login flow, sessions, tokens | [API_AUTH.md](API_AUTH.md) |
 | Military | Combat, battles, wars, weapons | [API_MILITARY.md](API_MILITARY.md) |
-| Social | Citizens, friends, messages, notifications | [API_SOCIAL.md](API_SOCIAL.md) |
+| Social | Citizens, friends, messages | [API_SOCIAL.md](API_SOCIAL.md) |
+| Notifications | Alerts, reports, notifications | [API_NOTIFICATIONS.md](API_NOTIFICATIONS.md) |
 | Economy | Marketplace, work, companies, currencies | [API_ECONOMY.md](API_ECONOMY.md) |
+| Rewards | Daily objectives, missions, achievements | [API_REWARDS.md](API_REWARDS.md) |
 
 ---
 
@@ -40,12 +42,26 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 ### Social
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| *TBD* | - | Endpoints to be documented |
+| `/en/main/citizen-profile-json-global/{citizenId}` | GET | Get citizen profile (public) |
+| `/en/main/citizen-profile-json-personal/{citizenId}` | GET | Get citizen profile (authenticated) |
+| `/en/main/citizen-addRemoveFriend` | POST | Add or remove friend |
+
+### Notifications
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/en/main/notificationsAjax/report/{page}` | GET | Get paginated notifications |
 
 ### Economy
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | *TBD* | - | Endpoints to be documented |
+
+### Rewards
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/en/main/objective-status` | POST | Get daily objective progress and rewards |
+| `/en/main/daily-missions-data` | POST | Get all daily missions with progress |
+| `/en/main/mission-solve` | POST | Claim rewards for a completed mission |
 
 ---
 
