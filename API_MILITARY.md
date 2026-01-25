@@ -285,6 +285,386 @@ curl 'https://www.erepublik.com/en/military/campaignsJson/citizen' \
 
 ---
 
+### Get Battle Statistics
+
+**Method:** GET
+**URL:** `/en/military/battle-stats/{battleId}/{division}/{battleZoneId}`
+**Auth Required:** Yes
+
+#### Description
+
+Retrieves detailed statistics for a specific battle zone, including top damage dealers for each side in all divisions, overall stats, zone status, active battle effects, and fighter information. This endpoint is typically polled during active combat to update the battlefield UI.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| battleId | number | Yes | The ID of the battle |
+| division | number | Yes | Division number (1-4 for ground, 11 for air) |
+| battleZoneId | number | Yes | The specific battle zone ID |
+
+#### Headers
+
+| Header           | Value                                            | Required    |
+| ---------------- | ------------------------------------------------ | ----------- |
+| Cookie           | `erpk=YOUR_SESSION_TOKEN`                        | Yes         |
+| X-Requested-With | `XMLHttpRequest`                                 | Yes         |
+| Accept           | `application/json, text/javascript, */*; q=0.01` | Recommended |
+
+#### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Accept: application/json, text/javascript, */*; q=0.01'
+```
+
+#### Example Response
+
+```json
+{
+  "stats": {
+    "personal": [],
+    "current": {
+      "6": {
+        "1": {
+          "14": {
+            "37858081": {
+              "top_damage": [
+                {
+                  "battle_zone_id": 37858081,
+                  "battle_id": 863499,
+                  "zone_id": 6,
+                  "division": 1,
+                  "citizen_id": 9741009,
+                  "damage": 215,
+                  "kills": 1,
+                  "side_country_id": 14,
+                  "type": "top_damage",
+                  "level": 12,
+                  "sector": ""
+                }
+              ]
+            }
+          },
+          "72": {
+            "37858081": {
+              "top_damage": [
+                {
+                  "battle_zone_id": 37858081,
+                  "battle_id": 863499,
+                  "zone_id": 6,
+                  "division": 1,
+                  "citizen_id": 9741009,
+                  "damage": 215,
+                  "kills": 1,
+                  "side_country_id": 72,
+                  "type": "top_damage",
+                  "level": 12,
+                  "sector": ""
+                }
+              ]
+            }
+          }
+        },
+        "4": {
+          "14": {
+            "37858084": {
+              "top_damage": [
+                {
+                  "battle_zone_id": 37858084,
+                  "battle_id": 863499,
+                  "zone_id": 6,
+                  "division": 4,
+                  "citizen_id": 3257328,
+                  "damage": 275002739,
+                  "kills": 60,
+                  "side_country_id": 14,
+                  "type": "top_damage",
+                  "level": 638,
+                  "sector": ""
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "overall": []
+  },
+  "zone_finished": false,
+  "division": {
+    "created_at": 1769345796,
+    "bar": {
+      "37859365": 14
+    },
+    "domination": {
+      "37859365": 50
+    },
+    "defence_shield": {
+      "37859365": null
+    },
+    "72": {
+      "37859365": {
+        "domination": 0,
+        "won": 0
+      },
+      "total": 17
+    },
+    "14": {
+      "37859365": {
+        "domination": 110,
+        "won": 0
+      },
+      "total": 91
+    }
+  },
+  "logs": {
+    "attackers": [],
+    "defenders": []
+  },
+  "fightersData": {
+    "4009762": {
+      "id": 4009762,
+      "name": "ogius",
+      "avatar": "https://cdnt.erepublik.net/HMWQL5S3qtIsRgP4qKawitAYNHw=/30x30/smart/avatars/Citizens/2010/10/25/c3df46043a674ac97aee9fab5b5cf2a6.jpg"
+    },
+    "6521752": {
+      "id": 6521752,
+      "name": "J. Jogreth",
+      "avatar": "https://cdnt.erepublik.net/SMd-KXdHetNQyp92hNoepQ93zjM=/30x30/smart/avatars/Citizens/2012/09/17/e0c976b4873af307f9596a917a12a5e5.png?d6f58076e458a4451a74ab35eb81dd52"
+    }
+  },
+  "opponentsInQueue": 0,
+  "isInQueue": false,
+  "campaigns": [],
+  "epicBattle": 0,
+  "activeEffects": [],
+  "battleEffects": [],
+  "maxHit": 0,
+  "most_contested": [],
+  "battle_zone_situation": {
+    "37859361": 0,
+    "37859362": 0,
+    "37859363": 0,
+    "37859364": 0,
+    "37859365": 0
+  }
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `stats.personal` | array | Personal stats for the authenticated citizen |
+| `stats.current` | object | Current top damage stats by zone → division → country → battle zone |
+| `stats.current.*.*.*.*.top_damage` | array | Top damage dealers with citizen info, damage, kills, level |
+| `stats.overall` | array | Overall battle statistics |
+| `zone_finished` | boolean | Whether the current zone has finished |
+| `division.created_at` | number | Unix timestamp when division round was created |
+| `division.bar` | object | Map of battle zone ID → country ID holding the wall |
+| `division.domination` | object | Map of battle zone ID → domination percentage |
+| `division.defence_shield` | object | Map of battle zone ID → shield status (null if no shield) |
+| `division.{countryId}` | object | Per-country stats including domination and wins |
+| `division.{countryId}.total` | number | Total points/wins for the country in this division |
+| `logs.attackers` | array | Combat logs for attacking side |
+| `logs.defenders` | array | Combat logs for defending side |
+| `fightersData` | object | Map of citizen ID → citizen details (name, avatar) |
+| `fightersData.*.avatar` | string | CDN URL for citizen avatar (30x30) |
+| `opponentsInQueue` | number | Number of opponents in queue (for direct fights) |
+| `isInQueue` | boolean | Whether the citizen is currently in combat queue |
+| `campaigns` | array | Related campaign data |
+| `epicBattle` | number | Epic battle status (0 = not epic) |
+| `activeEffects` | array | Currently active battle effects/boosters |
+| `battleEffects` | array | Available battle effects |
+| `maxHit` | number | Maximum hit damage recorded |
+| `most_contested` | array | Most contested zones info |
+| `battle_zone_situation` | object | Map of battle zone ID → situation status code |
+
+#### Notes
+
+- **Real-time updates**: This endpoint is typically polled every few seconds during active combat to refresh the battlefield UI
+- **Top damage structure**: `stats.current` is nested as `{zoneId → divisionId → countryId → battleZoneId → top_damage[]}`
+- **Country IDs**: The numeric keys (e.g., "14", "72") represent country IDs for invaders and defenders
+- **Division numbers**: 1-4 represent ground divisions, 11 represents the air division
+- **Avatar CDN**: Avatar URLs use Cloudflare CDN with `smart` resizing and size parameters (30x30)
+- **Domination values**: Can exceed 100, representing accumulated domination points
+- **Defence shield**: `null` indicates no shield active; non-null values indicate shield health/status
+- **Zone situation codes**: The `battle_zone_situation` values likely indicate special states (0 = normal)
+
+---
+
+### Get Battle Statistics (Console)
+
+**Method:** POST
+**URL:** `/en/military/battle-console`
+**Auth Required:** Yes
+
+#### Description
+
+Retrieves paginated battle statistics for a specific battle, round, and division using POST parameters. Returns detailed round information across all divisions and top damage dealers (leaderboards) for each country side. This endpoint is used by the battle console UI to display fighter statistics, leaderboards, and round data with pagination support.
+
+This is a **POST variant** of battle statistics that differs from the GET `/battle-stats` endpoint - it uses the `action=battleStatistics` parameter and provides paginated leaderboard data.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| battleId | number | Yes | The ID of the battle |
+| zoneId | number | Yes | The zone/round number |
+| round | number | Yes | The round number (same as zoneId) |
+| division | number | Yes | Division number (1-4 for ground, 11 for air) |
+| battleZoneId | number | Yes | The specific battle zone ID |
+| action | string | Yes | Must be "battleStatistics" |
+| type | string | Yes | Statistics type (e.g., "damage") |
+| leftPage | number | Yes | Page number for left side (invader) leaderboard |
+| rightPage | number | Yes | Page number for right side (defender) leaderboard |
+| _token | string | Yes | CSRF token for security |
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw 'battleId=863499&zoneId=7&action=battleStatistics&round=7&division=11&battleZoneId=37859365&type=damage&leftPage=1&rightPage=1&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Example Response
+
+```json
+{
+  "rounds": {
+    "37859365": {
+      "id": 37859365,
+      "zone": 7,
+      "round": 7,
+      "division": 11,
+      "created_at": 1769345107,
+      "type": "aircraft",
+      "terrain_type_id": null,
+      "started": 1,
+      "finished": 0
+    },
+    "37858085": {
+      "id": 37858085,
+      "zone": 6,
+      "round": 6,
+      "division": 11,
+      "created_at": 1769338746,
+      "type": "aircraft",
+      "terrain_type_id": null,
+      "started": 1,
+      "finished": 1
+    },
+    "37859364": {
+      "id": 37859364,
+      "zone": 7,
+      "round": 7,
+      "division": 4,
+      "created_at": 1769345107,
+      "type": "tanks",
+      "terrain_type_id": null,
+      "started": 1,
+      "finished": 0
+    }
+  },
+  "72": {
+    "fighterData": {
+      "1": {
+        "citizenId": 2886612,
+        "citizenName": "ghoghnooos",
+        "country_name": "Iran",
+        "citizenAvatar": "https://cdnt.erepublik.net/YHNhtt2L2mJ1nL43ygz7PtZgfDM=/30x30/smart/avatars/Citizens/2010/03/05/1dd7c446109ffa07dccbbb124b6e69de.jpg?a11fd74342a8cd81a4e5f8f0b06a65e6",
+        "country_permalink": "Iran",
+        "for_country_id": 72,
+        "value": "12,836",
+        "raw_value": 12836,
+        "reward": false
+      }
+    },
+    "pages": 0
+  },
+  "14": {
+    "fighterData": {
+      "1": {
+        "citizenId": 1752353,
+        "citizenName": "Awang",
+        "country_name": "Malaysia",
+        "citizenAvatar": "https://cdnt.erepublik.net/aqhbCUPdjxyP_RCbFjbAtocRFBM=/30x30/smart/avatars/Citizens/2009/08/11/5ade5c1f5bccf9d3b3046aa9b41a4959.jpg?42fa4b51f92caead74118e921488ea7f",
+        "country_permalink": "Malaysia",
+        "for_country_id": 14,
+        "value": "32,534",
+        "raw_value": 32534,
+        "reward": false
+      }
+    },
+    "pages": 0
+  }
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `rounds` | object | Map of battle zone ID → round details for all divisions |
+| `rounds.*.id` | number | Battle zone ID |
+| `rounds.*.zone` | number | Zone/round number |
+| `rounds.*.round` | number | Round number (same as zone) |
+| `rounds.*.division` | number | Division number (1-4 = ground, 11 = air) |
+| `rounds.*.created_at` | number | Unix timestamp when round was created |
+| `rounds.*.type` | string | Battle type ("aircraft" for air, "tanks" for ground) |
+| `rounds.*.terrain_type_id` | number/null | Terrain modifier ID (null if no terrain) |
+| `rounds.*.started` | number | 1 if round has started, 0 otherwise |
+| `rounds.*.finished` | number | 1 if round is finished, 0 if ongoing |
+| `{countryId}` | object | Country-specific leaderboard data (e.g., "72", "14") |
+| `{countryId}.fighterData` | object | Map of rank → fighter details |
+| `{countryId}.fighterData.*.citizenId` | number | Citizen ID of the fighter |
+| `{countryId}.fighterData.*.citizenName` | string | Display name of the fighter |
+| `{countryId}.fighterData.*.country_name` | string | Fighter's home country name |
+| `{countryId}.fighterData.*.citizenAvatar` | string | CDN URL for fighter's avatar (30x30) |
+| `{countryId}.fighterData.*.country_permalink` | string | Country permalink/slug |
+| `{countryId}.fighterData.*.for_country_id` | number | Country ID the fighter fought for |
+| `{countryId}.fighterData.*.value` | string | Formatted damage value with comma separators |
+| `{countryId}.fighterData.*.raw_value` | number | Raw damage value as number |
+| `{countryId}.fighterData.*.reward` | boolean | Whether fighter received reward |
+| `{countryId}.pages` | number | Total number of pages available for this side's leaderboard |
+
+#### Notes
+
+- **POST method required**: Unlike the GET `/battle-stats` endpoint, this uses POST with form data
+- **CSRF protection**: The `_token` parameter is required and must be a valid CSRF token from the current session
+- **Pagination**: Use `leftPage` and `rightPage` to paginate through leaderboards for each side
+  - Page numbers start at 1
+  - `pages: 0` in response indicates only one page of results
+- **Country ID keys**: The numeric keys (e.g., "72", "14") are country IDs representing each side of the battle
+  - These correspond to the invader and defender countries
+- **Round data scope**: The `rounds` object includes data for **all divisions** in the specified zone/round, not just the requested division
+- **Fighter ranking**: The keys in `fighterData` (e.g., "1") represent the rank/position on the leaderboard
+- **Battle types**:
+  - `type: "aircraft"` for air division (division 11)
+  - `type: "tanks"` for ground divisions (divisions 1-4)
+- **Terrain modifiers**: `terrain_type_id` indicates special terrain effects; `null` means default terrain
+- **Avatar CDN**: Uses Cloudflare CDN with smart resizing at 30x30 pixels
+- **Damage formatting**: Both formatted (`value`) and raw (`raw_value`) damage are provided
+- **Action parameter**: The `action=battleStatistics` parameter determines which data subset to return
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
