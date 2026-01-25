@@ -19,6 +19,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | Module | Description | Link |
 |--------|-------------|------|
 | Authentication | Login flow, sessions, tokens | [API_AUTH.md](API_AUTH.md) |
+| World & Travel | Countries, regions, travel, geography | [API_WORLD.md](API_WORLD.md) |
 | Military | Combat, battles, wars, weapons | [API_MILITARY.md](API_MILITARY.md) |
 | Social | Citizens, friends, messages | [API_SOCIAL.md](API_SOCIAL.md) |
 | Notifications | Alerts, reports, notifications | [API_NOTIFICATIONS.md](API_NOTIFICATIONS.md) |
@@ -33,6 +34,12 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/en/login` | POST | User login |
+
+### World & Travel
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/en/main/travelData` | POST | Get all countries, regions, and travel costs |
+| `/en/main/travel` | POST | Execute travel to a region (costs currency/tickets) |
 
 ### Military
 | Endpoint | Method | Description |
