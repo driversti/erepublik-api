@@ -1116,6 +1116,251 @@ curl -X POST 'https://www.erepublik.com/en/military/armory-data/protectors' \
 
 ---
 
+## Get Battle Deployment Inventory
+
+**Method:** POST
+**URL:** `/en/military/fightDeploy-getInventory`
+**Auth Required:** Yes
+
+#### Description
+
+Retrieves the authenticated citizen's complete combat inventory for deploying to a specific battle, including available weapons (with damage per hit calculations), energy sources (food, energy bars, and pool energy), vehicles with country-specific enrollment status, and recoverable energy. This endpoint is called when preparing to fight in a battle zone to determine available combat resources and deployment options.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| _token | string | Yes | CSRF token for security |
+| battleId | number | Yes | The ID of the battle to deploy to |
+| sideCountryId | number | Yes | The country ID for the side being joined |
+| battleZoneId | number | Yes | The specific battle zone ID to deploy to |
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&battleId=863500&sideCountryId=72&battleZoneId=37861235'
+```
+
+#### Example Response
+
+```json
+{
+  "weapons": [
+    {
+      "industryId": 23,
+      "quality": -1,
+      "name": "No weapon",
+      "amount": null,
+      "preselect": true,
+      "attributes": {
+        "firepower": null,
+        "maxEnergy": null
+      },
+      "damageperHit": 143,
+      "isBest": false
+    },
+    {
+      "industryId": 23,
+      "quality": 5,
+      "name": "Air-to-Air Missile Q5",
+      "amount": 1169,
+      "uses": 5844,
+      "preselect": false,
+      "attributes": {
+        "firepower": "+100%",
+        "maxEnergy": 58450
+      },
+      "damageperHit": 286,
+      "isBest": true
+    }
+  ],
+  "energySources": [
+    {
+      "type": "pool",
+      "energy": 6654
+    },
+    {
+      "type": "food",
+      "tier": 1,
+      "quality": 1,
+      "amount": 284072,
+      "energy": 568144
+    },
+    {
+      "type": "food",
+      "tier": 2,
+      "quality": 2,
+      "amount": 5678,
+      "energy": 22712
+    },
+    {
+      "type": "food",
+      "tier": 3,
+      "quality": 3,
+      "amount": 2332887,
+      "energy": 13997322
+    },
+    {
+      "type": "energy_bar",
+      "tier": 11,
+      "quality": 11,
+      "amount": 50,
+      "energy": 10000
+    }
+  ],
+  "recoverableEnergy": 0,
+  "minEnergy": 10,
+  "fuelConsumed": 1,
+  "vehicles": [
+    {
+      "id": 30,
+      "type": "aircraft",
+      "isActive": true,
+      "name": "F8U-16 Gunslinger",
+      "status": "enrolled",
+      "intStatus": 1,
+      "isDefault": false,
+      "blueprints": null,
+      "countryId": 72,
+      "countryData": {
+        "id": 72,
+        "level": 13,
+        "maxLevel": 50,
+        "xp": 20309840,
+        "requiredXP": 43076000,
+        "damageBonus": 13,
+        "title": "Protector of Lithuania"
+      },
+      "title": "Protector of Lithuania",
+      "attributes": [
+        {
+          "type": "damageBonus",
+          "value": 13
+        }
+      ],
+      "isRecommended": true
+    },
+    {
+      "id": 40,
+      "type": "aircraft",
+      "isActive": false,
+      "name": "Ember Firefly SH-18",
+      "status": "notEnrolled",
+      "intStatus": 2,
+      "isDefault": false,
+      "blueprints": null,
+      "countryId": null,
+      "countryData": null,
+      "title": null,
+      "attributes": [],
+      "isRecommended": false
+    }
+  ],
+  "poolEnergy": 6654,
+  "maxEnergy": 16654,
+  "recoverableEnergyBuyFood": 0
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `weapons` | array | List of available weapons for this battle type (air or ground) |
+| `weapons[].industryId` | number | Industry ID for the weapon type (e.g., 23 = aircraft weapons) |
+| `weapons[].quality` | number | Weapon quality (-1 for no weapon, 1-7 for weapons) |
+| `weapons[].name` | string | Display name of the weapon |
+| `weapons[].amount` | number/null | Number of weapons in inventory (null for "No weapon") |
+| `weapons[].uses` | number | Total uses available (amount × uses per weapon) |
+| `weapons[].preselect` | boolean | Whether this weapon should be preselected in UI |
+| `weapons[].attributes` | object | Weapon attributes (firepower, maxEnergy) |
+| `weapons[].attributes.firepower` | string/null | Firepower bonus (e.g., "+100%") |
+| `weapons[].attributes.maxEnergy` | number/null | Maximum energy that can be consumed per hit |
+| `weapons[].damageperHit` | number | Calculated damage per hit with this weapon |
+| `weapons[].isBest` | boolean | Whether this is the highest quality weapon available |
+| `energySources` | array | List of available energy sources (food, energy bars, pool) |
+| `energySources[].type` | string | Energy source type ("pool", "food", "energy_bar") |
+| `energySources[].tier` | number | Tier/quality level (food: 1-7, energy bars: 11) |
+| `energySources[].quality` | number | Quality level (matches tier) |
+| `energySources[].amount` | number | Number of items in inventory (not present for pool) |
+| `energySources[].energy` | number | Total energy available from this source |
+| `recoverableEnergy` | number | Energy that can be recovered from previous battles |
+| `minEnergy` | number | Minimum energy cost per hit (typically 10) |
+| `fuelConsumed` | number | Fuel consumed per hit (for vehicles) |
+| `vehicles` | array | List of all available vehicles for this battle type |
+| `vehicles[].id` | number | Unique vehicle ID |
+| `vehicles[].type` | string | Vehicle type ("aircraft" or "tanks") |
+| `vehicles[].isActive` | boolean | Whether this vehicle is currently active |
+| `vehicles[].name` | string | Display name of the vehicle |
+| `vehicles[].status` | string | Enrollment status ("enrolled", "notEnrolled", etc.) |
+| `vehicles[].intStatus` | number | Integer status code (1=enrolled, 2=notEnrolled) |
+| `vehicles[].isDefault` | boolean | Whether this is a default vehicle |
+| `vehicles[].blueprints` | object/null | Blueprint progress (null if not applicable) |
+| `vehicles[].countryId` | number/null | Country ID for enrolled vehicles |
+| `vehicles[].countryData` | object/null | Country-specific protection data |
+| `vehicles[].countryData.level` | number | Protection level for this country (1-50) |
+| `vehicles[].countryData.damageBonus` | number | Damage bonus percentage |
+| `vehicles[].countryData.title` | string | Protection title (e.g., "Protector of Lithuania") |
+| `vehicles[].title` | string/null | Current protection title |
+| `vehicles[].attributes` | array | Vehicle attributes (typically damage bonus) |
+| `vehicles[].isRecommended` | boolean | Whether this vehicle is recommended for this battle |
+| `poolEnergy` | number | Current pool energy available |
+| `maxEnergy` | number | Maximum energy capacity |
+| `recoverableEnergyBuyFood` | number | Energy recoverable by purchasing food |
+
+#### Notes
+
+- **CSRF protection**: The `_token` parameter is required and must be a valid CSRF token from the current session
+- **Battle type detection**: The endpoint automatically determines whether the battle zone is air or ground division and returns appropriate weapons and vehicles
+  - Air divisions (division 11) return aircraft and air-to-air missiles
+  - Ground divisions (1-4) return tanks and ground weapons
+- **Weapon selection**:
+  - `preselect: true` indicates the default weapon (usually "No weapon")
+  - `isBest: true` marks the highest quality weapon available
+  - Higher quality weapons provide better `damageperHit` values
+- **Damage calculation**: The `damageperHit` value is pre-calculated based on:
+  - Base damage
+  - Weapon quality and firepower bonuses
+  - Vehicle protection level and damage bonuses
+  - Citizen level and attributes
+- **Energy sources**:
+  - `type: "pool"` represents the citizen's energy pool (regenerates over time)
+  - `type: "food"` represents consumable food items of various qualities
+  - `type: "energy_bar"` represents premium energy bars (typically Q11)
+- **Food tiers**:
+  - Tier 1 (Q1): 2 energy per unit
+  - Tier 2 (Q2): 4 energy per unit
+  - Tier 3 (Q3): 6 energy per unit
+  - Higher tiers provide proportionally more energy
+- **Vehicle recommendations**:
+  - `isRecommended: true` indicates the vehicle is enrolled for the battle's side country
+  - Vehicles enrolled for the correct country provide damage bonuses
+  - Vehicles enrolled for other countries appear but are not recommended
+- **Weapon uses**: The `uses` field shows total available uses (e.g., 1169 weapons × 5 uses each = 5844 total uses)
+- **Energy limits**: `maxEnergy` represents the citizen's maximum energy capacity including pool and storage
+- **Industry IDs**:
+  - 23 = Aircraft weapons (air-to-air missiles)
+  - 1 = Ground weapons (various weapon types)
+- **Quality scale**: Weapons range from Q1 (lowest) to Q7 (highest), with Q5+ providing significant bonuses
+- **No weapon option**: Always available with `quality: -1` and basic damage per hit
+- **Country matching**: The `sideCountryId` parameter determines which vehicles are recommended based on their enrollment status
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
