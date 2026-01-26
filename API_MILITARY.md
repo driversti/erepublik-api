@@ -830,6 +830,10 @@ curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
 - **Avatar CDN**: Uses Cloudflare CDN with smart resizing at 30x30 pixels
 - **Damage formatting**: Both formatted (`value`) and raw (`raw_value`) damage are provided
 - **Action parameter**: The `action=battleStatistics` parameter determines which data subset to return
+- **Type parameter values**: The `type` parameter filters the leaderboard type:
+  - `"damage"` - Returns top damage dealers
+  - `"kills"` - Returns top kill counts
+  - `"overall"` - Returns overall/combined statistics
 
 ---
 
