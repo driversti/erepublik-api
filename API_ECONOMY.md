@@ -81,6 +81,66 @@ curl 'https://www.erepublik.com/en/main/job-data' \
 
 ---
 
+## Work as Employee
+
+**Method:** POST
+**URL:** `/en/economy/work`
+**Auth Required:** Yes
+
+### Description
+
+Work at the current employer as an employee. This endpoint performs the daily work action, earning salary and contributing to work streak achievements. Can only be executed once per day per citizen.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| _token | string | Yes | CSRF token for request validation |
+| action_type | string | Yes | Must be set to `work` for employee work |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/economy/work' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&action_type=work'
+```
+
+### Example Response
+
+**Already worked today:**
+```json
+{
+  "status": false,
+  "message": "already_worked",
+  "result": ""
+}
+```
+
+### Notes
+
+- **Daily Limit:** Can only be executed once per day (resets at eRepublik day change)
+- **Error Messages:**
+  - `already_worked`: Citizen has already performed daily work
+  - Other errors may include: not employed, employer has no funds, etc.
+- **Same Endpoint as WAM:** This uses the same `/en/economy/work` endpoint but with `action_type=work` instead of `action_type=production`
+- **Requirements:** Citizen must be employed to use this endpoint
+- The CSRF `_token` can be obtained from the page source or previous API responses
+
+---
+
 ## Work Overtime
 
 **Method:** POST
@@ -497,6 +557,104 @@ curl 'https://www.erepublik.com/en/main/training-grounds-json' \
 - Training resets daily at eRepublik day change (00:00 eRepublik time)
 - Higher quality facilities provide more strength but cost more gold
 - Training is a key mechanic for increasing combat effectiveness
+
+---
+
+## Train in Training Grounds
+
+**Method:** POST
+**URL:** `/en/economy/train`
+**Auth Required:** Yes
+
+### Description
+
+Executes training in selected training grounds, gaining strength points. Each facility can be trained once per day. Training consumes no energy for the default free training but may cost gold for premium facilities. Returns updated strength totals, XP gained, and progress toward the Super Soldier Medal.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| grounds[N][id] | number | Yes | Training ground ID (from `/en/main/training-grounds-json`) |
+| grounds[N][train] | number | Yes | Training flag: `1` to train, `0` to skip |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/economy/train' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw 'grounds%5B0%5D%5Bid%5D=85434&grounds%5B0%5D%5Btrain%5D=1&grounds%5B1%5D%5Bid%5D=363943&grounds%5B1%5D%5Btrain%5D=1&grounds%5B2%5D%5Bid%5D=1979243&grounds%5B2%5D%5Btrain%5D=1&grounds%5B3%5D%5Bid%5D=364274&grounds%5B3%5D%5Btrain%5D=1&_token=YOUR_CSRF_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "status": true,
+  "message": true,
+  "result": {
+    "strength_bonus": 90,
+    "xp": 8,
+    "health": 40,
+    "gold": 0,
+    "strength": 412917,
+    "consumed_summary": [],
+    "to_achievement": 83,
+    "to_achievement_text": "You need an additional <span id=\"train_to_achievement\">83 Strength points</span> to get the Super Soldier Medal.",
+    "daily_tasks_done": true
+  },
+  "error": false
+}
+```
+
+### Notes
+
+- **Training Grounds Array:**
+  - Submit multiple grounds in a single request (up to 4 facilities)
+  - Array indices start at 0: `grounds[0]`, `grounds[1]`, etc.
+  - Each ground requires both `id` and `train` parameters
+  - Set `train=1` to train, `train=0` to skip that facility
+
+- **Response Fields:**
+  - `strength_bonus`: Total strength gained from this training session
+  - `xp`: Experience points earned
+  - `health`: Health points consumed (or restored, depending on context)
+  - `gold`: Gold spent on training (0 if free training or training contract active)
+  - `strength`: Total accumulated strength after training
+  - `consumed_summary`: Array of items consumed during training (energy, gold)
+  - `to_achievement`: Strength points needed for the next Super Soldier Medal
+  - `to_achievement_text`: Human-readable progress message (HTML)
+  - `daily_tasks_done`: `true` if daily task requirements are met
+
+- **Training Costs:**
+  - First facility (Weights Room): Free
+  - Additional facilities: May cost gold (0.19, 0.89, 1.79 gold depending on quality)
+  - Training contracts eliminate gold costs
+  - `effectiveCost` from training grounds status shows actual cost after contracts
+
+- **Daily Limits:**
+  - Each training ground can only be used once per day
+  - Training resets at eRepublik day change (00:00 eRepublik time)
+  - Use `/en/main/training-grounds-json` to check if already trained
+
+- **Super Soldier Medal:**
+  - Awarded every 250 strength points gained
+  - `to_achievement` tracks remaining points to next medal
+  - Medal rewards include Gold and achievement progress
+
+- **Related Endpoints:**
+  - Use `/en/main/training-grounds-json` to get available training grounds and current status
+  - Training ground IDs are citizen-specific (each citizen has unique facility IDs)
 
 ---
 
