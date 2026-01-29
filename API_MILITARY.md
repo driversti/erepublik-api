@@ -837,6 +837,255 @@ curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
 
 ---
 
+### Get Battle Console Data
+
+**Method:** POST
+**URL:** `/en/military/battle-console`
+**Auth Required:** Yes
+
+#### Description
+
+Retrieves comprehensive battle state data including all divisions' status, wall positions, domination points, campaign points, and overall battle progress. This endpoint uses the `action=battleConsole` parameter and provides a high-level overview of the entire battle across all divisions, unlike the `battleStatistics` action which focuses on fighter leaderboards. This is typically used to render the battle console UI showing the current state of all divisions in a campaign.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| battleId | number | Yes | The ID of the battle |
+| zoneId | number | Yes | The zone/round number |
+| action | string | Yes | Must be "battleConsole" |
+| battleZoneId | number | Yes | The specific battle zone ID |
+| _token | string | Yes | CSRF token for security |
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Accept | `application/json, text/plain, */*` | Recommended |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw 'battleId=864000&zoneId=9&action=battleConsole&battleZoneId=37886839&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Example Response
+
+```json
+{
+  "division": [
+    {
+      "id": 37886836,
+      "division": 1,
+      "countries": {
+        "53": {
+          "roundDominationPoints": 0,
+          "defenceShield": 0,
+          "totalPointsWonByDivision": 0,
+          "wall": 0,
+          "combatOrders": []
+        },
+        "42": {
+          "roundDominationPoints": 1800,
+          "defenceShield": null,
+          "totalPointsWonByDivision": 1,
+          "wall": 100,
+          "combatOrders": []
+        },
+        "divisionWinner": 42,
+        "dominatingCountry": 42
+      },
+      "type": "tank",
+      "divisionWinner": false,
+      "isEpic": false,
+      "epicState": 0,
+      "epicBattleProgress": 0,
+      "campaignPoints": 1,
+      "winnerInfo": {
+        "message": "Bulgaria won this campaign",
+        "isConquered": false,
+        "countryName": "Bulgaria",
+        "countryPermalink": "Bulgaria",
+        "waiting": false,
+        "timeUntil": 0,
+        "campaignFinished": true
+      }
+    },
+    {
+      "id": 37886837,
+      "division": 2,
+      "countries": {
+        "53": {
+          "roundDominationPoints": 0,
+          "defenceShield": 0,
+          "totalPointsWonByDivision": 0,
+          "wall": 50,
+          "combatOrders": []
+        },
+        "42": {
+          "roundDominationPoints": 1800,
+          "defenceShield": null,
+          "totalPointsWonByDivision": 2,
+          "wall": 50,
+          "combatOrders": []
+        },
+        "divisionWinner": 42,
+        "dominatingCountry": 42
+      },
+      "type": "tank",
+      "divisionWinner": false,
+      "isEpic": false,
+      "epicState": 0,
+      "epicBattleProgress": 0,
+      "campaignPoints": 2,
+      "winnerInfo": {
+        "message": "Bulgaria won this campaign",
+        "isConquered": false,
+        "countryName": "Bulgaria",
+        "countryPermalink": "Bulgaria",
+        "waiting": false,
+        "timeUntil": 0,
+        "campaignFinished": true
+      }
+    },
+    {
+      "id": 37886840,
+      "division": 11,
+      "countries": {
+        "53": {
+          "roundDominationPoints": 0,
+          "defenceShield": 0,
+          "totalPointsWonByDivision": 0,
+          "wall": 49.25,
+          "combatOrders": []
+        },
+        "42": {
+          "roundDominationPoints": 1800,
+          "defenceShield": null,
+          "totalPointsWonByDivision": 7,
+          "wall": 50.75,
+          "combatOrders": []
+        },
+        "divisionWinner": 42,
+        "dominatingCountry": 42
+      },
+      "type": "airforce",
+      "divisionWinner": false,
+      "isEpic": false,
+      "epicState": 0,
+      "epicBattleProgress": 1.8,
+      "campaignPoints": 7,
+      "winnerInfo": {
+        "message": "Bulgaria won this campaign",
+        "isConquered": false,
+        "countryName": "Bulgaria",
+        "countryPermalink": "Bulgaria",
+        "waiting": false,
+        "timeUntil": 0,
+        "campaignFinished": true
+      }
+    }
+  ],
+  "totalPointsByDivision": {
+    "1": { "42": 6, "53": 3 },
+    "2": { "42": 18, "53": 0 },
+    "3": { "42": 27, "53": 0 },
+    "4": { "42": 45, "53": 0 },
+    "11": { "42": 56, "53": 7 }
+  },
+  "totalPoints": {
+    "53": 10,
+    "42": 152
+  },
+  "isResistance": false,
+  "isRevolution": false,
+  "isDictatorship": false,
+  "allies": {
+    "42": [],
+    "53": []
+  },
+  "battle_time": 87794,
+  "serverTime": 1769578638
+}
+```
+
+#### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `division` | array | Array of all 5 divisions (1-4 ground, 11 air) with detailed status |
+| `division[].id` | number | Battle zone ID for this division |
+| `division[].division` | number | Division number (1-4 = ground, 11 = air) |
+| `division[].countries` | object | Per-country battle status including wall and domination |
+| `division[].countries.{countryId}` | object | Country-specific stats within this division |
+| `division[].countries.{countryId}.roundDominationPoints` | number | Domination points accumulated this round (max 1800) |
+| `division[].countries.{countryId}.defenceShield` | number/null | Defence shield value (null if no shield active) |
+| `division[].countries.{countryId}.totalPointsWonByDivision` | number | Total campaign points won in this division |
+| `division[].countries.{countryId}.wall` | number | Wall position percentage (0-100) |
+| `division[].countries.{countryId}.combatOrders` | array | Active combat orders for this country |
+| `division[].countries.divisionWinner` | number | Country ID that won this division round |
+| `division[].countries.dominatingCountry` | number | Country ID currently dominating this division |
+| `division[].type` | string | Battle type ("tank" for ground, "airforce" for air) |
+| `division[].divisionWinner` | boolean | Whether this division round has concluded |
+| `division[].isEpic` | boolean | Whether this is an epic battle |
+| `division[].epicState` | number | Epic battle state (0 = not epic) |
+| `division[].epicBattleProgress` | number | Progress toward epic battle status |
+| `division[].campaignPoints` | number | Total campaign points at stake in this division |
+| `division[].winnerInfo` | object | Winner information (populated when round finished) |
+| `division[].winnerInfo.message` | string | Human-readable winner message |
+| `division[].winnerInfo.isConquered` | boolean | Whether the region was conquered |
+| `division[].winnerInfo.countryName` | string | Name of the winning country |
+| `division[].winnerInfo.countryPermalink` | string | URL-safe country name |
+| `division[].winnerInfo.waiting` | boolean | Whether waiting for next round |
+| `division[].winnerInfo.timeUntil` | number | Seconds until next event |
+| `division[].winnerInfo.campaignFinished` | boolean | Whether the entire campaign has finished |
+| `totalPointsByDivision` | object | Campaign points per division, keyed by division number |
+| `totalPointsByDivision.{divisionNum}` | object | Points per country for this division |
+| `totalPoints` | object | Overall campaign points, keyed by country ID |
+| `isResistance` | boolean | Whether this is a resistance war |
+| `isRevolution` | boolean | Whether this is a revolution battle |
+| `isDictatorship` | boolean | Whether this involves a dictatorship |
+| `allies` | object | Allied countries for each side, keyed by country ID |
+| `allies.{countryId}` | array | Array of allied country IDs for this side |
+| `battle_time` | number | Elapsed battle time in seconds |
+| `serverTime` | number | Unix timestamp of the server time |
+
+#### Notes
+
+- **CSRF protection**: The `_token` parameter is required and must be a valid CSRF token from the current session
+- **Difference from battleStatistics**: This endpoint (`action=battleConsole`) returns high-level battle state data for all divisions, while `action=battleStatistics` returns paginated fighter leaderboards for a specific division
+- **Division structure**: The `division` array contains all 5 divisions regardless of which `battleZoneId` is specified:
+  - Divisions 1-4 are ground divisions (`type: "tank"`)
+  - Division 11 is the air division (`type: "airforce"`)
+- **Wall mechanics**:
+  - Wall values range from 0-100, representing the percentage controlled by each side
+  - When a country's wall reaches 100%, they win the round
+  - Wall values for both countries should add up to approximately 100
+- **Domination points**:
+  - `roundDominationPoints` accumulates during combat (max 1800 typically)
+  - Higher domination leads to faster wall movement
+- **Campaign points**:
+  - `campaignPoints` in each division shows the point value for winning that division
+  - `totalPointsByDivision` tracks accumulated points per country per division
+  - `totalPoints` shows the overall campaign score
+- **Winner determination**: When `campaignFinished: true`, the `winnerInfo` object contains final results
+- **Battle types**:
+  - `isResistance`: True for resistance wars (citizens fighting occupation)
+  - `isRevolution`: True for revolution battles (against government)
+  - `isDictatorship`: True when a dictatorship is involved
+- **Country IDs**: The numeric keys (e.g., "42", "53") represent country IDs for invaders and defenders
+- **Use case**: This endpoint is ideal for building battle dashboards or monitoring overall campaign progress
+
+---
+
 ## Get Armory Overview
 
 **Method:** POST
