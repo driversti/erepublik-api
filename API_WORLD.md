@@ -1144,6 +1144,172 @@ Same structure as in "Get City Overview Data" endpoint - contains basic city inf
 
 ---
 
+## Get World Map Data
+
+**Method:** GET
+**URL:** `/en/main/map-data?updated_at={timestamp}`
+**Auth Required:** Yes
+
+### Description
+
+Retrieves world map data for all regions (574 total), including current/original country ownership, natural resources, city information, geographic coordinates (bounding boxes, centroids), and active/past battle information. Supports incremental updates via the `updated_at` timestamp parameter, returning only regions modified since that time.
+
+### Query Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| updated_at | string | Yes | ISO 8601 timestamp (URL-encoded). Returns regions updated since this time. Example: `2026-02-01T23%3A22%3A47-08%3A00` |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Accept | `application/json, text/javascript, */*; q=0.01` | Recommended |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/main/map-data?updated_at=2026-02-01T23%3A22%3A47-08%3A00' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Accept: application/json, text/javascript, */*; q=0.01'
+```
+
+### Example Response
+
+```json
+{
+  "1": {
+    "resources": [
+      {"id": 11, "name": "Fish", "mtype": "food", "rarity": "common", "bonus": 15},
+      {"id": 1, "name": "Grain", "mtype": "food", "rarity": "very common", "bonus": 10}
+    ],
+    "original_country": {"id": 1, "name": "Romania", "code": "ro"},
+    "current_country": {"id": 1, "name": "Romania", "code": "ro"},
+    "city": {
+      "id": 36,
+      "name": "Constanta",
+      "permalink": "Constanta",
+      "population": 20,
+      "lnglat": [28.652, 44.173]
+    },
+    "region": {
+      "id": 1,
+      "name": "Dobrogea",
+      "permalink": "Dobrogea",
+      "bbox": [27.45, 43.68, 29.7, 45.22],
+      "center": [28.575, 44.45]
+    }
+  },
+  "2": {
+    "resources": [
+      {"id": 3, "name": "Cattle", "mtype": "food", "rarity": "uncommon", "bonus": 20}
+    ],
+    "original_country": {"id": 1, "name": "Romania", "code": "ro"},
+    "current_country": {"id": 1, "name": "Romania", "code": "ro"},
+    "city": {
+      "id": 35,
+      "name": "Bucharest",
+      "permalink": "Bucharest",
+      "population": 228,
+      "lnglat": [26.103, 44.426]
+    },
+    "region": {
+      "id": 2,
+      "name": "Muntenia",
+      "permalink": "Muntenia",
+      "bbox": [24.45, 43.66, 27.45, 45.0],
+      "center": [25.95, 44.33]
+    },
+    "active_battle_info": {
+      "battle_id": 561895,
+      "region_permalink": "Muntenia",
+      "attacker_id": 45,
+      "attacker_code": "ua",
+      "defender_id": 1,
+      "defender_code": "ro",
+      "type": "resistance"
+    }
+  }
+}
+```
+
+### Response Structure
+
+- Response is an object keyed by region ID (string)
+- Each region contains: `resources`, `original_country`, `current_country`, `city`, `region`
+- Optional fields per region: `active_battle_info`, `past_battle_info`
+
+### Response Fields (per region)
+
+#### resources (array)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | number | Resource ID |
+| name | string | Resource display name (e.g., "Fish", "Iron", "Oil") |
+| mtype | string | Material type: `food` or `weapon` |
+| rarity | string | Rarity level: `very common`, `common`, `uncommon`, `rare` |
+| bonus | number | Production bonus percentage (10-25%) |
+
+#### original_country / current_country (object)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | number | Country ID |
+| name | string | Country name |
+| code | string | Two-letter country code (lowercase) |
+
+#### city (object)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | number | City ID |
+| name | string | City name |
+| permalink | string | URL-friendly city name |
+| population | number | Number of residents in the city |
+| lnglat | array | Geographic coordinates `[longitude, latitude]` |
+
+#### region (object)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | number | Region ID |
+| name | string | Region name |
+| permalink | string | URL-friendly region name |
+| bbox | array | Bounding box `[minLng, minLat, maxLng, maxLat]` |
+| center | array | Centroid coordinates `[longitude, latitude]` |
+
+#### active_battle_info (object, optional)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| battle_id | number | Battle ID |
+| region_permalink | string | URL-friendly region name |
+| attacker_id | number | Attacking country ID |
+| attacker_code | string | Attacker two-letter country code |
+| defender_id | number | Defending country ID |
+| defender_code | string | Defender two-letter country code |
+| type | string | Battle type: `resistance`, `direct`, `airstrike` |
+
+#### past_battle_info (object, optional)
+
+Same structure as `active_battle_info`. Present when a battle recently ended in the region.
+
+### Notes
+
+- **Incremental Updates:** Use the `updated_at` parameter to fetch only regions that changed since the last request. This is essential for real-time map tracking applications to minimize bandwidth.
+- **Response Size:** Full response is approximately 620KB (574 regions). Using incremental updates significantly reduces payload size.
+- **Geographic Data:** The `bbox` and `center` coordinates are suitable for map rendering libraries (Leaflet, Mapbox, etc.).
+- **Battle Tracking:** Regions with active battles include `active_battle_info`. Recently concluded battles may show in `past_battle_info`.
+- **Occupation Status:** Compare `original_country` vs `current_country` to determine if a region is occupied.
+- **Resources:** Each region can have multiple natural resources providing production bonuses.
+- **Timestamp Format:** The `updated_at` parameter must be URL-encoded. Example: `2026-02-01T23:22:47-08:00` becomes `2026-02-01T23%3A22%3A47-08%3A00`.
+
+---
+
 ## Endpoint Documentation Template
 
 Use this template when adding new endpoints:

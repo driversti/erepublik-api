@@ -49,6 +49,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 |----------|--------|-------------|
 | `/en/main/travelData` | POST | Get all countries, regions, and travel costs |
 | `/en/main/travel` | POST | Execute travel to a region (costs currency/tickets) |
+| `/en/main/map-data` | GET | Get world map data (regions, ownership, battles) |
 
 ### Military
 | Endpoint | Method | Description |
