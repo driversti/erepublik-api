@@ -59,6 +59,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/country/economy/{countryName}` | GET | Get country economy page - treasury, tax revenue, GDP, resources, taxes (HTML+JS) |
 | `/en/country/politics/{countryName}` | GET | Get country politics page - president, cabinet, congress parties (HTML) |
 | `/en/country/military/{countryName}` | GET | Get country military page - natural enemy, defence shield, airstrike readiness, active wars with allies, resistance wars, MPP (HTML) |
+| `/en/country-administration/{countryName}/{page}` | GET | Get country administration page - military priorities, law proposals history with pagination (HTML) |
 | `/en/{countryName}/new-donation` | POST | Propose treasury donation (Congress) |
 
 ### Military
