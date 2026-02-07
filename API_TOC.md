@@ -21,6 +21,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | Authentication | Login flow, sessions, tokens | [API_AUTH.md](API_AUTH.md) |
 | CAPTCHA & Verification | Session verification, anti-bot challenges, CAPTCHA solving | [API_CAPTCHA.md](API_CAPTCHA.md) |
 | World & Travel | Countries, regions, travel, geography | [API_WORLD.md](API_WORLD.md) |
+| Country | Country-specific pages, politics, society | [API_COUNTRY.md](API_COUNTRY.md) |
 | Military | Combat, battles, wars, weapons | [API_MILITARY.md](API_MILITARY.md) |
 | Social | Citizens, friends, messages | [API_SOCIAL.md](API_SOCIAL.md) |
 | Notifications | Alerts, reports, notifications | [API_NOTIFICATIONS.md](API_NOTIFICATIONS.md) |
@@ -51,10 +52,19 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/main/travel` | POST | Execute travel to a region (costs currency/tickets) |
 | `/en/main/map-data` | GET | Get world map data (regions, ownership, battles) |
 
+### Country
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/en/country/society/{countryName}` | GET | Get country society page - citizen stats, regions, country ID reference (HTML) |
+| `/en/country/economy/{countryName}` | GET | Get country economy page - treasury, tax revenue, GDP, resources, taxes (HTML+JS) |
+| `/en/country/politics/{countryName}` | GET | Get country politics page - president, cabinet, congress parties (HTML) |
+| `/en/country/military/{countryName}` | GET | Get country military page - natural enemy, defence shield, airstrike readiness, active wars with allies, resistance wars, MPP (HTML) |
+| `/en/{countryName}/new-donation` | POST | Propose treasury donation (Congress) |
+
 ### Military
 | Endpoint | Method | Description |
 |----------|--------|-------------|
-| *TBD* | - | Endpoints to be documented |
+| `/en/country/military/{countryName}` | GET | Country military page (natural enemy, defence shield, airstrike, wars, MPP) |
 
 ### Social
 | Endpoint | Method | Description |

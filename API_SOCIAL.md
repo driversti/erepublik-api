@@ -833,6 +833,7 @@ Any additional information, gotchas, or observations.
 
 - [API Table of Contents](API_TOC.md)
 - [Authentication](API_AUTH.md)
+- [Country API](API_COUNTRY.md)
 - [Notifications API](API_NOTIFICATIONS.md)
 - [Military API](API_MILITARY.md)
 - [Economy API](API_ECONOMY.md)
