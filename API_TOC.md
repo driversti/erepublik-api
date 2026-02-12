@@ -130,6 +130,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/economy/exchange/create/` | POST | Create a new exchange offer |
 | `/en/economy/exchange/update/` | POST | Update an existing exchange offer |
 | `/en/economy/exchange/delete/` | POST | Delete an exchange offer |
+| `/en/economy/myCompanies` | GET | My Companies page - all factories, holdings, production stats, upgrade trees, WAM status (HTML) |
 
 ### Rewards
 | Endpoint | Method | Description |
