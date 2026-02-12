@@ -289,7 +289,7 @@ Complete country ID reference (extracted from dropdown):
 | 170 | Nigeria | Nigeria |
 | 171 | Cuba | Cuba |
 
-> **Note:** IDs are not sequential — gaps exist (e.g., no IDs 2-8, 16-22, 25, 46, 60, 62, 85-163). Total: **72 countries**.
+> **Note:** IDs are not sequential — gaps exist (e.g., no IDs 2-8, 16-22, 25, 46, 60, 62, 85-163). Total: **74 countries**. See [API_REFERENCE.md](API_REFERENCE.md) for the complete country and region reference tables.
 
 #### JavaScript Variables in Response
 

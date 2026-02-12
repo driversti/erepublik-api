@@ -17,6 +17,7 @@ Unofficial API documentation for [eRepublik](https://www.erepublik.com), a brows
 | [Notifications](API_NOTIFICATIONS.md) | Alerts and reports |
 | [Economy](API_ECONOMY.md) | Marketplace, work, companies, currencies |
 | [Rewards](API_REWARDS.md) | Daily objectives, missions, weekly challenges |
+| [Reference Data](API_REFERENCE.md) | Country & region ID lookup tables (74 countries, 574 regions) |
 
 See [API_TOC.md](API_TOC.md) for a full endpoint quick-reference table.
 

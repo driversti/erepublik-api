@@ -27,6 +27,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | Notifications | Alerts, reports, notifications | [API_NOTIFICATIONS.md](API_NOTIFICATIONS.md) |
 | Economy | Marketplace, work, companies, currencies | [API_ECONOMY.md](API_ECONOMY.md) |
 | Rewards | Daily objectives, missions, achievements | [API_REWARDS.md](API_REWARDS.md) |
+| Reference Data | Country & region ID lookup tables | [API_REFERENCE.md](API_REFERENCE.md) |
 
 ---
 
