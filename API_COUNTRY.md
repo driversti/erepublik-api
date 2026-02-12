@@ -516,6 +516,95 @@ Displays current Gold, local currency, and Energy reserves. Parse from `table.do
 
 > **Parsing note:** Gold and Currency have decimal parts in `<sup>` tags. Energy has no decimals. The currency code (e.g., `USD`, `LTL`) comes from the `span.currency` text and the flag image (`/images/flags/M/{countryName}.gif`).
 
+##### 1b. Treasury Donation Form (Logged-in Only)
+
+When authenticated (level 25+), a "Contribute" button appears below the treasury table. Clicking it reveals a donation form with three rows: Gold, Currency, and Food. The form also includes a food quality selector (q1-q7).
+
+```html
+<a class="donate_open std_global_btn mediumSize blueColor"
+   href="javascript:" title="Contribute"><span>Contribute</span></a>
+
+<table class="donate_table in_economy" cellpading="0" cellspacing="0">
+    <tr>
+        <!-- Gold donation -->
+        <td align="right">
+            <span class="special" id="currentGoldValue">26</span><sup>.1</sup>
+        </td>
+        <td><b class="golden">Gold:</b></td>
+        <td><input type="text" id="gold_amount" name="gold_amount" value="1" /></td>
+        <td>
+            <img src="//www.erepublik.net/images/parts/icon-gold.gif" alt="Gold" />
+            <span class="currency">GOLD</span>
+        </td>
+        <td>
+            <a class="std_global_btn smallSize blueColor" href="javascript:"
+               onclick="donateGold_onClick_eTab();" title="Contribute">
+                <span>Contribute</span>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <!-- Currency donation -->
+        <td align="right">
+            <span class="special" id="currentCurrencyValue">2,942,730</span><sup>.34</sup>
+        </td>
+        <td><b class="orange">Currency:</b></td>
+        <td><input type="text" id="currency_amount" name="currency_amount" value="20" /></td>
+        <td>
+            <span class="currency_cl">
+                <img src="//www.erepublik.net/images/flags_png/XL/Lithuania.png"
+                     alt="" width="24" /><strong>LTL</strong>
+            </span>
+        </td>
+        <td>
+            <a class="std_global_btn smallSize blueColor" href="javascript:"
+               onclick="donateCurrency_onClick_eTab();" title="Contribute">
+                <span>Contribute</span>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <!-- Food donation with quality selector -->
+        <td align="right">
+            <span class="special" id="currentFoodValue">35,790</span>
+        </td>
+        <td><b class="green">Food:</b></td>
+        <td><input type="text" id="food_amount" name="food_amount" value="10" /></td>
+        <td>
+            <a class="prev_food" href="javascript:">Prev</a>
+            <div class="food_type">
+                <img src=".../q1_30x30.png" data-quality="1" alt="" />
+                <!-- ... q2 through q7 ... -->
+                <img src=".../q7_30x30.png" data-quality="7" alt="" />
+                <input type="hidden" value="0" id="img_active" name="img_active" />
+            </div>
+            <a class="next_food" href="javascript:">Next</a>
+        </td>
+        <td>
+            <a class="std_global_btn smallSize blueColor" href="javascript:"
+               onclick="donateFood_onClick_eTab();" title="Contribute">
+                <span>Contribute</span>
+            </a>
+        </td>
+    </tr>
+</table>
+```
+
+| Element | ID / Selector | Description |
+|---------|--------------|-------------|
+| Gold input | `input#gold_amount` | Amount of gold to donate |
+| Currency input | `input#currency_amount` | Amount of local currency to donate |
+| Food input | `input#food_amount` | Amount of food units to donate |
+| Food quality | `input#img_active` (hidden) | Selected food quality (0-indexed display, `data-quality` 1-7) |
+| Gold donate button | `onclick="donateGold_onClick_eTab()"` | JS function for gold donation |
+| Currency donate button | `onclick="donateCurrency_onClick_eTab()"` | JS function for currency donation |
+| Food donate button | `onclick="donateFood_onClick_eTab()"` | JS function for food donation |
+| Current gold | `span#currentGoldValue` | Current treasury gold (updates after donation) |
+| Current currency | `span#currentCurrencyValue` | Current treasury currency (updates after donation) |
+| Current food/energy | `span#currentFoodValue` | Current treasury energy (updates after donation) |
+
+> **Note:** The donation form uses `_eTab` suffix on function names (economy tab). The Military page's airstrike section uses the same form but without Gold and without the `_eTab` suffix (uses `donateFood_onClick()` and `donateCurrency_onClick()`). The currency flag shown is the **viewer's citizenship currency** flag (e.g., Lithuanian flag for LTL), not the viewed country's flag. Food quality icons follow pattern: `/images/icons/industry/1/q{N}_30x30.png` where N is 1-7. The `info_message` above the treasury explains that "To donate, you must be level 25 or above."
+
 ##### 2. Tax Revenue (60 days) — JavaScript Variables
 
 The most valuable data on this page. Three JS variables contain 60 days of daily tax revenue:
@@ -545,7 +634,7 @@ var tableDataJSON = [
 ];
 ```
 
-**Revenue source columns (fixed):**
+**Revenue source columns (standard):**
 
 | Column | Description |
 |--------|-------------|
@@ -558,9 +647,15 @@ var tableDataJSON = [
 | Treasury Donations | Direct citizen/org donations to treasury |
 | Cities Subsidy | City maintenance costs (**always negative**) |
 
+> **Important:** The column order is **NOT fixed** — it varies between countries. For example:
+> - USA: `Work as Manager, Work, Value Added Tax, Medals, Import Tax, Combat Orders, Treasury Donations, Cities Subsidy`
+> - Albania: `Work as Manager, Value Added Tax, Import Tax, Medals, Work, Combat Orders, Cities Subsidy` (no Treasury Donations column)
+>
+> Columns that have had **zero activity** across the entire 60-day period may be **omitted entirely** (e.g., Albania has no `Treasury Donations` column). Always parse column headers from the first row rather than assuming a fixed order.
+
 **Revenue source columns (dynamic — conquered regions):**
 
-After the fixed columns, additional columns appear for each country whose regions are currently occupied. These are named by country (e.g., `"Paraguay"`, `"Turkey"`, `"Russia"`). A value of `0` on a given day means no revenue from that country's regions that day. Countries may appear/disappear as territories change hands — e.g., `"Bulgaria"` had revenue on days 6,594-6,596 then dropped to `0`.
+After the standard columns, additional columns appear for each country whose regions are currently occupied. These are named by country (e.g., `"Paraguay"`, `"Turkey"`, `"Croatia"`). A value of `0` on a given day means no revenue from that country's regions that day. Countries may appear/disappear as territories change hands — e.g., Albania's `"Croatia"` column shows revenue only for days 6,632-6,645 (when Albania held Croatian regions).
 
 ##### 3. Gross Domestic Product (60 days) — JavaScript Variable
 
@@ -766,7 +861,7 @@ Industry icon URL pattern: `/images/icons/industry/{industryId}/default.png`
 - This is an **HTML page endpoint**, not a JSON API endpoint
 - The page is accessible without authentication (but Cloudflare may challenge bot-like requests)
 - **Most data-rich country page** — contains 3 major JS data variables ideal for scraping economic data
-- Tax revenue `chartDataJSON` columns are **dynamic** — conquered region columns appear/disappear as territories change hands
+- Tax revenue `chartDataJSON` columns are **dynamic** — both the order and presence of standard columns varies between countries, and conquered region columns appear/disappear as territories change. Always parse column headers from the first row
 - The `tableDataJSON` includes a **Totals column** with 60-day aggregates — useful for quick summaries without summing yourself
 - **Cities Subsidy** is always negative (it's an expense, not revenue)
 - `chartDataJSON` and `tableDataJSON` contain the exact same data in different orientations (chart vs table)
@@ -826,6 +921,43 @@ Returns a full HTML page (`<body id="country">`) with three sections:
 ```
 
 #### Page Sections (parsed from HTML)
+
+##### 0. Dictator (Dictatorship Countries Only)
+
+In **dictatorship countries**, an additional section appears **before** the President section. Located under `<h2 class="section">Dictator</h2>`:
+
+```html
+<h2 class="section">Dictator</h2>
+<div class="indent">
+    <div class="infoholder">
+        <div class="entity rightpadded">
+            <div class="avatarholder">
+                <a hovercard=1 href="//www.erepublik.com/en/citizen/profile/9556415"
+                   class="icon" title="xR0Nx">
+                    <img src="https://cdnt.erepublik.net/.../avatar.jpg" />
+                </a>
+                <div class="xprank">162</div>
+            </div>
+            <div class="nameholder">
+                <a hovercard=1 href="//www.erepublik.com/en/citizen/profile/9556415"
+                   class="dotted" title="xR0Nx">
+                    xR0Nx
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+```
+
+| Data | CSS Selector / Pattern | Example |
+|------|----------------------|---------|
+| Dictator name | `h2:contains("Dictator") ~ div .entity a.dotted` title attr | `xR0Nx` |
+| Citizen ID | `.entity a.icon` href → `/en/citizen/profile/{citizenId}` | `9556415` |
+| Level | `.entity .xprank` text | `162` |
+
+> **Note:** The Dictator section does **not** have "Election results" or "Next elections" links — dictators are not elected. The `dictatorships` JavaScript variable (documented below in [Global JS Variables](#global-javascript-variables-all-country-pages)) lists all current dictatorship country IDs.
+
+> **Dictatorship effects on other sections:** When a country is a dictatorship, the **Congress section** is empty — the table has headers only, with no party rows (Congress is dissolved under dictatorship).
 
 ##### 1. President
 
@@ -1054,26 +1186,30 @@ Under `<h2 class="section">Natural Enemy</h2>`, preceded by an info message abou
     </div>
 
     <!-- When natural enemy IS set: -->
-    <div class="attacker" style="padding-top:0px;">
+    <div class="attacker" style="padding-top:0px; width: 500px">
         <div class="flagholder">
             <a href="//www.erepublik.com/en/country/society/{enemyCountry}">
-                <img src="//www.erepublik.net/images/flags_png/XL/{enemyCountry}.png" />
+                <img src="//www.erepublik.net/images/flags_png/L/{enemyCountry}.png" />
             </a>
         </div>
-        <div class="nameholder">
+        <div class="nameholder" style="font-size:14px; margin-top:9px;">
             <a class="dotted" href="//www.erepublik.com/en/country/society/{enemyCountry}">
                 {Enemy Country Name}
             </a>
         </div>
+        Since: Day 6,371, 11:40 (9 months ago)
     </div>
 </div>
 ```
 
-| Data | CSS Selector | Example (USA) |
-|------|-------------|---------------|
-| Natural enemy status | `div.indent > div.attacker > div.nameholder` text | `No current Natural Enemy` |
-| Enemy flag | `div.indent > div.attacker img` src | `//www.erepublik.net/images/flags_png/XL/{country}.png` |
-| Enemy link | `div.indent > div.attacker a` href | `/en/country/society/{country}` |
+| Data | CSS Selector | Example (USA) | Example (Poland) |
+|------|-------------|---------------|-------------------|
+| Natural enemy status | `div.indent > div.attacker > div.nameholder` text | `No current Natural Enemy` | Enemy name (e.g., `Estonia`) |
+| Enemy flag | `div.indent > div.attacker img` src | — | `//www.erepublik.net/images/flags_png/L/{country}.png` |
+| Enemy link | `div.indent > div.attacker a` href | — | `/en/country/society/{country}` |
+| Since timestamp | Text after `.nameholder` in `.attacker` div | — | `Since: Day 6,371, 11:40 (9 months ago)` |
+
+> **Note:** When a natural enemy IS set, the section includes a "Since" timestamp showing when the natural enemy was declared, with both the eRepublik game day and a human-readable relative time (e.g., "9 months ago"). The flag image uses the `/flags_png/L/` (Large) size, not XL.
 
 ##### 2. Defence Shield
 
@@ -1148,8 +1284,54 @@ Under `<h2 class="section">Airstrike</h2>`. Displays two circular gauge widgets 
 > **Note:** Airstrike requirements are **country-specific**. Compare:
 > - USA: 245,000 energy units, 240,000 currency
 > - Lithuania: 45,750 energy units, 270,000 currency
+> - Albania: 103,250 energy units, 66,666.67 currency
 >
-> The `value` attribute is an integer 0-100 representing gauge fill percentage. The gauge color is green (`#9ADE53`) for energy and orange (`#EC9E7A`) for currency.
+> The `value` attribute is an integer 0-100 representing gauge fill percentage. The gauge color is green (`#9ADE53`) for energy and orange (`#EC9E7A`) for currency. The `data-req` can be a **floating-point number** (e.g., Albania's currency: `66666.666666667`) — the display rounds it.
+
+##### 3b. Airstrike Donation Form (Logged-in Only)
+
+When authenticated (level 25+), below the airstrike gauges, a donation form appears for contributing Food and Currency to the airstrike effort. This is similar to the Economy page donation form but **without Gold**:
+
+```html
+<table class="donate_table" cellpading="0" cellspacing="0">
+    <tr>
+        <!-- Food donation with quality selector (same as economy page) -->
+        <td><b class="green">Food:</b></td>
+        <td><input type="text" id="food_amount" name="food_amount" value="10" /></td>
+        <td>
+            <!-- Food quality selector: q1 through q7 images -->
+            <div class="food_type">
+                <img src=".../q1_30x30.png" data-quality="1" alt="" />
+                <!-- ... -->
+                <img src=".../q7_30x30.png" data-quality="7" alt="" />
+            </div>
+        </td>
+        <td>
+            <a onclick="donateFood_onClick();" title="Contribute">
+                <span>Contribute</span>
+            </a>
+        </td>
+    </tr>
+    <tr>
+        <!-- Currency donation -->
+        <td><b class="orange">Currency:</b></td>
+        <td><input type="text" id="currency_amount" name="currency_amount" value="20" /></td>
+        <td>
+            <span class="currency_cl">
+                <img src="//www.erepublik.net/images/flags_png/XL/Lithuania.png"
+                     alt="" width="24" /><strong>LTL</strong>
+            </span>
+        </td>
+        <td>
+            <a onclick="donateCurrency_onClick();" title="Contribute">
+                <span>Contribute</span>
+            </a>
+        </td>
+    </tr>
+</table>
+```
+
+> **Note:** The airstrike donation form uses `donateFood_onClick()` and `donateCurrency_onClick()` (without `_eTab` suffix, unlike the Economy page). The `info_message` above mentions the level 25 requirement and that "The Country President can use the Airstrike to declare war and attack a country that you do not have borders with." The `SERVER_DATA.countryId` is set inline for the donation JS handlers.
 
 ##### 4. Active Wars
 
@@ -1318,7 +1500,8 @@ Example active wars data (USA, eDay 6654, **32 active wars**):
 Under `<h2 class="section">Active resistance wars in {countryName}</h2>`. Uses `table.political.padded` (note: `.padded` not `.largepadded` like active wars):
 
 ```html
-<h2 class="section">Active resistance wars in USA</h2>
+<!-- When no resistance wars: -->
+<h2 class="section">Active resistance wars in Albania</h2>
 <div class="indent">
     <table class="political padded">
         <tr>
@@ -1326,45 +1509,102 @@ Under `<h2 class="section">Active resistance wars in {countryName}</h2>`. Uses `
             <th width="318px"></th>
             <th width="63px"></th>
         </tr>
-        <!-- When no resistance wars: -->
         <tr>
             <td colspan="3">
                 There are no resistance wars in this country.
             </td>
         </tr>
-        <!-- When resistance wars exist (expected structure): -->
+    </table>
+</div>
+
+<!-- When resistance wars exist (Poland example): -->
+<h2 class="section">Active resistance wars in Poland</h2>
+<div class="indent">
+    <table class="political padded">
         <tr>
-            <td>Region name</td>
-            <td>War info</td>
-            <td><a href="//www.erepublik.com/en/wars/show/{warId}">details</a></td>
+            <th width="215px"></th>
+            <th width="318px"></th>
+            <th width="63px"></th>
+        </tr>
+        <tr>
+            <td class="last">
+                <img style="vertical-align:middle"
+                     src="//www.erepublik.net/images/flags_png/L/Resistance.png" alt="" />
+                Resistance Force of Canada
+            </td>
+            <td class="last">
+                <span class="goright influence_multiplier"
+                      title="Canada receives x2.94 Influence due to their Determination to be free.">
+                    2.94<span></span>
+                </span>
+            </td>
+            <td class="last">
+                <a href="//www.erepublik.com/en/wars/show/224764"
+                   class="std_global_btn mediumSize blueColore">
+                    <span>details</span>
+                </a>
+            </td>
         </tr>
     </table>
 </div>
 ```
 
-> **Note:** The resistance wars table has 3 columns (215px, 318px, 63px) vs active wars table with 2 columns (530px, 65px).
+**Resistance war entry CSS selectors:**
+
+| Data | CSS Selector | Example |
+|------|-------------|---------|
+| Resistance flag | `td img[src*="Resistance.png"]` | `/images/flags_png/L/Resistance.png` |
+| Resistance force name | `td` text after flag img | `Resistance Force of Canada` |
+| Determination multiplier | `span.influence_multiplier` text | `2.94` (citizens of the occupied country receive x2.94 influence) |
+| War details link | `a[href*="wars/show"]` | `/en/wars/show/224764` |
+
+> **Note:** The resistance wars table has 3 columns (215px, 318px, 63px) vs active wars table with 2 columns (530px, 65px). The flag used is a special `/flags_png/L/Resistance.png` generic resistance flag, not a country flag. The determination multiplier works the same as on the Society page for occupied regions.
 
 ##### 6. Mutual Protection Pacts (MPP)
 
 Under `<h2 class="section">Mutual Protection Pacts</h2>`. Uses `table.political.padded`:
 
 ```html
+<!-- When no MPPs: -->
 <div class="indent">
     <table class="political padded">
         <tr>
             <th width="405px;"></th>
             <th width="195px;"></th>
         </tr>
-        <!-- When no MPPs: -->
         <tr>
             <td colspan="3">
                 This country has no mutual protection pacts.
             </td>
         </tr>
-        <!-- When MPPs exist (expected structure): -->
+    </table>
+    <a href="//www.erepublik.com/en/list/mpp/0/1"
+       class="std_global_btn smallSize blueColor">All Mutual Protection Pacts</a>
+</div>
+
+<!-- When MPPs exist (Poland example): -->
+<div class="indent">
+    <table class="political padded">
         <tr>
-            <td>Country name with flag</td>
-            <td>Expiry info</td>
+            <th width="405px;"></th>
+            <th width="195px;"></th>
+        </tr>
+        <tr>
+            <td class="last">
+                <span class="fakeheight">
+                    <img src="//www.erepublik.net/images/flags_png/L/Finland.png"
+                         alt="" class="flag"/>
+                    <a href="//www.erepublik.com/en/country/society/Finland"
+                       class="dotted" title="">
+                        Finland
+                    </a>
+                </span>
+            </td>
+            <td class="last">
+                <img src="//www.erepublik.net/images/parts/icon-pact.gif"
+                     alt="" class="icon" />
+                Expires in 2 months
+            </td>
         </tr>
     </table>
     <a href="//www.erepublik.com/en/list/mpp/0/1"
@@ -1372,7 +1612,17 @@ Under `<h2 class="section">Mutual Protection Pacts</h2>`. Uses `table.political.
 </div>
 ```
 
-> **Note:** The MPP table has 2 columns (405px, 195px). An "All Mutual Protection Pacts" button links to `/en/list/mpp/0/1`.
+**MPP entry CSS selectors:**
+
+| Data | CSS Selector | Example |
+|------|-------------|---------|
+| Country flag | `td span.fakeheight img.flag` src | `/images/flags_png/L/Finland.png` |
+| Country name | `td span.fakeheight a.dotted` text | `Finland` |
+| Country link | `td span.fakeheight a.dotted` href | `/en/country/society/Finland` |
+| Pact icon | `td img.icon` src | `/images/parts/icon-pact.gif` |
+| Expiry text | `td` text after pact icon | `Expires in 2 months` |
+
+> **Note:** The MPP table has 2 columns (405px, 195px). An "All Mutual Protection Pacts" button links to `/en/list/mpp/0/1`. The expiry text uses relative time (e.g., "Expires in 2 months", "Expires in 25 days") — the exact date is not shown. Flag images use the `/flags_png/L/` (Large) size.
 
 #### JavaScript on this Page
 
@@ -1526,6 +1776,31 @@ Under `<h2 class="section">Military Priorities</h2>` inside `div#militaryPriorit
 
 > **Note:** The "Deploy allied forces" button has class `disabled` for non-president viewers. When the Country President is logged in, this button opens the MPP priority popup (handled by `generalPopup.renderPopup('mppPriority')` in JS). There may also be a "Campaign of the Day" feature (see JS variables below).
 
+##### 2b. Manage Organizations
+
+Under `<h2 class="section">Manage Organizations</h2>` inside `div#manageOrganizations`. This section appears **after** Military Priorities:
+
+```html
+<div class="holder" id="manageOrganizations">
+    <h2 class="section">Manage Organizations</h2>
+    <div class="adminaction">
+        <div class="goleft padded">
+            <a class="std_global_btn smallSize orangeColor mppPriorities disabled"
+               id="manageOrganizationsTrigger" title="Manage Organizations" tipsy>
+                <span>Manage Organizations</span>
+            </a>
+        </div>
+    </div>
+</div>
+```
+
+| Data | CSS Selector | Notes |
+|------|-------------|-------|
+| Manage Organizations button | `a#manageOrganizationsTrigger` | Has class `disabled` when viewer is not president |
+| Button text | `a#manageOrganizationsTrigger span` | `Manage Organizations` |
+
+> **Note:** Like the "Deploy allied forces" button, the "Manage Organizations" button has class `disabled` for non-president viewers. When the Country President is logged in, this button likely opens a popup to manage country organizations. Note the CSS class `mppPriorities` is reused from the Military Priorities section (likely a copy-paste from the original code).
+
 ##### 3. Law Proposals
 
 Under `<h2 class="section">Law proposals</h2>`. Contains a table listing recent law proposals with their status:
@@ -1587,8 +1862,10 @@ Under `<h2 class="section">Law proposals</h2>`. Contains a table listing recent 
 |-----------|----------|-------------|
 | `taxStyle Donate` | Donate | Treasury donation proposal |
 | `taxStyle NaturalEnemy` | Natural Enemy | Declare/remove natural enemy |
+| `taxStyle Airstrike` | Airstrike | Launch an airstrike against a non-bordering country |
+| `taxStyle DeclareWar` | Declare War | Declare war on a bordering country |
 
-> **Note:** Additional law types likely exist (e.g., MPP, Embargo, Tax Change, Impeachment) but were not observed in this sample. The CSS class on the `<a>` tag follows the pattern `taxStyle {LawType}`.
+> **Note:** Additional law types likely exist (e.g., MPP, Embargo, Tax Change, Impeachment) but have not been observed yet. The CSS class on the `<a>` tag follows the pattern `taxStyle {LawType}`.
 
 **Status icons:**
 
@@ -1596,8 +1873,9 @@ Under `<h2 class="section">Law proposals</h2>`. Contains a table listing recent 
 |--------|----------|----------|
 | Pending | `icon-law_empty.gif` | `Pending` |
 | Accepted | `icon-law_valid.gif` | `Accepted` |
+| Rejected | `icon-law_invalid.gif` | `Rejected` |
 
-> **Note:** Additional statuses likely exist (e.g., Rejected/Expired) with corresponding icon files.
+> **Note:** Additional statuses may exist (e.g., Expired) with corresponding icon files.
 
 Example law proposals data (USA, eDay 6654, page 1):
 
@@ -1654,7 +1932,7 @@ The `countrySelector` variable uses `urlTab: "country-administration"` (note: hy
 - Law IDs are **sequential integers** across all countries (e.g., `327910`, `327868`) — they can be used with `/en/main/law/{countryName}/{lawId}`
 - The `class="first"` on `<td>` elements only appears on the first row — it's for CSS top-border styling
 - The **Campaign of the Day** and **Deploy allied forces** features are only functional for the Country President (button is `disabled` for other viewers)
-- Additional law types beyond `Donate` and `NaturalEnemy` likely exist (MPP, Embargo, Tax changes, Impeachment, etc.) but were not observed in this sample
+- Law types observed so far: `Donate`, `NaturalEnemy`, `Airstrike`, `DeclareWar`. Additional types likely exist (MPP, Embargo, Tax changes, Impeachment)
 - The administration tab link in the country tabs uses the full URL with page number: `/en/country-administration/USA/1`
 - Additional CSS: `country.{buildId}.css` (instead of `war_list.css` used by military tab)
 
@@ -1728,6 +2006,139 @@ This endpoint returns an **HTML redirect** (HTTP 302), not JSON:
 - The GET version of the same URL (`/en/{countryName}/new-donation`) shows the donation proposal form
 - URL pattern `/{countryName}/new-donation` is different from other country pages which use `/country/{tab}/{countryName}`
 - Similar congressional action endpoints likely exist for other proposal types (e.g., natural enemy, MPP, embargo, tax changes)
+
+---
+
+## Global JavaScript Variables (All Country Pages)
+
+These JavaScript variables are embedded in all country pages and provide useful metadata that is **not page-specific**. They appear in a `<script>` block in the `<head>` section.
+
+### Dictatorships and Empires
+
+Two global constants identify current dictatorship and empire countries:
+
+```javascript
+const dictatorships = {"47":1,"67":1,"28":1,"26":1,"33":1,"69":1,"170":1,"168":1,"30":1},
+      empires = {"35":1};
+
+// Applied via:
+erepublik.info.updateCountryInfo(countryId, {is_dictatorship: true});
+erepublik.info.updateCountryInfo(countryId, {is_empire: true});
+```
+
+| Variable | Type | Description |
+|----------|------|-------------|
+| `dictatorships` | `Object` | Map of country IDs (string keys) that are currently dictatorships. Value is always `1` |
+| `empires` | `Object` | Map of country IDs (string keys) that are currently empires. Value is always `1` |
+
+Example mappings (eDay 6659):
+
+| Country ID | Country | Type |
+|------------|---------|------|
+| 26 | Mexico | Dictatorship |
+| 28 | Venezuela | Dictatorship |
+| 30 | Switzerland | Dictatorship |
+| 33 | Austria | Dictatorship |
+| 47 | South Korea | Dictatorship |
+| 67 | Philippines | Dictatorship |
+| 69 | Bosnia and Herzegovina | Dictatorship |
+| 168 | Georgia | Dictatorship |
+| 170 | Nigeria | Dictatorship |
+| 35 | Poland | Empire |
+
+> **Note:** These values are **dynamic** — they reflect the current game state at the time the page is loaded. Dictatorships and empires change as in-game political events occur (coups, elections, etc.).
+
+### ErpkPvp Configuration
+
+PvP-related configuration, present on all pages when logged in:
+
+```javascript
+var ErpkPvp = (ErpkPvp || {});
+ErpkPvp.bosh_service = 'unassigned2';
+ErpkPvp.muc_host = 'unassigned1';
+ErpkPvp.citizenId = 4690052;
+```
+
+### SERVER_DATA.countryId (Economy & Military Pages Only)
+
+On Economy and Military pages, the country ID is injected into `SERVER_DATA` via inline script:
+
+```javascript
+(SERVER_DATA || (SERVER_DATA = {})).countryId = 167;
+```
+
+This makes the viewed country's ID available to donation form JavaScript handlers.
+
+---
+
+## Edge Cases and Empty States
+
+Country pages handle various edge states differently. These patterns apply across all tab types:
+
+### Society Page — No Regions (0 Regions)
+
+When a country has lost all its territory (all regions conquered), the regions section shows an empty table:
+
+```html
+<h2 class="section" id="currentRegions">Regions (0)</h2>
+<div class="indent">
+    <table class="regions"><tr>
+        <th width="490px"></th>
+        <th width="65px"></th>
+    </tr>
+    </table>
+</div>
+```
+
+### Society Page — No Alliance
+
+When a country has no alliance, the `<a class="alliance_name">` element is simply absent from the `#profileholder`:
+
+```html
+<div id="profileholder">
+    <h1>Albania</h1>
+    <p class="padded">
+        <a href="//wiki.erepublik.com/index.php/Albania" target="_blank" class="goleft rightpadded">...</a>
+        <a class="country_rank" href="...">Rank 25</a>
+        <!-- No alliance_name element -->
+    </p>
+</div>
+```
+
+### Politics Page — Dissolved Congress (Dictatorship)
+
+Under dictatorship, the Congress table has headers but **no party rows**:
+
+```html
+<table class="political largepadded">
+    <tr>
+        <th width="210px"></th>
+        <th width="85px"></th>
+        <th width="305px"></th>
+    </tr>
+    <!-- No party rows — Congress is dissolved -->
+</table>
+```
+
+### Military Page — No Active Wars
+
+```html
+<tr>
+    <td colspan="2">
+        This country is not involved in any war.
+    </td>
+</tr>
+```
+
+### Military Page — No Resistance Wars / No MPPs
+
+```html
+<!-- No resistance wars -->
+<td colspan="3">There are no resistance wars in this country.</td>
+
+<!-- No MPPs -->
+<td colspan="3">This country has no mutual protection pacts.</td>
+```
 
 ---
 
