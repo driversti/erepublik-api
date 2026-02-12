@@ -2630,13 +2630,23 @@ Localized UI strings (56 keys). Used for battlefield UI labels:
   "ERPK_ECONOMY_HOST": "economy.erepublik.com",
   "ERPK_MAIN_HOST": "www.erepublik.com",
   "extras": "winter treats",
-  "webDeployEnabled": true
+  "webDeployEnabled": true,
+  "battleDetermination": 1,
+  "fightSessionKey": "",
+  "fighterCountryId": 72,
+  "oldEnemyHealth": 51,
+  "remainingHospitals": 0
 }
 ```
 
 - `deployment` — `null` for finished battles; likely populated during active combat with deployment state
 - `fightersData`, `historyStats` — empty arrays in finished battles; populated during active rounds
 - `aoe_effects` — Area of Effect active effects (empty when battle is over)
+- `battleDetermination` — `1` when battle determination is active (affects campaign point calculation), `0` otherwise
+- `fightSessionKey` — session key for fight actions; empty string when not actively fighting
+- `fighterCountryId` — country ID the player is currently fighting for
+- `oldEnemyHealth` — previous opponent's health value in PvP combat
+- `remainingHospitals` — number of hospital items remaining for the player
 
 ### Response Fields Reference
 
@@ -2685,6 +2695,11 @@ Localized UI strings (56 keys). Used for battlefield UI labels:
 | `texts` | object | Localized UI strings (56 keys) with `%%N%%` placeholders |
 | `deployment` | object/null | Active deployment state (`null` when no deployment) |
 | `webDeployEnabled` | boolean | Whether web-based deployment is enabled |
+| `battleDetermination` | number | `1` if battle determination is active, `0` otherwise |
+| `fightSessionKey` | string | Session key for fight actions (empty when not fighting) |
+| `fighterCountryId` | number | Country ID the player is fighting for |
+| `oldEnemyHealth` | number | Previous opponent's health in PvP combat |
+| `remainingHospitals` | number | Remaining hospital items for the player |
 
 ### Data Extraction
 
@@ -2733,6 +2748,11 @@ data = json.loads(json_str)
   - `spectatorOnly` — `false` for active (player can fight), `true` for finished
   - `deployment` — `null` when not deploying; contains `{ myTotalDamage, isMaxLevel, rankText, rankIcon, currentRankPoints, nextRankPoints, rankPercentProgress }` when deployment UI is shown
   - `fightersData`, `historyStats` — populated during active rounds
+  - `battleDetermination` — present in both active and finished battles; `1` when determination is active
+  - `fightSessionKey` — empty string when not in an active fight session; populated with a session key during combat
+  - `fighterCountryId` — the country ID the player chose to fight for; present in both active and finished battles
+  - `oldEnemyHealth` — PvP opponent's previous health; may be `0` in finished battles
+  - `remainingHospitals` — hospital count available at current location; present in both active and finished battles
 - **Player strength**: Available via `erepublik.promos.April1st2017.playerStrength` (e.g., `414481.469`) — the "April 1st 2017" promo is permanently active and carries the player's current strength value
 - **Pomelo WebSocket**: Real-time battle updates via `gate.erepublik.com:3050` with auth token = session token (`erpk` cookie value). See `erepublik.settings.pomelo` in the page's global object.
 
@@ -2742,29 +2762,26 @@ Beyond `BATTLE_SERVER_DATA`, the battlefield page embeds several other useful da
 
 #### `erepublik.citizen` (line ~47)
 
-Full citizen state including economy, party, residence, daily orders, terrain skills:
+Full citizen state including identity, economy, party, residence, daily orders, terrain skills (43 keys):
 
 ```json
 {
   "citizenId": 4690052,
-  "name": "driver sti",
+  "isOrganization": 0,
+  "isAdult": true,
+  "isNewCitizen": false,
   "country": 72,
   "citizenshipCountryId": 72,
+  "name": "driver sti",
+  "avatar": "https://cdnt.erepublik.net/enQ9lXJMVlMaSYRgyEsa10ndQwA=/55x55/smart/avatars/Citizens/2011/04/12/1907aee62f42c11beba21159840cdc16.png?fa70b874e2f337186b979af9404828eb",
   "currency": "LTL",
-  "division": 11,
-  "muId": 893,
-  "regimentId": 1390,
-  "energy": 772,
-  "energyToRecover": 10220,
-  "energyFromFoodRemaining": 0,
-  "energyPerInterval": 64,
-  "hasFoodInInventory": true,
-  "gold": 75667,
-  "currencyAmount": 7120147,
-  "userLevel": 1725,
-  "canSwitchDivisions": true,
-  "isTopCustomer": true,
-  "loyaltyPoints": 2620,
+  "citizenshipCurrencyName": "LTL",
+  "isEmpire": false,
+  "isDictatorship": 0,
+  "countryLocationId": 72,
+  "regionLocationId": 663,
+  "countryLocationName": "Lithuania",
+  "countryLocationPermalink": "Lithuania",
   "residence": {
     "hasResidence": 1,
     "cityId": 710,
@@ -2773,28 +2790,140 @@ Full citizen state including economy, party, residence, daily orders, terrain sk
     "bonuses": {
       "has_residence": 1,
       "is_in_residence": 1,
+      "valid_until": 0,
+      "time_remaining": 0,
+      "num_houses": 1,
       "energy_bonus": 100,
-      "recovery_bonus": 4
+      "recovery_bonus": 4,
+      "description": "Residence bonuses available"
     }
   },
-  "terrainSkills": {
-    "1": { "terrain_id": 1, "skill_points": 40000 },
-    "2": { "terrain_id": 2, "skill_points": 33333 }
+  "division": 4,
+  "muId": 893,
+  "muCountryId": 72,
+  "regimentId": 1390,
+  "party": {
+    "id": 3773,
+    "party_id": 3773,
+    "is_party_president": 0,
+    "name": "Lietuvos Tevynes Sajunga",
+    "economical_orientation": "Center",
+    "stripped_title": "lietuvos-tevynes-sajunga",
+    "has_avatar": 1,
+    "created_at": 1315032136,
+    "joined_at": 1681043826
   },
+  "energy": 900,
+  "energyToRecover": 10220,
+  "energyFromFoodRemaining": 0,
+  "energyPerInterval": 64,
+  "hasFoodInInventory": true,
+  "gold": 75678,
+  "currencyAmount": 7120147,
+  "userLevel": 1725,
+  "hasCoreLoopAccess": false,
+  "canWorkTrainAgainIn": 70214,
+  "currentExperiencePoints": 8503402,
   "dailyOrders": [
     {
       "battleId": 869119,
       "sideCountryId": 72,
       "regionId": 372,
       "title": "Fight for Lithuania in Jiangsu",
+      "battleLink": "//www.erepublik.com/en/military/battlefield-choose-side/869119/72",
+      "setBy": {
+        "name": "priorities",
+        "id": 0,
+        "role": "Military Unit's priorities",
+        "description": "Set by Military Unit's priorities"
+      },
       "required": 25,
       "progress": 0,
-      "completed": false
+      "completed": false,
+      "isCivilWar": false
     }
   ],
+  "dailiesToCollect": 0,
+  "canChangeMPPPriorities": false,
+  "canChangeTerrainPriorities": false,
+  "canSwitchDivisions": true,
+  "terrainSkills": {
+    "1": { "terrain_id": 1, "skill_points": 40000 },
+    "2": { "terrain_id": 2, "skill_points": 33333 },
+    "3": { "terrain_id": 3, "skill_points": 17728 },
+    "4": { "terrain_id": 4, "skill_points": 0 },
+    "5": { "terrain_id": 5, "skill_points": 33333 },
+    "6": { "terrain_id": 6, "skill_points": 40000 },
+    "7": { "terrain_id": 7, "skill_points": 0 },
+    "8": { "terrain_id": 8, "skill_points": 0 },
+    "9": { "terrain_id": 9, "skill_points": 33333 },
+    "10": { "terrain_id": 10, "skill_points": 33333 },
+    "11": { "terrain_id": 11, "skill_points": 0 },
+    "12": { "terrain_id": 12, "skill_points": 0 },
+    "13": { "terrain_id": 13, "skill_points": 0 },
+    "14": { "terrain_id": 14, "skill_points": 0 }
+  },
+  "isTopCustomer": true,
+  "loyaltyPoints": 2620,
   "boxKeys": { "cupid_key": 223 }
 }
 ```
+
+**New fields (compared to earlier captures):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `avatar` | string | Citizen avatar URL (CDN, with image proxy path) |
+| `isOrganization` | number | `0` for regular citizen, `1` for organization account |
+| `isAdult` | boolean | Whether the citizen is an adult account |
+| `isNewCitizen` | boolean | Whether the citizen is considered "new" |
+| `isEmpire` | boolean | Whether the citizen's country is currently an empire |
+| `isDictatorship` | number | `0` or `1` — whether the country is under dictatorship |
+| `citizenshipCurrencyName` | string | Currency name for citizenship country (e.g., `"LTL"`) |
+| `countryLocationId` | number | Country ID where the citizen is currently located |
+| `countryLocationName` | string | Display name of current country location |
+| `countryLocationPermalink` | string | URL-friendly country name (e.g., `"Lithuania"`) |
+| `regionLocationId` | number | Region ID of current location |
+| `muCountryId` | number | Country ID of the citizen's military unit |
+| `currentExperiencePoints` | number | Current XP total |
+| `canWorkTrainAgainIn` | number | Seconds until next work/train action is available |
+| `dailiesToCollect` | number | Number of uncollected daily rewards |
+| `hasCoreLoopAccess` | boolean | Whether citizen has access to the core loop feature |
+| `canChangeMPPPriorities` | boolean | Can change MPP (Mutual Protection Pact) priorities |
+| `canChangeTerrainPriorities` | boolean | Can change terrain priorities |
+| `party` | object | Full party membership info (see below) |
+
+**`party` sub-object:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` / `party_id` | number | Party ID (duplicated) |
+| `is_party_president` | number | `0` or `1` — whether citizen is party president |
+| `name` | string | Party display name |
+| `economical_orientation` | string | Political orientation (e.g., `"Center"`) |
+| `stripped_title` | string | URL-safe slug of the party name |
+| `has_avatar` | number | `0` or `1` — whether party has a custom avatar |
+| `created_at` | number | Unix timestamp of party creation |
+| `joined_at` | number | Unix timestamp of when the citizen joined |
+
+**Updated `dailyOrders[]` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `battleLink` | string | Protocol-relative URL to the battlefield choose-side page |
+| `setBy` | object | Who set the order: `{ name, id, role, description }` |
+| `isCivilWar` | boolean | Whether the battle is a civil war |
+
+**Updated `residence.bonuses` fields:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `valid_until` | number | Expiry timestamp (`0` = permanent/no expiry) |
+| `time_remaining` | number | Seconds remaining until bonuses expire (`0` = permanent) |
+| `num_houses` | number | Number of houses the citizen owns |
+| `description` | string | Human-readable description (e.g., `"Residence bonuses available"`) |
+
+**`terrainSkills`** — expanded from 2 to 14 terrain entries (IDs 1–14), reflecting the full terrain system. Each entry: `{ terrain_id: number, skill_points: number }`.
 
 #### `energyData` (line ~272)
 
