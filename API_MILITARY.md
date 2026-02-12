@@ -495,41 +495,41 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
   "stats": {
     "personal": [],
     "current": {
-      "6": {
-        "1": {
-          "14": {
-            "37858081": {
+      "8": {
+        "2": {
+          "52": {
+            "38158387": {
               "top_damage": [
                 {
-                  "battle_zone_id": 37858081,
-                  "battle_id": 863499,
-                  "zone_id": 6,
-                  "division": 1,
-                  "citizen_id": 9741009,
-                  "damage": 215,
-                  "kills": 1,
-                  "side_country_id": 14,
+                  "battle_zone_id": 38158387,
+                  "battle_id": 869119,
+                  "zone_id": 8,
+                  "division": 2,
+                  "citizen_id": 9617915,
+                  "damage": 489819,
+                  "kills": 4,
+                  "side_country_id": 52,
                   "type": "top_damage",
-                  "level": 12,
+                  "level": 49,
                   "sector": ""
                 }
               ]
             }
           },
           "72": {
-            "37858081": {
+            "38158387": {
               "top_damage": [
                 {
-                  "battle_zone_id": 37858081,
-                  "battle_id": 863499,
-                  "zone_id": 6,
-                  "division": 1,
-                  "citizen_id": 9741009,
-                  "damage": 215,
-                  "kills": 1,
+                  "battle_zone_id": 38158387,
+                  "battle_id": 869119,
+                  "zone_id": 8,
+                  "division": 2,
+                  "citizen_id": 9617915,
+                  "damage": 4549974,
+                  "kills": 28,
                   "side_country_id": 72,
                   "type": "top_damage",
-                  "level": 12,
+                  "level": 49,
                   "sector": ""
                 }
               ]
@@ -537,20 +537,79 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
           }
         },
         "4": {
-          "14": {
-            "37858084": {
+          "72": {
+            "38158389": {
               "top_damage": [
                 {
-                  "battle_zone_id": 37858084,
-                  "battle_id": 863499,
-                  "zone_id": 6,
+                  "battle_zone_id": 38158389,
+                  "battle_id": 869119,
+                  "zone_id": 8,
                   "division": 4,
-                  "citizen_id": 3257328,
-                  "damage": 275002739,
-                  "kills": 60,
-                  "side_country_id": 14,
+                  "citizen_id": 2100702,
+                  "damage": 1938717198,
+                  "kills": 198,
+                  "side_country_id": 72,
                   "type": "top_damage",
-                  "level": 638,
+                  "level": 1066,
+                  "sector": ""
+                }
+              ]
+            }
+          },
+          "52": {
+            "38158389": {
+              "top_damage": [
+                {
+                  "battle_zone_id": 38158389,
+                  "battle_id": 869119,
+                  "zone_id": 8,
+                  "division": 4,
+                  "citizen_id": 7780887,
+                  "damage": 243775256,
+                  "kills": 26,
+                  "side_country_id": 52,
+                  "type": "top_damage",
+                  "level": 1690,
+                  "sector": ""
+                }
+              ]
+            }
+          }
+        },
+        "11": {
+          "52": {
+            "38158390": {
+              "top_damage": [
+                {
+                  "battle_zone_id": 38158390,
+                  "battle_id": 869119,
+                  "zone_id": 8,
+                  "division": 11,
+                  "citizen_id": 7780887,
+                  "damage": 28329,
+                  "kills": 19,
+                  "side_country_id": 52,
+                  "type": "top_damage",
+                  "level": 1690,
+                  "sector": ""
+                }
+              ]
+            }
+          },
+          "72": {
+            "38158390": {
+              "top_damage": [
+                {
+                  "battle_zone_id": 38158390,
+                  "battle_id": 869119,
+                  "zone_id": 8,
+                  "division": 11,
+                  "citizen_id": 9637574,
+                  "damage": 146160,
+                  "kills": 210,
+                  "side_country_id": 72,
+                  "type": "top_damage",
+                  "level": 775,
                   "sector": ""
                 }
               ]
@@ -563,29 +622,29 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
   },
   "zone_finished": false,
   "division": {
-    "created_at": 1769345796,
+    "created_at": 1770898418,
     "bar": {
-      "37859365": 14
+      "38158390": 72
     },
     "domination": {
-      "37859365": 50
+      "38158390": 83.7646
     },
     "defence_shield": {
-      "37859365": null
+      "38158390": 0
     },
-    "72": {
-      "37859365": {
+    "52": {
+      "38158390": {
         "domination": 0,
         "won": 0
       },
-      "total": 17
+      "total": 4
     },
-    "14": {
-      "37859365": {
-        "domination": 110,
+    "72": {
+      "38158390": {
+        "domination": 90,
         "won": 0
       },
-      "total": 91
+      "total": 122
     }
   },
   "logs": {
@@ -593,15 +652,25 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
     "defenders": []
   },
   "fightersData": {
-    "4009762": {
-      "id": 4009762,
-      "name": "ogius",
-      "avatar": "https://cdnt.erepublik.net/HMWQL5S3qtIsRgP4qKawitAYNHw=/30x30/smart/avatars/Citizens/2010/10/25/c3df46043a674ac97aee9fab5b5cf2a6.jpg"
+    "2100702": {
+      "id": 2100702,
+      "name": "Gedoras",
+      "avatar": "https://cdnt.erepublik.net/nJR31VeRruwr3428BVYALe_byZM=/30x30/smart/avatars/Citizens/2009/10/30/426a1f6b4acdb80141909b7bdda037be.jpg"
     },
-    "6521752": {
-      "id": 6521752,
-      "name": "J. Jogreth",
-      "avatar": "https://cdnt.erepublik.net/SMd-KXdHetNQyp92hNoepQ93zjM=/30x30/smart/avatars/Citizens/2012/09/17/e0c976b4873af307f9596a917a12a5e5.png?d6f58076e458a4451a74ab35eb81dd52"
+    "7780887": {
+      "id": 7780887,
+      "name": "NuRupeNik",
+      "avatar": "https://cdnt.erepublik.net/Xg1r0JGIeBiskTvAG63olitD7kU=/30x30/smart/avatars/Citizens/2013/07/11/c2ba951a95ece74cf543782fae6e3f7f.jpg?0d12907546b8fcc998389ac5a3ca6bd1"
+    },
+    "9617915": {
+      "id": 9617915,
+      "name": "Lazauskas",
+      "avatar": "https://cdnt.erepublik.net/kN03gJYxEtDcYYN6C9QiRI6mB4U=/30x30/smart/avatars/Citizens/2021/03/11/29f28f4dc725488d508ce75899b62af3.jpg?90f8a943944e5c76a0fce2a4fdaf0745"
+    },
+    "9637574": {
+      "id": 9637574,
+      "name": "K0rsakoff",
+      "avatar": "https://cdnt.erepublik.net/QwFvBoPimFffiWJhzLRLL_3Hrho=/30x30/smart/avatars/Citizens/2021/10/23/995edeb7e1b5377f012a2924b40c76b3.jpg?739399a9db0f2cb22474d68c224363ee"
     }
   },
   "opponentsInQueue": 0,
@@ -609,15 +678,19 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
   "campaigns": [],
   "epicBattle": 0,
   "activeEffects": [],
-  "battleEffects": [],
-  "maxHit": 0,
+  "battleEffects": {
+    "valentinesDay": {
+      "is_active": 0
+    }
+  },
+  "maxHit": 134,
   "most_contested": [],
   "battle_zone_situation": {
-    "37859361": 0,
-    "37859362": 0,
-    "37859363": 0,
-    "37859364": 0,
-    "37859365": 0
+    "38158386": 0,
+    "38158387": 0,
+    "38158388": 0,
+    "38158389": 0,
+    "38158390": 0
   }
 }
 ```
@@ -634,7 +707,7 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
 | `division.created_at` | number | Unix timestamp when division round was created |
 | `division.bar` | object | Map of battle zone ID → country ID holding the wall |
 | `division.domination` | object | Map of battle zone ID → domination percentage |
-| `division.defence_shield` | object | Map of battle zone ID → shield status (null if no shield) |
+| `division.defence_shield` | object | Map of battle zone ID → shield value (`null` = no shield, `0` = shield inactive/depleted, positive number = shield active) |
 | `division.{countryId}` | object | Per-country stats including domination and wins |
 | `division.{countryId}.total` | number | Total points/wins for the country in this division |
 | `logs.attackers` | array | Combat logs for attacking side |
@@ -646,7 +719,7 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
 | `campaigns` | array | Related campaign data |
 | `epicBattle` | number | Epic battle status (0 = not epic) |
 | `activeEffects` | array | Currently active battle effects/boosters |
-| `battleEffects` | array | Available battle effects |
+| `battleEffects` | object | Named battle effects keyed by event name (e.g., `valentinesDay`), each with `is_active` flag |
 | `maxHit` | number | Maximum hit damage recorded |
 | `most_contested` | array | Most contested zones info |
 | `battle_zone_situation` | object | Map of battle zone ID → situation status code |
@@ -659,7 +732,8 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
 - **Division numbers**: 1-4 represent ground divisions, 11 represents the air division
 - **Avatar CDN**: Avatar URLs use Cloudflare CDN with `smart` resizing and size parameters (30x30)
 - **Domination values**: Can exceed 100, representing accumulated domination points
-- **Defence shield**: `null` indicates no shield active; non-null values indicate shield health/status
+- **Defence shield**: `null` = no shield mechanic, `0` = shield inactive/depleted, positive number = shield active with remaining health
+- **Battle effects**: `battleEffects` is an object keyed by event name (e.g., `valentinesDay`) with `is_active` flag (0/1) — tracks seasonal/holiday combat modifiers
 - **Zone situation codes**: The `battle_zone_situation` values likely indicate special states (0 = normal)
 
 ---
