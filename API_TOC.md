@@ -20,6 +20,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 |--------|-------------|------|
 | Authentication | Login flow, sessions, tokens | [API_AUTH.md](API_AUTH.md) |
 | CAPTCHA & Verification | Session verification, anti-bot challenges, CAPTCHA solving | [API_CAPTCHA.md](API_CAPTCHA.md) |
+| Homepage | Main dashboard — citizen state, social feeds, settings, events | [API_HOMEPAGE.md](API_HOMEPAGE.md) |
 | World & Travel | Countries, regions, travel, geography | [API_WORLD.md](API_WORLD.md) |
 | Country | Country-specific pages, politics, society | [API_COUNTRY.md](API_COUNTRY.md) |
 | Military | Combat, battles, wars, weapons | [API_MILITARY.md](API_MILITARY.md) |
@@ -45,6 +46,11 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/main/sessionUnlockPopup` | GET | Get CAPTCHA modal popup HTML |
 | `/en/main/sessionGetChallenge` | POST | Get CAPTCHA challenge image and IDs |
 | `/en/main/sessionUnlock` | POST | Submit CAPTCHA solution |
+
+### Homepage
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/en` | GET | Main dashboard page — citizen state, social feeds, battle listings, settings (HTML) |
 
 ### World & Travel
 | Endpoint | Method | Description |
