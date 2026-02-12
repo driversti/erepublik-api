@@ -890,8 +890,8 @@ Retrieves filtered and sorted marketplace offers for a specific product type. Su
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | countryId | number | Yes | Country ID where the market is located (e.g., 72 for Lithuania) |
-| industryId | number | Yes | Product industry type (1=Food, 2=Weapons, 23=Aircraft, 24=House) |
-| quality | number | Yes | Product quality level (1-7 for most products) |
+| industryId | number | Yes | Product industry type (see Industry IDs table in Notes) |
+| quality | number | Yes | Product quality level (see Quality Ranges table in Notes) |
 | orderBy | string | Yes | Sort order: `price_asc`, `price_desc`, `amount_asc`, `amount_desc` |
 | currentPage | number | Yes | Page number for pagination (starts at 1) |
 | ajaxMarket | number | Yes | AJAX flag, must be set to `1` |
@@ -967,16 +967,29 @@ curl -X POST 'https://www.erepublik.com/en/economy/marketplaceAjax' \
 
 ### Notes
 
-- **Industry IDs:**
-  - 1: Food
-  - 2: Weapons
-  - 23: Aircraft
-  - 24: House
-  - See raw materials for IDs 1-20 (documented in "Work as Manager" endpoint)
+- **Industry IDs (9 tradeable industries):**
 
-- **Quality Levels:**
-  - Food, Weapons, Aircraft, House: Q1-Q7
-  - Higher quality provides better effects/energy restoration
+  | ID | Industry | Type | Quality Range | Token |
+  |----|----------|------|---------------|-------|
+  | 1 | Food | Finished product | Q1–Q7 | `FOOD` |
+  | 2 | Weapons (Ammunition) | Finished product | Q1–Q7 | `WEAPON` |
+  | 3 | Moving Tickets | Finished product | Q1–Q5 | `TICKET` |
+  | 4 | Houses | Finished product | Q1–Q5 | `HOUSE` |
+  | 23 | Aircraft Weapons | Finished product | Q1–Q5 | `AIRCRAFT` |
+  | 7 | Food Raw Materials | Raw material | Q1 only | `GRAIN` |
+  | 12 | Weapon Raw Materials | Raw material | Q1 only | `IRON` |
+  | 17 | House Raw Materials | Raw material | Q1 only | `SAND` |
+  | 24 | Aircraft Raw Materials | Raw material | Q1 only | `MAGNESIUM` |
+
+  > IDs 5–6, 8–11, 13–16, 18–22, 25+ are **not valid** for the marketplace. The `industryJSON` variable on the marketplace page defines 29 industry entries total (including individual resource types like Grain, Fish, Iron, etc.), but only these 9 appear as marketplace filters.
+  >
+  > Raw material IDs use the **first resource** of each category as the aggregate marketplace ID (7=Grain→Food RM, 12=Iron→Weapon RM, 17=Sand→House RM, 24=Magnesium→Aircraft RM).
+
+- **Quality Ranges:**
+  - Food, Weapons: Q1–Q7
+  - Moving Tickets, Houses, Aircraft Weapons: Q1–Q5
+  - All raw materials: Q1 only (no quality tiers)
+  - Special items exist at higher quality numbers (e.g., Q10=Energy Bar, Q10=Bazooka) but are **not sold** via this marketplace endpoint — they appear in inventory as separate item types
 
 - **Country Filtering:**
   - `countryId` determines which country's market to search
@@ -1258,11 +1271,12 @@ curl 'https://www.erepublik.com/en/economy/myMarketOffers' \
   - Multiple offers for the same product type can exist simultaneously
 
 - **Industry IDs:**
-  - 1: Food (Q1-Q11)
-  - 2: Weapons/Ammunition (Q1-Q7)
-  - 4: Houses (Q1-Q5)
-  - 23: Aircraft Weapons (Q1-Q5)
-  - 7, 12, 17, 24: Raw Materials
+  - 1: Food (Q1–Q7)
+  - 2: Weapons/Ammunition (Q1–Q7)
+  - 3: Moving Tickets (Q1–Q5)
+  - 4: Houses (Q1–Q5)
+  - 23: Aircraft Weapons (Q1–Q5)
+  - 7, 12, 17, 24: Raw Materials (Q1 only)
 
 - **Related Endpoints:**
   - Use `marketplaceAjax` to browse offers from all sellers
