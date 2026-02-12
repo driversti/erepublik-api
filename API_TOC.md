@@ -51,6 +51,11 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 |----------|--------|-------------|
 | `/en/main/travelData` | POST | Get all countries, regions, and travel costs |
 | `/en/main/travel` | POST | Execute travel to a region (costs currency/tickets) |
+| `/en/main/city-data/{cityId}/overview` | GET | Get city overview (stats, residence, government, region info) |
+| `/en/main/city-data/{cityId}/residents` | GET | Get city residents list (paginated) |
+| `/en/main/city-data/{cityId}/properties` | GET | Get citizen's properties in a city (houses, factories) |
+| `/en/main/city-search` | GET | Search cities by name, region, or country (autocomplete) |
+| `/en/main/city-actions` | POST | Perform city actions (establish residence) |
 | `/en/main/map-data` | GET | Get world map data (regions, ownership, battles) |
 
 ### Country
@@ -89,6 +94,12 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/economy/workOvertime` | POST | Work overtime for extra salary |
 | `/en/economy/work` | POST | Work as Manager (WAM) in companies |
 | `/en/main/training-grounds-json` | GET | Get training grounds status |
+| `/en/economy/exchange-market/` | GET | Monetary market page - exchange offers, rates, currency data (HTML) |
+| `/en/economy/exchange/retrieve/` | POST | Get paginated exchange offers |
+| `/en/economy/exchange/purchase/` | POST | Buy currency from an exchange offer |
+| `/en/economy/exchange/create/` | POST | Create a new exchange offer |
+| `/en/economy/exchange/update/` | POST | Update an existing exchange offer |
+| `/en/economy/exchange/delete/` | POST | Delete an exchange offer |
 
 ### Rewards
 | Endpoint | Method | Description |

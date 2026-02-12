@@ -986,8 +986,8 @@ curl 'https://www.erepublik.com/en/main/city-data/710/properties' \
           "energyBooster": 2,
           "overtimePoints": 1,
           "effectsActive": 1,
-          "activeTimeRemaining": 699368,
-          "inventory": 26,
+          "activeTimeRemaining": 486880,
+          "inventory": 24,
           "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/1",
           "buttonText": "Extend",
           "activationMessage": "Extension successful",
@@ -1000,7 +1000,7 @@ curl 'https://www.erepublik.com/en/main/city-data/710/properties' \
             },
             "url": "/en/economy/activateHouse"
           },
-          "confirmationMessage": "The city of Klaipeda charges 628.9 LTL for this action. Continue?"
+          "confirmationMessage": "The city of Klaipeda charges 681.11 LTL for this action. Continue?"
         },
         {
           "quality": 2,
@@ -1013,9 +1013,55 @@ curl 'https://www.erepublik.com/en/main/city-data/710/properties' \
           "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/2",
           "buttonText": "Buy",
           "activationMessage": ""
+        },
+        {
+          "quality": 3,
+          "energyBonus": 200,
+          "energyBooster": 2,
+          "overtimePoints": 1,
+          "effectsActive": 0,
+          "activeTimeRemaining": 0,
+          "inventory": 0,
+          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/3",
+          "buttonText": "Buy",
+          "activationMessage": ""
+        },
+        {
+          "quality": 4,
+          "energyBonus": 300,
+          "energyBooster": 2,
+          "overtimePoints": 1,
+          "effectsActive": 0,
+          "activeTimeRemaining": 0,
+          "inventory": 0,
+          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/4",
+          "buttonText": "Buy",
+          "activationMessage": ""
+        },
+        {
+          "quality": 5,
+          "energyBonus": 400,
+          "energyBooster": 2,
+          "overtimePoints": 1,
+          "effectsActive": 0,
+          "activeTimeRemaining": 0,
+          "inventory": 0,
+          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/5",
+          "buttonText": "Use",
+          "activationMessage": "You now have a house in Klaipeda",
+          "activationData": {
+            "params": {
+              "action": "activate",
+              "quality": 5,
+              "cityId": 710,
+              "cityWidget": "L2VuL21haW4vY2l0eS1kYXRhLzcxMC9wcm9wZXJ0aWVzL2hvdXNlcw=="
+            },
+            "url": "/en/economy/activateHouse"
+          },
+          "confirmationMessage": "The city of Klaipeda charges 0 LTL for this action. Continue?"
         }
       ],
-      "currency": 6274326,
+      "currency": 7120147,
       "widgetUrl": "/en/main/city-data/710/properties/houses",
       "widgetId": "houses"
     },
@@ -1135,12 +1181,269 @@ Same structure as in "Get City Overview Data" endpoint - contains basic city inf
 - `activeTimeRemaining` shows seconds until house expires (typically 7 days duration)
 - Only one house quality can be active at a time in a city
 - `inventory` count shows how many houses of that quality the citizen owns
-- Button text indicates available action: "Use" (from inventory), "Buy" (need to purchase), "Extend" (renew active house)
+- The list always includes all 5 quality levels plus Central Park, regardless of ownership
+- Button text indicates available action: "Use" (activate from inventory or reward), "Buy" (need to purchase from marketplace), "Extend" (renew currently active house)
+- Houses with `buttonText: "Use"` at 0 cost may come from weekly challenges or other reward sources
 - Holding company data shows factory distribution in the city
 - `isRaw` factories produce raw materials (oil, rubber, iron, etc.), others produce finished goods
 - `maxEmployees` = `numFactories` × workers per factory (varies by industry and quality)
 - The `activationData.params.cityWidget` is a base64-encoded callback URL for refreshing the widget after activation
 - Activation costs include city's residential tax
+
+---
+
+## Search Cities
+
+**Method:** GET
+**URL:** `/en/main/city-search?search={query}`
+**Auth Required:** No
+
+### Description
+
+Searches for cities by name, region name, or country name. This is the autocomplete/search endpoint used by the city search widget on city pages. It performs a **case-insensitive substring match** across city name, region name, and country name fields.
+
+### Query Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| search | string | Yes | Search query (minimum 2 characters) |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| X-Requested-With | `XMLHttpRequest` | Yes |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/main/city-search?search=War' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+### Example Response
+
+```json
+{
+  "status": true,
+  "data": [
+    {
+      "id": 231,
+      "name": "Warsaw",
+      "permalink": "Warsaw",
+      "regionName": "Mazovia",
+      "countryName": "Poland",
+      "avatar": "//www.erepublik.net/images/modules/cities/128px/Warsaw.png",
+      "url": "//www.erepublik.com/en/main/city/Warsaw"
+    },
+    {
+      "id": 500,
+      "name": "Bhubaneswar",
+      "permalink": "Bhubaneswar",
+      "regionName": "Orissa",
+      "countryName": "India",
+      "avatar": "//www.erepublik.net/images/modules/cities/128px/Bhubaneswar.png",
+      "url": "//www.erepublik.com/en/main/city/Bhubaneswar"
+    },
+    {
+      "id": 537,
+      "name": "Peshawar",
+      "permalink": "Peshawar",
+      "regionName": "North-West Frontier Province",
+      "countryName": "Pakistan",
+      "avatar": "//www.erepublik.net/images/modules/cities/128px/Peshawar.png",
+      "url": "//www.erepublik.com/en/main/city/Peshawar"
+    }
+  ],
+  "error": false
+}
+```
+
+### Example Response (No Results)
+
+```json
+{
+  "status": true,
+  "data": [],
+  "error": false
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| status | boolean | Always `true` for valid requests |
+| data | array | Array of matching city objects |
+| error | boolean | Always `false` for valid requests |
+
+#### City Object (in data array)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | number | City ID |
+| name | string | City display name |
+| permalink | string | URL-friendly city name |
+| regionName | string | Region containing the city |
+| countryName | string | Country currently controlling the region |
+| avatar | string | URL to city image/icon |
+| url | string | URL to the city page |
+
+### Notes
+
+- **No authentication required** — works without session cookie
+- **Minimum 2 characters** — queries with 0 or 1 character return an empty `data` array
+- **Case-insensitive** — "bu" and "Bu" return the same results
+- **Substring matching** — matches anywhere in city name, region name, or country name (e.g., "bu" matches "Bucharest", "Hamburg", "Istanbul", "Burgundy")
+- **No pagination** — all matching results are returned in a single response
+- Search for a country name (e.g., "Lithuania") returns all cities in that country — useful for listing a country's cities
+- The `countryName` reflects the **current controller** of the region, not the original owner (e.g., Budapest may show "Bulgaria" as country if Bulgaria conquered Central Hungary)
+
+---
+
+## City Overview Widget Sub-endpoints
+
+The city overview endpoint returns widget data inline, but each widget also has its own lazy-loading URL that returns just the widget portion. These are useful for refreshing individual widgets without reloading the full overview.
+
+### Get Residence Widget
+
+**Method:** GET
+**URL:** `/en/main/city-data/{cityId}/overview/residence`
+**Auth Required:** Yes
+
+Returns just the `widgets.residence` object from the [City Overview](#get-city-overview-data) response.
+
+```bash
+curl 'https://www.erepublik.com/en/main/city-data/710/overview/residence' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+```json
+{
+  "isResident": 1,
+  "canEstablishResidence": 1,
+  "citizenResidenceCityId": 0,
+  "establishResidenceCost": {
+    "residentialTax": 200,
+    "propertiesTransfer": {
+      "houses": { "1": 498.67 },
+      "total": 498.67
+    },
+    "total": 698.67
+  },
+  "establishResidenceConfirmation": "Are you sure you want to pay 698.67 LTL in local taxes and establish your residence in Klaipeda?",
+  "bonuses": {
+    "houseDurability": 10,
+    "energyBonus": 100,
+    "recoveryBonus": 2,
+    "numHouses": 1,
+    "parkEnergyBonus": 100,
+    "parkRecoveryBonus": 2,
+    "cityBonuxText": "<b>+10%</b> House durability",
+    "housesBonusText": "<b>+2</b> Energy / 6 minutes, <b>+100</b> Energy pool",
+    "parkBonusText": "<b>+2</b> Energy / 6 minutes, <b>+100</b> Energy pool"
+  },
+  "actionUrl": "//www.erepublik.com/en/main/city-actions",
+  "action": "establishResidence",
+  "widgetUrl": "//www.erepublik.com/en/main/city-data/710/overview/residence",
+  "widgetId": "residence"
+}
+```
+
+### Get Government Widget
+
+**Method:** GET
+**URL:** `/en/main/city-data/{cityId}/overview/government`
+**Auth Required:** Yes
+
+Returns just the `widgets.government` object from the [City Overview](#get-city-overview-data) response.
+
+```bash
+curl 'https://www.erepublik.com/en/main/city-data/710/overview/government' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+```json
+{
+  "mayor": [],
+  "numCityCouncilors": "-",
+  "widgetUrl": "//www.erepublik.com/en/main/city-data/710/overview/government",
+  "widgetId": "government"
+}
+```
+
+### Notes
+
+- These are the same data objects returned inline within the full overview response
+- Useful for refreshing a single widget without re-fetching the entire city overview
+- The `widgetUrl` in each widget's response points back to itself (self-referential)
+- The properties panel has similar sub-endpoints: `/en/main/city-data/{cityId}/properties/houses` and `/en/main/city-data/{cityId}/properties/holdingCompany`
+
+---
+
+## Establish Residence (City Actions)
+
+**Method:** POST
+**URL:** `/en/main/city-actions`
+**Auth Required:** Yes
+
+### Description
+
+Performs city-related actions such as establishing residence. This is the action endpoint referenced by the residence widget's `actionUrl`. Establishing residence in a city costs local currency (residential tax + property transfer fees).
+
+### Request Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| action | string | Yes | Action type (e.g., `establishResidence`) |
+| cityId | number | Yes | Target city ID |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/city-actions' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw 'action=establishResidence&cityId=710&_token=YOUR_CSRF_TOKEN'
+```
+
+### Example Response (Error - Invalid City)
+
+```json
+{
+  "status": false,
+  "message": "Invalid City",
+  "error": true
+}
+```
+
+### Example Response (Error - CSRF)
+
+```
+"CSRF attack detected."
+```
+
+### Notes
+
+- **Modifying action** — this endpoint changes game state (establishes residence, costs currency)
+- Requires valid CSRF token obtained from the page context
+- The total cost is shown in the residence widget's `establishResidenceCost.total` field
+- Without `_token`, returns "CSRF attack detected" error
+- Without valid `cityId`, returns "Invalid City" error
+- Cost breakdown: residential tax (fixed per city) + property transfer fees (depends on houses owned)
+- The residence widget's `establishResidenceConfirmation` field provides a pre-formatted confirmation message
 
 ---
 
