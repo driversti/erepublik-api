@@ -83,6 +83,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 ### Economy
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/en/economy/marketplace` | GET | Marketplace page - product browser with AngularJS, industry/quality filters, industryJSON (HTML) |
 | `/en/main/shopItemsJson` | GET | Get Gold Shop and VIP Shop items |
 | `/en/main/job-data` | GET | Get employment and work status |
 | `/en/economy/workOvertime` | POST | Work overtime for extra salary |
