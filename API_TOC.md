@@ -71,6 +71,30 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 ### Military
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/en/military/campaignsJson/list` | GET | List all active campaigns/battles (public) |
+| `/en/military/campaignsJson/countryId/{id}` | GET | Get campaigns for a specific country |
+| `/en/military/campaignsJson/citizen` | GET | Get campaigns for the logged-in citizen |
+| `/en/military/battlefield/{battleId}` | GET | Full battlefield page with embedded battle state (HTML) |
+| `/en/military/battle-console` | POST | Get live battle zone stats, fighters, combat orders |
+| `/en/military/battle-stats/{battleId}` | POST | Get battle statistics |
+| `/en/military/deploy-bomb` | POST | Deploy a bomb (Big Bomb, Small Bomb, Cruise Missile) |
+| `/en/military/fight-activateBooster` | POST | Activate a combat booster |
+| `/en/military/fightDeploy-getInventory` | POST | Get deployment inventory (weapons, vehicles, energy) |
+| `/en/military/fightDeploy-startDeploy` | POST | Start automated deployment |
+| `/en/military/fightDeploy-cancelDeploy` | POST | Cancel active deployment |
+| `/en/military/pvp-inventory/` | GET | Get PvP inventory (HTML) |
+| `/en/military/battle-map-status/{battleId}` | POST | Get campaign map division results |
+| `/en/military/armory-data/overview` | GET | Get armory overview data |
+| `/en/military/armory-data/protectors` | GET | Get protectors data |
+| `/en/main/battlefieldTravel` | POST | Choose side & travel to battle region |
+| `/en/main/switch-division` | POST | Switch between divisions |
+| `/en/main/pvp-queue` | POST | Join/leave PvP queue |
+| `/en/main/fight-activateBattleEffect` | POST | Activate seasonal battle effect |
+| `/en/main/fight-listObjectives` | GET | List battle objectives |
+| `/en/main/mercenary-campaign/subscribe/` | POST | Subscribe to mercenary campaign |
+| `/en/main/mercenary-campaign/unsubscribe/` | POST | Unsubscribe from mercenary campaign |
+| `/en/economy/refillEnergy` | POST | Eat food / use energy bars |
+| `/en/economy/energyRefill-getInventory` | POST | Get energy refill inventory |
 | `/en/country/military/{countryName}` | GET | Country military page (natural enemy, defence shield, airstrike, wars, MPP) |
 
 ### Social

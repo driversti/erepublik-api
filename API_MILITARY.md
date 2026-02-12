@@ -2328,6 +2328,9 @@ Three weapon types — Big Bomb, Small Bomb, and Cruise Missile:
 | `deploy_size` | Deploy size multiplier | `100_deploy_size_100_600`, `100_deploy_size_500_600` |
 | `ground_deploy_influence` | Ground influence bonus | `100_ground_deploy_influence_1_600`, `100_ground_deploy_influence_3_600` |
 | `ground_deploy_rank_points` | Ground rank points bonus | `100_ground_deploy_rank_points_1_600`, `100_ground_deploy_rank_points_3_600` |
+| `air_damage` | Air damage multiplier | `100_air_damage_2_600`, `100_air_damage_5_600`, `100_air_damage_10_600` |
+| `air_deploy_influence` | Air influence bonus | `100_air_deploy_influence_1_600`, `100_air_deploy_influence_3_600` |
+| `air_deploy_rank_points` | Air rank points bonus | `100_air_deploy_rank_points_1_600`, `100_air_deploy_rank_points_3_600` |
 
 **Booster ID naming convention:** `{industryId}_{type}_{quality}_{duration}` (e.g., `100_damage_10_7200` = +100% damage for 2 hours)
 
@@ -2417,6 +2420,18 @@ Three weapon types — Big Bomb, Small Bomb, and Cruise Missile:
 | `100_ground_deploy_rank_points_2_1200` | +20% Ground Rank Points | +20% for 20 min |
 | `100_ground_deploy_rank_points_2_600` | +20% Ground Rank Points | +20% for 10 min |
 | `100_ground_deploy_rank_points_3_600` | +30% Ground Rank Points | +30% for 10 min |
+| `100_air_damage_2_600` | +20% Air Damage | +20% for 10 min |
+| `100_air_damage_5_600` | +50% Air Damage | +50% for 10 min |
+| `100_air_damage_5_300` | +50% Air Damage | +50% for 5 min |
+| `100_air_damage_10_600` | +100% Air Damage | +100% for 10 min |
+| `100_air_deploy_influence_1_600` | +10% Air Influence | +10% for 10 min |
+| `100_air_deploy_influence_2_1200` | +20% Air Influence | +20% for 20 min |
+| `100_air_deploy_influence_2_600` | +20% Air Influence | +20% for 10 min |
+| `100_air_deploy_influence_3_600` | +30% Air Influence | +30% for 10 min |
+| `100_air_deploy_rank_points_1_600` | +10% Air Rank Points | +10% for 10 min |
+| `100_air_deploy_rank_points_2_1200` | +20% Air Rank Points | +20% for 20 min |
+| `100_air_deploy_rank_points_2_600` | +20% Air Rank Points | +20% for 10 min |
+| `100_air_deploy_rank_points_3_600` | +30% Air Rank Points | +30% for 10 min |
 
 #### Rounds
 
@@ -2711,7 +2726,760 @@ data = json.loads(json_str)
 - **Booster ID naming convention**: `{industryId}_{type}_{quality}_{duration}` (e.g., `100_damage_10_7200`)
 - **Date fields**: `battle_start_at`, `battle_critical_at`, `server_time` use `new Date('...')` in the raw JavaScript — these must be converted to strings before JSON parsing
 - **Text placeholders**: The `texts` map uses `%%1%%`, `%%2%%` for variable substitution (e.g., `"%%1%% CONQUERED %%2%%"`)
-- **`terrain_type_id`**: Observed values are `3` (ground round 1), `0` (aircraft round 1), `null` (subsequent rounds). The exact meaning of terrain types needs further research.
+- **`terrain_type_id`**: Observed values: `0` (aircraft round 1), `3` (ground round 1 — one battle), `4` (ground round 1 — another battle), `null` (subsequent rounds). Different terrain types may represent different battlefield terrain bonuses.
+- **Active vs Finished battle differences**:
+  - `activeBattleZones` — empty array when finished; populated with objects `{ battleZoneId, zoneId, division, type, terrainTypeId, sector }` during active battles
+  - `battleFinished` — `0` for active, `1` for finished
+  - `spectatorOnly` — `false` for active (player can fight), `true` for finished
+  - `deployment` — `null` when not deploying; contains `{ myTotalDamage, isMaxLevel, rankText, rankIcon, currentRankPoints, nextRankPoints, rankPercentProgress }` when deployment UI is shown
+  - `fightersData`, `historyStats` — populated during active rounds
+- **Player strength**: Available via `erepublik.promos.April1st2017.playerStrength` (e.g., `414481.469`) — the "April 1st 2017" promo is permanently active and carries the player's current strength value
+- **Pomelo WebSocket**: Real-time battle updates via `gate.erepublik.com:3050` with auth token = session token (`erpk` cookie value). See `erepublik.settings.pomelo` in the page's global object.
+
+### Additional Embedded Data Objects
+
+Beyond `BATTLE_SERVER_DATA`, the battlefield page embeds several other useful data objects:
+
+#### `erepublik.citizen` (line ~47)
+
+Full citizen state including economy, party, residence, daily orders, terrain skills:
+
+```json
+{
+  "citizenId": 4690052,
+  "name": "driver sti",
+  "country": 72,
+  "citizenshipCountryId": 72,
+  "currency": "LTL",
+  "division": 11,
+  "muId": 893,
+  "regimentId": 1390,
+  "energy": 772,
+  "energyToRecover": 10220,
+  "energyFromFoodRemaining": 0,
+  "energyPerInterval": 64,
+  "hasFoodInInventory": true,
+  "gold": 75667,
+  "currencyAmount": 7120147,
+  "userLevel": 1725,
+  "canSwitchDivisions": true,
+  "isTopCustomer": true,
+  "loyaltyPoints": 2620,
+  "residence": {
+    "hasResidence": 1,
+    "cityId": 710,
+    "regionId": 663,
+    "countryId": 72,
+    "bonuses": {
+      "has_residence": 1,
+      "is_in_residence": 1,
+      "energy_bonus": 100,
+      "recovery_bonus": 4
+    }
+  },
+  "terrainSkills": {
+    "1": { "terrain_id": 1, "skill_points": 40000 },
+    "2": { "terrain_id": 2, "skill_points": 33333 }
+  },
+  "dailyOrders": [
+    {
+      "battleId": 869119,
+      "sideCountryId": 72,
+      "regionId": 372,
+      "title": "Fight for Lithuania in Jiangsu",
+      "required": 25,
+      "progress": 0,
+      "completed": false
+    }
+  ],
+  "boxKeys": { "cupid_key": 223 }
+}
+```
+
+#### `energyData` (line ~272)
+
+```json
+{
+  "energy": 772,
+  "energyPoolLimit": 10220,
+  "recoverableEnergy": 0,
+  "energyPerInterval": 64,
+  "energyStatus": "recovering"
+}
+```
+
+#### `globalNS.userInfo` (line ~1069)
+
+```javascript
+globalNS.userInfo.wellness = 772;
+globalNS.userInfo.specialFoodAmount = 71353;  // treats count
+globalNS.userInfo.specialFoodValue = 100;     // energy per treat
+globalNS.userInfo.energyPerInterval = 64;
+```
+
+#### Deploy Rank Data (line ~2653)
+
+```json
+{
+  "deploy": {
+    "myTotalDamage": 0,
+    "isMaxLevel": false,
+    "rankText": "Air Commodore *****",
+    "rankIcon": "//www.erepublik.net/images/modules/ranks/aircraft/32px/061_air_commodore.png",
+    "currentRankPoints": 59284166,
+    "nextRankPoints": 76360000,
+    "rankPercentProgress": 3.088
+  }
+}
+```
+
+---
+
+## Battlefield AJAX Endpoints
+
+The following endpoints are called by the battlefield page's JavaScript (AngularJS controllers and jQuery) to perform actions during combat. All require the `erpk` session cookie and most require the CSRF token from `SERVER_DATA.csrfToken`.
+
+### Common Headers for All AJAX Endpoints
+
+| Header | Value | Required |
+|--------|-------|----------|
+| `Cookie` | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| `Content-Type` | `application/x-www-form-urlencoded` | Yes (POST) |
+| `X-Requested-With` | `XMLHttpRequest` | Recommended |
+| `Referer` | `https://www.erepublik.com/en/military/battlefield/{battleId}` | Recommended |
+
+---
+
+### Battle Console (Get Live Battle State)
+
+**Method:** POST
+**URL:** `/en/military/battle-console`
+**Auth Required:** Yes
+
+#### Description
+
+Fetches real-time battle zone state including live stats (domination bar), fighter rankings, combat orders, war history, and allied forces. This is the **primary polling endpoint** for battlefield UI updates. Called by `BattleStatsController`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `zoneId` | number | Yes | The zone (round) number |
+| `battleZoneId` | number | Yes | The specific battle zone ID (division) |
+| `action` | string | Yes | Action type: `"battleStatistics"`, `"fighterStatistics"`, `"warHistory"`, `"combatOrders"` |
+| `_token` | string | Yes | CSRF token from `SERVER_DATA.csrfToken` |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&zoneId=8&battleZoneId=38158390&action=battleStatistics&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Notes
+
+- `action=battleStatistics` — returns live domination stats, wall info, allied forces
+- `action=fighterStatistics` — returns top fighters on each side with damage rankings
+- `action=combatOrders` — returns active combat orders (bounties) for each side
+- `action=warHistory` — returns previous rounds' results
+
+---
+
+### Deploy Bomb
+
+**Method:** POST
+**URL:** `/en/military/deploy-bomb`
+**Auth Required:** Yes
+
+#### Description
+
+Deploys a special weapon (Big Bomb, Small Bomb, or Cruise Missile) in the current battle zone. Called from `hit_bomb()` in `battle_new.js`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `battleZoneId` | number | Yes | The specific battle zone ID |
+| `bombId` | number | Yes | The bomb type ID: `21` (Small Bomb), `22` (Big Bomb), `215` (Cruise Missile) |
+| `_token` | string | Yes | CSRF token |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/deploy-bomb' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&battleZoneId=38158390&_token=YOUR_CSRF_TOKEN&bombId=22'
+```
+
+#### Notes
+
+- Bomb damage: Big Bomb = 5,000,000; Small Bomb = 1,500,000; Cruise Missile = 1,500,000
+- Can be disabled server-side: check `SERVER_DATA.bigBombsDisabled` and `SERVER_DATA.cruiseMissilesDisabled`
+- Response is JSON — check for `error` field
+
+---
+
+### Activate Booster
+
+**Method:** POST
+**URL:** `/en/military/fight-activateBooster`
+**Auth Required:** Yes
+
+#### Description
+
+Activates a combat booster (speed accelerator, damage boost, prestige points, deploy size, influence, rank points). Called by `SpecialItemsController`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `type` | string | Yes | Booster type: `speed`, `damage`, `catchup`, `prestige_points`, `deploy_size`, `air_damage`, `ground_deploy_influence`, `air_deploy_influence`, `ground_deploy_rank_points`, `air_deploy_rank_points` |
+| `quality` | number | Yes | Booster quality tier (e.g., `1`, `2`, `3`, `5`, `10`, `100`, `200`, `500`) |
+| `duration` | number | Yes | Duration in seconds (e.g., `60`, `180`, `300`, `600`, `1200`, `3600`, `7200`, `28800`, `86400`) |
+| `battleId` | number | Yes | The battle/campaign ID |
+| `battleZoneId` | number | Yes | The specific battle zone ID |
+| `sideId` | number | Yes | Country ID of the side you're fighting for (`SERVER_DATA.mySideCountryId`) |
+| `_token` | string | Yes | CSRF token |
+| `confirmExtendBooster` | string | No | Set to `"yes"` when extending/replacing an active booster of the same type |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/fight-activateBooster' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'type=speed&quality=2&duration=600&battleId=869119&battleZoneId=38158390&sideId=72&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Response
+
+```json
+{
+  "status": "succes",
+  "message": "Booster activated"
+}
+```
+
+#### Notes
+
+- Success status is `"succes"` (note the typo — single 's')
+- If a booster of the same type is already active, the UI prompts for confirmation and resends with `confirmExtendBooster=yes`
+- Available boosters and their params are listed in `SERVER_DATA.boosters.inactive`
+- Each booster's `canActivateBooster` flag indicates if it can currently be activated
+
+---
+
+### Battlefield Travel (Choose Side & Travel)
+
+**Method:** POST
+**URL:** `/en/main/battlefieldTravel`
+**Auth Required:** Yes
+
+#### Description
+
+Handles choosing a side in the battle and traveling to the region where the fight takes place. Called by `BattleSetupController`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `sideCountryId` | number | Yes | Country ID to fight for |
+| `battleZoneId` | number | Yes | Target battle zone ID |
+| `_token` | string | Yes | CSRF token |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/battlefieldTravel' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&sideCountryId=72&battleZoneId=38158390&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Notes
+
+- Travel costs are visible in `SERVER_DATA.travel.travelData.allDestinations.regions[regionId].cost`
+- Can use travel tickets instead of currency — check `ticket` and `ticketAmount` fields
+- If `travelRequired` is `false`, the player is already in a valid region
+- The `travelMethod` field indicates preference: `"preferCurrency"` or ticket-based
+
+---
+
+### Switch Division
+
+**Method:** POST
+**URL:** `/en/main/switch-division`
+**Auth Required:** Yes
+
+#### Description
+
+Switches the player to a different division (Div I–IV or Aircraft). Requires `canSwitchDivisions: true` in citizen data. Causes a page reload on success. Called from `battle_new.js`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `countryId` | number | Yes | Player's country ID (`SERVER_DATA.countryId`) |
+| `zoneId` | number | Yes | Current zone/round number |
+| `division` | number | Yes | Target division: `1`–`4` (ground) or `11` (aircraft) |
+| `_token` | string | Yes | CSRF token |
+| `action` | string | Yes | `"activate"` |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/switch-division' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&countryId=72&zoneId=8&division=4&_token=YOUR_CSRF_TOKEN&action=activate'
+```
+
+#### Response
+
+```json
+{
+  "error": false
+}
+```
+
+#### Notes
+
+- On success (`error: false`), the client reloads the page
+- Only available when `SERVER_DATA.canSwitchDivisions` is `true`
+- Division `11` = Aircraft
+
+---
+
+### PvP Queue (Join/Leave)
+
+**Method:** POST
+**URL:** `/en/main/pvp-queue`
+**Auth Required:** Yes
+
+#### Description
+
+Joins or leaves the PvP (duel) queue in a battle zone. Minimum 100 energy required to join. Called from `battle_new.js`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `battleZoneId` | number | Yes | The specific battle zone ID |
+| `_token` | string | Yes | CSRF token |
+| `action` | string | Yes | `"join"` or `"leave"` |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/pvp-queue' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&battleZoneId=38158390&_token=YOUR_CSRF_TOKEN&action=join'
+```
+
+#### Response
+
+```json
+{
+  "error": false,
+  "message": "SUCCESS"
+}
+```
+
+#### Notes
+
+- Messages: `"SUCCESS"`, `"JOIN"` for successful queue join
+- `pvpShowLock` in `SERVER_DATA` gates whether PvP is available
+- Points threshold: PvP disabled when both sides exceed 1400 campaign points
+
+---
+
+### PvP Inventory
+
+**Method:** GET
+**URL:** `/en/military/pvp-inventory/`
+**Auth Required:** Yes
+
+#### Description
+
+Returns an HTML fragment containing the player's PvP-related inventory. Rendered inline in the battlefield UI.
+
+#### Notes
+
+- Returns **HTML**, not JSON
+- Used to display weapons/items available during PvP duels
+
+---
+
+### Get Deployment Inventory
+
+**Method:** POST
+**URL:** `/en/military/fightDeploy-getInventory`
+**Auth Required:** Yes
+
+#### Description
+
+Fetches the player's inventory for deployment — available weapons, vehicles, energy sources (food, energy bars, treats), fuel, and deployment configuration limits. Called by `DeploymentController` when opening the deploy panel.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `battleZoneId` | number | Yes | The specific battle zone ID |
+| `sideCountryId` | number | Yes | Country ID to fight for |
+| `_token` | string | Yes | CSRF token |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&battleZoneId=38158390&sideCountryId=72&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Expected Response Structure
+
+```json
+{
+  "energySources": [
+    { "type": "food", "quality": 1, "amount": 500 },
+    { "type": "energy_bar", "quality": 1, "amount": 200 },
+    { "type": "winter_treat", "quality": 1, "amount": 100 }
+  ],
+  "weapons": [...],
+  "vehicles": [...],
+  "minEnergy": 0,
+  "maxEnergy": 10000,
+  "fuel": { "amount": 500 }
+}
+```
+
+#### Notes
+
+- Response includes `energySources` array grouped by type
+- `minEnergy`/`maxEnergy` define the deployment energy slider range
+- Weapons and vehicles include quality, damage bonuses, and selection state
+
+---
+
+### Start Deployment
+
+**Method:** POST
+**URL:** `/en/military/fightDeploy-startDeploy`
+**Auth Required:** Yes
+
+#### Description
+
+Starts an automated deployment that gradually consumes resources (food, energy bars, fuel) to deal damage over time. While deployed, the player **cannot** travel, eat, fight manually, or use bombs — but **can** activate boosters. Called by `DeploymentController.startDeploy()`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `battleZoneId` | number | Yes | The specific battle zone ID |
+| `sideCountryId` | number | Yes | Country ID to fight for |
+| `energyUsed` | number | Yes | Total energy to deploy |
+| `weaponQuality` | number | Yes | Weapon quality to use (0 = bare hands) |
+| `vehicleId` | number | No | Vehicle/protector to use |
+| `_token` | string | Yes | CSRF token |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-startDeploy' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&battleZoneId=38158390&sideCountryId=72&energyUsed=5000&weaponQuality=7&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Notes
+
+- Only one deployment can be active at a time (check `SERVER_DATA.deployment`)
+- Level-up energy is automatically added and consumed during deployment
+- Deploy estimates (damage, kills, time) are calculated client-side
+- Boosters like `deploy_size` (+100%, +200%, +500%) increase the effective deployment size
+
+---
+
+### Cancel Deployment
+
+**Method:** POST
+**URL:** `/en/military/fightDeploy-cancelDeploy`
+**Auth Required:** Yes
+
+#### Description
+
+Cancels an in-progress deployment. Called when the player clicks the cancel button on the deploy panel.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `_token` | string | Yes | CSRF token |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-cancelDeploy' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&_token=YOUR_CSRF_TOKEN'
+```
+
+---
+
+### Deployment Report Popup
+
+**Method:** GET (popup)
+**URL:** `/en/military/fightDeploy-deployReportPopup`
+**Auth Required:** Yes
+
+#### Description
+
+Returns an HTML popup fragment with the completed deployment's results (damage dealt, kills, resources consumed). Shown after deployment finishes.
+
+---
+
+### Activate Battle Effect
+
+**Method:** POST
+**URL:** `/en/main/fight-activateBattleEffect`
+**Auth Required:** Yes
+
+#### Description
+
+Activates a special battle effect (e.g., snow fight, Valentine's Day). Called by `SnowFightFactory`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `citizenId` | number | Yes | Player's citizen ID |
+| `battleId` | number | Yes | The battle/campaign ID |
+| `type` | string | Yes | Effect type (e.g., `"snowFight"`, `"valentinesDay"`) |
+| `_token` | string | Yes | CSRF token |
+
+---
+
+### List Battle Objectives
+
+**Method:** GET
+**URL:** `/en/main/fight-listObjectives`
+**Auth Required:** Yes
+
+#### Description
+
+Returns the list of battle objectives (special destructible targets). Called by `ObjectivesFactory`.
+
+---
+
+### Battle Stats
+
+**Method:** POST
+**URL:** `/en/military/battle-stats/{battleId}`
+**Auth Required:** Yes
+
+#### Description
+
+Returns battle statistics data. The `{battleId}` is appended to the URL path.
+
+---
+
+### Energy Refill - Get Inventory
+
+**Method:** POST
+**URL:** `/en/economy/energyRefill-getInventory`
+**Auth Required:** Yes
+
+#### Description
+
+Fetches the player's food and energy bar inventory for the energy refill popup. Called by `EnergyPopupFactory`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+
+---
+
+### Refill Energy (Eat Food / Use Energy Bar)
+
+**Method:** POST
+**URL:** `/en/economy/refillEnergy`
+**Auth Required:** Yes
+
+#### Description
+
+Consumes food or energy bars to restore energy. Called by `EnergyPopupFactory.recoverEnergy()`.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| *(additional params)* | | | Type and quality of food/energy bar to consume |
+
+#### Notes
+
+- Food consumption has daily limits (`energyFromFoodRemaining`)
+- Energy bars bypass the food limit
+- Special food (treats) restore 50 energy per use, `specialFoodAmount` tracked separately
+- Energy pool limit is `energyPoolLimit` (e.g., 10220)
+- `energyPerInterval` is the passive recovery rate
+
+---
+
+### Mercenary Campaign Subscribe/Unsubscribe
+
+**Method:** POST
+**URL:** `/en/main/mercenary-campaign/subscribe/`
+**URL:** `/en/main/mercenary-campaign/unsubscribe/`
+**Auth Required:** Yes
+
+#### Description
+
+Subscribe to or unsubscribe from a mercenary campaign (combat order).
+
+---
+
+### Battle Map Status
+
+**Method:** POST
+**URL:** `/en/military/battle-map-status/{battleId}`
+**Auth Required:** Yes
+
+#### Description
+
+Returns the campaign map status showing which divisions each side has won. Called by `CampaignMapController`.
+
+---
+
+## Pomelo WebSocket (Real-time Battle Updates)
+
+**Gateway:** `gate.erepublik.com:3050`
+**Auth Token:** Same as `erpk` session cookie value
+
+### Description
+
+The battlefield page establishes a WebSocket connection via the Pomelo framework for real-time updates. This provides:
+
+- Live hit notifications (who hit whom, damage dealt)
+- Domination bar updates
+- Battle hero changes
+- Zone won/lost events
+- Deployment progress updates
+
+### Configuration (from page source)
+
+```json
+{
+  "pomelo": {
+    "gate": "gate.erepublik.com",
+    "port": 3050,
+    "authToken": "YOUR_SESSION_TOKEN"
+  }
+}
+```
+
+### JavaScript Bundle
+
+The Pomelo client is loaded from: `//www.erepublik.net/js/pomelo/lib/build/build.{timestamp}.js`
+
+### Notes
+
+- The Pomelo connection is what enables the live battlefield animation (players appearing, shooting, damage numbers)
+- Without WebSocket, you'd need to poll `/en/military/battle-console` for updates
+- The `authToken` matches the `erpk` cookie value
+
+---
+
+## Battlefield AngularJS Controllers Reference
+
+The battlefield page uses these AngularJS controllers:
+
+| Controller | Element ID | Purpose |
+|------------|-----------|---------|
+| `BattleStatsController` | `#BattleStatsController` | Live stats, fighter rankings, combat orders, war history |
+| `BattlefieldPlayersController` | `#battleConsole` | Player avatars on the battlefield animation |
+| `BattleSetupController` | `#battleFooterbattleSetup` | Side selection, travel, division switching |
+| `DeploymentController` | `#battleFooterDeploy` | Deploy panel (inventory, energy slider, vehicle selection) |
+| `SpecialItemsController` | `#special_weapons_list_area` | Boosters, bombs, special weapons |
+| `ErpkBattleFieldChangeSides` | `.switch_region_area` | Division/side switching button |
+| `CampaignMapController` | `#CampaignMapController` | Campaign map overlay |
+| `ValentinesController` | `#ValentinesController` | Seasonal Valentine's Day events |
+| `SideNotificationController` | `#SideNotificationController` | Side notifications (achievements, rewards) |
+| `CitizenAchievementsController` | `#CitizenAchievementsController` | Achievement popups |
+
+---
+
+## JavaScript Bundles Reference
+
+Key JS files loaded on the battlefield page:
+
+| File | Size | Purpose |
+|------|------|---------|
+| `battle_new.{ts}.js` | ~86 KB | Core battle logic: PvP, bomb deployment, division switching, food inventory |
+| `erepublik.{ts}.js` | ~411 KB | Main framework: popups, general UI, page routing |
+| `erpk_angular_controllers.{ts}.js` | ~391 KB | All AngularJS controllers (battle stats, deploy, boosters, economy) |
+| `erpk_angular_services.{ts}.js` | ~24 KB | Angular services and factories |
+| `pomelo/lib/build/build.{ts}.js` | — | Pomelo WebSocket client for real-time updates |
+| `pvp/inventory.{ts}.js` | — | PvP inventory management |
+
+> `{ts}` = build timestamp (e.g., `1770287129`)
+
+---
+
+## Battlefield Automation Summary
+
+For fighting automation, the key endpoints and data flow are:
+
+1. **Load battlefield page** → `GET /en/military/battlefield/{battleId}` → extract `SERVER_DATA` (CSRF token, battle zones, boosters, travel)
+2. **Choose side & travel** (if needed) → `POST /en/main/battlefieldTravel`
+3. **Switch division** (if needed) → `POST /en/main/switch-division`
+4. **Check energy** → `energyData` from page or poll `globalNS.userInfo.wellness`
+5. **Eat food / use energy bars** → `POST /en/economy/refillEnergy`
+6. **Activate boosters** → `POST /en/military/fight-activateBooster`
+7. **Deploy** → `POST /en/military/fightDeploy-startDeploy` (automated fighting)
+8. **Deploy bombs** → `POST /en/military/deploy-bomb`
+9. **Monitor progress** → WebSocket (Pomelo) or poll `POST /en/military/battle-console`
+10. **Cancel deployment** → `POST /en/military/fightDeploy-cancelDeploy`
+
+**Important values from `SERVER_DATA` for automation:**
+
+| Value | Source | Use |
+|-------|--------|-----|
+| `csrfToken` | `SERVER_DATA.csrfToken` | Required `_token` param for all POST requests |
+| `battleId` | `SERVER_DATA.battleId` | Battle identifier |
+| `battleZoneId` | `SERVER_DATA.battleZoneId` | Current zone/division identifier |
+| `mySideCountryId` | `SERVER_DATA.mySideCountryId` | Which side you're on |
+| `health` | `SERVER_DATA.health` | Current energy |
+| `travelRequired` | `SERVER_DATA.travelRequired` | Whether travel is needed |
+| `canSwitchDivisions` | `SERVER_DATA.canSwitchDivisions` | Whether division switching is allowed |
+| `boosters.inactive` | `SERVER_DATA.boosters.inactive` | Available boosters to activate |
+| `specialWeapons` | `SERVER_DATA.specialWeapons` | Available bombs to deploy |
+| `playerStrength` | `erepublik.promos.April1st2017.playerStrength` | Current strength value |
 
 ---
 
