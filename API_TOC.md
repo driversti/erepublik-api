@@ -109,6 +109,9 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/main/citizen-profile-json-global/{citizenId}` | GET | Get citizen profile (public) |
 | `/en/main/citizen-profile-json-personal/{citizenId}` | GET | Get citizen profile (authenticated) |
 | `/en/main/citizen-addRemoveFriend` | POST | Add or remove friend |
+| `/en/main/citizen-hovercard/{citizenId}` | GET | Get citizen hovercard (mini-profile with online status, badges, memberships) |
+| `/en/main/citizen-search?name={query}` | GET | Search citizens by name prefix |
+| `/en/main/news/rated/all/all/{page}/rss` | GET | News articles RSS feed |
 
 ### Notifications
 | Endpoint | Method | Description |

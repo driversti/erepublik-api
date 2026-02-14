@@ -779,6 +779,320 @@ curl -X POST 'https://www.erepublik.com/en/main/wall-post/delete/json' \
 
 ---
 
+## Get Citizen Hovercard
+
+**Method:** GET
+**URL:** `/en/main/citizen-hovercard/{citizenId}`
+**Auth Required:** Yes
+
+### Description
+
+Returns a compact citizen profile used for hover tooltips across the site. Significantly richer than expected — includes online status, badge/rank icons, political title, party/MU/city memberships, and detailed fighter stats. This endpoint powers the popup that appears when hovering over a citizen's name in the game UI.
+
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| citizenId | number | Yes | The unique citizen ID |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+
+### Example Request (cURL)
+
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+### Example Response
+
+```json
+{
+  "name": "driver sti",
+  "avatar": "https://cdnt.erepublik.net/.../1907aee62f42c11beba21159840cdc16.png?...",
+  "level": 1730,
+  "bornOn": "Apr 12, 2011",
+  "isDead": false,
+  "isBanned": false,
+  "isOnline": true,
+  "numberOfFriends": 5353,
+  "isFriend": false,
+  "isSelf": true,
+  "citizenship": {
+    "id": 72,
+    "name": "Lithuania",
+    "permalink": "Lithuania"
+  },
+  "politicalTitle": "Congress Member",
+  "isOrg": false,
+  "isAdult": true,
+  "badges": [
+    {
+      "type": "militaryRank",
+      "name": "Legends of Ukraine: Laurentiu L Battalion XX",
+      "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/070_legendary.png"
+    },
+    {
+      "type": "aviationRank",
+      "name": "Air Commodore *****",
+      "icon": "//www.erepublik.net/images/modules/ranks/aircraft/64px/061_air_commodore.png"
+    }
+  ],
+  "activity": [
+    {
+      "type": "residenceCity",
+      "id": 710,
+      "name": "Klaipeda",
+      "avatar": "//www.erepublik.net/images/modules/cities/128px/Klaipeda.png",
+      "title": "Resident",
+      "permalink": "//www.erepublik.com/en/main/city/Klaipeda"
+    },
+    {
+      "type": "politicalParty",
+      "id": 3773,
+      "name": "Lietuvos Tevynes Sajunga",
+      "avatar": "//cdnt.erepublik.net/.../5c151c2a9b76f9ef26d7e0f0d00c9a89.jpg",
+      "title": "Party Member",
+      "economicalOrientation": "Center",
+      "socialOrientation": "Anarchist",
+      "permalink": "//www.erepublik.com/en/party/3773"
+    },
+    {
+      "type": "militaryUnit",
+      "id": 893,
+      "name": "Lithuanian Shadows",
+      "avatar": "//cdnt.erepublik.net/.../d56b9fc4b0f1be8871f5e1c40c0067e7.png?...",
+      "title": "Soldier",
+      "permalink": "//www.erepublik.com/en/military/military-unit/893"
+    }
+  ],
+  "fighterInfo": {
+    "military": {
+      "rank": 89,
+      "strength": 414573.469,
+      "division": 4
+    },
+    "aviation": {
+      "rank": 61,
+      "perception": 0,
+      "division": 11
+    }
+  },
+  "interactionButtons": []
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | string | Citizen display name |
+| `avatar` | string | Avatar image URL |
+| `level` | number | Experience level |
+| `bornOn` | string | Registration date (e.g., "Apr 12, 2011") |
+| `isDead` | boolean | Whether the citizen account is dead |
+| `isBanned` | boolean | Whether the citizen is banned |
+| `isOnline` | boolean | Whether the citizen is currently online |
+| `numberOfFriends` | number | Total friend count |
+| `isFriend` | boolean | Whether the authenticated citizen is friends with this citizen |
+| `isSelf` | boolean | Whether this is the authenticated citizen's own profile |
+| `citizenship` | object | Citizenship info: `id`, `name`, `permalink` |
+| `politicalTitle` | string | Current political role (e.g., "Congress Member", "President") |
+| `isOrg` | boolean | Whether this is an organization account (not a player) |
+| `isAdult` | boolean | Whether the account meets age requirements |
+| `badges` | array | Military and aviation rank badges |
+| `badges[].type` | string | Badge type: `"militaryRank"` or `"aviationRank"` |
+| `badges[].name` | string | Full rank name |
+| `badges[].icon` | string | Rank icon image URL |
+| `activity` | array | Active memberships (residence, party, military unit) |
+| `activity[].type` | string | `"residenceCity"`, `"politicalParty"`, or `"militaryUnit"` |
+| `activity[].id` | number | Entity ID |
+| `activity[].name` | string | Entity name |
+| `activity[].title` | string | Role title (e.g., "Resident", "Party Member", "Soldier") |
+| `activity[].permalink` | string | Full URL to the entity page |
+| `activity[].economicalOrientation` | string | Party economic orientation (party only) |
+| `activity[].socialOrientation` | string | Party social orientation (party only) |
+| `fighterInfo` | object | Military and aviation combat stats |
+| `fighterInfo.military` | object | Ground combat: `rank`, `strength`, `division` |
+| `fighterInfo.aviation` | object | Air combat: `rank`, `perception`, `division` |
+| `interactionButtons` | array | Available interaction buttons (empty for self) |
+
+### Notes
+
+- **Lightweight alternative to profile endpoints**: Returns key citizen data in a single compact response, ideal for tooltips or quick lookups
+- **Online status**: The `isOnline` field provides real-time online status — not available from the profile JSON endpoints
+- **Friendship context**: `isFriend` and `isSelf` are relative to the authenticated session
+- **Error handling**: Returns `{"error": true, "message": "citizen error"}` for invalid citizen IDs or system accounts
+- **Activity array**: Contains up to 3 entries (city, party, MU) — entries are omitted if the citizen has no membership
+- **Organization accounts**: When `isOrg: true`, the response represents a company/organization rather than a player
+
+---
+
+## Search Citizens
+
+**Method:** GET
+**URL:** `/en/main/citizen-search`
+**Auth Required:** Yes
+
+### Description
+
+Searches for citizens by name prefix. Returns up to ~10 matching results ordered by relevance. Used for autocomplete in the game's citizen search functionality (e.g., when composing messages or adding friends).
+
+### Query Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| name | string | Yes | Search query (citizen name prefix, minimum ~2 characters) |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+
+### Example Request (cURL)
+
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-search?name=plato' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+### Example Response
+
+```json
+{
+  "query": "plato",
+  "citizens": [
+    {
+      "id": 2,
+      "name": "Plato",
+      "level": 27,
+      "birthday": "Day 169",
+      "xp": 10365,
+      "countryId": 30,
+      "avatar": "https://cdnt.erepublik.net/.../c81e728d9d4c2f636f067f89cc14862c.jpg"
+    },
+    {
+      "id": 9435044,
+      "name": "Plato Aparato",
+      "level": 1,
+      "birthday": "Day 4,008",
+      "xp": 0,
+      "countryId": 64,
+      "avatar": "https://cdnt.erepublik.net/.../default_male.gif"
+    }
+  ]
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `query` | string | The search query that was submitted |
+| `citizens` | array | Array of matching citizen results |
+| `citizens[].id` | number | Citizen ID |
+| `citizens[].name` | string | Citizen display name |
+| `citizens[].level` | number | Experience level |
+| `citizens[].birthday` | string | In-game birthday (e.g., "Day 169") |
+| `citizens[].xp` | number | Experience points |
+| `citizens[].countryId` | number | Citizenship country ID |
+| `citizens[].avatar` | string | Avatar image URL |
+
+### Notes
+
+- **Prefix matching**: Searches by name prefix, not substring — "plato" matches "Plato" and "Platoctm" but not "xPlato"
+- **Result limit**: Returns approximately 10 results maximum
+- **Error handling**: Returns `{"error": {"message": "Invalid name parameter"}}` if the `name` parameter is missing
+- **Inactive citizens**: Results include inactive/dead citizens (check `level: 1` and `xp: 0` as indicators of never-played accounts)
+- **Use cases**: Citizen lookup, autocomplete for message composition, friend search, building citizen directories
+
+---
+
+## News RSS Feed
+
+**Method:** GET
+**URL:** `/en/main/news/{sorting}/{country}/{category}/{page}/rss`
+**Auth Required:** No (public, but session cookie may affect results)
+
+### Description
+
+Returns an RSS/XML feed of news articles (player-written newspapers). Provides article titles, links, publication dates, and description excerpts. Useful for building news readers, monitoring political developments, or tracking player-generated content.
+
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| sorting | string | Yes | Sort order: `rated` (by votes/endorsements) |
+| country | string | Yes | Country filter: `all` for all countries, or a country name |
+| category | string | Yes | Article category: `all` for all categories |
+| page | number | Yes | Page number (starts at 1) |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | No (may personalize results) |
+
+### Example Request (cURL)
+
+```bash
+curl 'https://www.erepublik.com/en/main/news/rated/all/all/1/rss'
+```
+
+### Example Response
+
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+  xmlns:content="//purl.org/rss/1.0/modules/content/"
+  xmlns:wfw="//wellformedweb.org/CommentAPI/">
+  <channel>
+    <title><![CDATA[eRepublik News]]></title>
+    <link>https://erepublik.com/en/main/news/rated/all/all/1/rss</link>
+    <description><![CDATA[eRepublik News]]></description>
+    <language>en-us</language>
+    <pubDate>Fri, 13 Feb 2026 20:38:50 -0800</pubDate>
+    <item>
+      <title><![CDATA[Gold farming, Feb 1-8]]></title>
+      <link>https://www.erepublik.com/en/article/gold-farming-feb-1-8-2794000/1/20</link>
+      <guid>https://www.erepublik.com/en/article/gold-farming-feb-1-8-2794000/1/20</guid>
+      <pubDate>Sun, 08 Feb 2026 00:36:08 -0800</pubDate>
+      <description><![CDATA[Greetings! I decided to publish another data slice...]]></description>
+    </item>
+  </channel>
+</rss>
+```
+
+### Response Fields (per `<item>`)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | Article title (CDATA-wrapped) |
+| `link` | string | Full URL to the article page |
+| `guid` | string | Unique article identifier (same as link) |
+| `pubDate` | string | RFC 2822 publication date |
+| `description` | string | Article excerpt/summary (CDATA-wrapped, truncated) |
+
+### Notes
+
+- **RSS 2.0 format**: Standard RSS with `content` and `wfw` XML namespace extensions
+- **Article URL pattern**: `/en/article/{slug}-{articleId}/{page}/{commentsPerPage}`
+- **Sorting**: Only `rated` is confirmed to work; other values may return 404
+- **Pagination**: Use `page` parameter to get older articles
+- **Public endpoint**: Works without authentication, but results may differ with a session cookie
+- **Use cases**: News aggregation, monitoring political articles, tracking community developments
+
+---
+
 ## Template
 
 Use this template when documenting new endpoints:
