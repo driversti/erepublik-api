@@ -10,6 +10,8 @@
 
 Economy endpoints cover marketplace, work mechanics, companies, currencies (Gold/CC), and financial transactions.
 
+> For Gold earning methods and cost reference data, see [[Gold]].
+
 ---
 
 ## Endpoints
@@ -872,6 +874,13 @@ curl 'https://www.erepublik.com/en/main/shopItemsJson' \
 - VIP levels range from 0 (non-VIP) to 13 (maximum VIP tier)
 - Items often have limited daily/weekly purchase quantities
 - Raw material prices make high-tier items accessible without spending Gold
+
+- **Pack Promotions:**
+  - Special pack offers (Tycoon Pack, Hero Packs, Combat Packs, Seasonal Packs) appear in `ErpkShop` variable on the homepage
+  - `ErpkShop = {"promotions":[],"popupPromotions":[],"battlePromotions":[],"numberOfPurchasablePacks":0,"specialSalesEvent":false}`
+  - Packs are real-money purchases (EUR/USD/Game Tokens), not available via this JSON endpoint
+  - See [[Packs]] for pack mechanics (Tycoon Pack: 20g + 150 tickets + 20% productivity for 7 days)
+  - Promotions shown as banners on homepage, purchased via external payment providers
 
 ---
 
