@@ -1031,9 +1031,9 @@ Returns an RSS/XML feed of news articles (player-written newspapers). Provides a
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| sorting | string | Yes | Sort order: `rated` (by votes/endorsements) |
-| country | string | Yes | Country filter: `all` for all countries, or a country name |
-| category | string | Yes | Article category: `all` for all categories |
+| sorting | string | Yes | Sort order: `rated` (by votes/endorsements) or `latest` (newest first) |
+| country | string | Yes | Must be `all` — country-specific values return HTML instead of RSS |
+| category | string | Yes | Must be `all` — category-specific values return HTML instead of RSS |
 | page | number | Yes | Page number (starts at 1) |
 
 ### Headers
@@ -1086,7 +1086,8 @@ curl 'https://www.erepublik.com/en/main/news/rated/all/all/1/rss'
 
 - **RSS 2.0 format**: Standard RSS with `content` and `wfw` XML namespace extensions
 - **Article URL pattern**: `/en/article/{slug}-{articleId}/{page}/{commentsPerPage}`
-- **Sorting**: Only `rated` is confirmed to work; other values may return 404
+- **Sorting**: Two sort orders work: `rated` (by votes) and `latest` (newest first). Other values return 404
+- **No filtering**: Country and category path segments must be `all` — specific values (e.g., `Lithuania`, `politics`) return HTML pages instead of RSS
 - **Pagination**: Use `page` parameter to get older articles
 - **Public endpoint**: Works without authentication, but results may differ with a session cookie
 - **Use cases**: News aggregation, monitoring political articles, tracking community developments
