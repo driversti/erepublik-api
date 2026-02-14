@@ -81,7 +81,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/military/campaignsJson/countryId/{id}` | GET | Get campaigns for a specific country |
 | `/en/military/campaignsJson/citizen` | GET | Get campaigns for the logged-in citizen |
 | `/en/military/battlefield/{battleId}` | GET | Full battlefield page with embedded battle state (HTML) |
-| `/en/military/battle-console` | POST | Get live battle zone stats, fighters, combat orders |
+| `/en/military/battle-console` | POST | Get live battle zone stats, fighters, combat orders, war history |
 | `/en/military/battle-stats/{battleId}` | POST | Get battle statistics |
 | `/en/military/deploy-bomb` | POST | Deploy a bomb (Big Bomb, Small Bomb, Cruise Missile) |
 | `/en/military/fight-activateBooster` | POST | Activate a combat booster |

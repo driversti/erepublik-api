@@ -155,8 +155,13 @@ curl 'https://www.erepublik.com/en/military/campaignsJson/list' \
 | `battles.*.div.*.div` | number | Division number (1-4 = ground, 11 = air) |
 | `battles.*.div.*.wall.for` | number | Country ID currently holding the wall |
 | `battles.*.div.*.wall.dom` | number | Wall domination percentage (0-100) |
+| `battles.*.div.*.end` | number/null | Unix timestamp when this division round finished; `null` if still active |
+| `battles.*.div.*.division_end` | boolean | `true` if this division round has concluded |
+| `battles.*.div.*.epic` | number | Epic battle status (`0` = not epic) |
+| `battles.*.div.*.epic_type` | number | Epic battle type identifier |
 | `battles.*.div.*.intensity_scale` | string | Battle intensity ("cold_war", etc.) |
 | `battles.*.div.*.co` | object | Combat orders for invader and defender |
+| `battles.*.div.*.terrain` | number | Terrain type for this division (`0` = default) |
 | `countries` | object | Map of country ID → country info |
 | `countries.*.cotd` | number | Campaign of the day battle ID (0 if none) |
 | `last_updated` | number | Unix timestamp of last data update |
@@ -173,7 +178,8 @@ curl 'https://www.erepublik.com/en/military/campaignsJson/list' \
   - `div: 4` - Division 4 (ground)
   - `div: 11` - Air division
 - `epic` values indicate epic battle status (0 = not epic)
-- `division_end: true` indicates the round has finished
+- `division_end: true` indicates the round has finished; when true, the `end` field contains the Unix timestamp of when the round ended
+- **Per-division finish timestamps:** The `end` field is the only direct timestamp for when a division round ended. However, this endpoint only returns **active** battles — once a battle finishes completely, it disappears from the list. See [Determining Battle Finish Time](#determining-battle-finish-time) for approaches to get timing data for fully finished battles
 - `terrain: 0` is default terrain; other values indicate special terrain modifiers
 
 ---
@@ -1129,7 +1135,7 @@ curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
 | `isDictatorship` | boolean | Whether this involves a dictatorship |
 | `allies` | object | Allied countries for each side, keyed by country ID |
 | `allies.{countryId}` | array | Array of allied country IDs for this side |
-| `battle_time` | number | Elapsed battle time in seconds |
+| `battle_time` | number | Seconds since campaign started. Always equals `serverTime - campaign_start_unix` — does **not** freeze for finished battles |
 | `serverTime` | number | Unix timestamp of the server time |
 
 #### Notes
@@ -1157,6 +1163,118 @@ curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
   - `isDictatorship`: True when a dictatorship is involved
 - **Country IDs**: The numeric keys (e.g., "42", "53") represent country IDs for invaders and defenders
 - **Use case**: This endpoint is ideal for building battle dashboards or monitoring overall campaign progress
+- **`battle_time` is not frozen**: Live testing confirmed `battle_time` keeps incrementing for finished battles. It always equals `serverTime - campaign_start_unix`. Useful for deriving `battle_start_at` as a Unix timestamp: `start_unix = serverTime - battle_time`. See [Determining Battle Finish Time](#determining-battle-finish-time)
+
+---
+
+### Get War History (Previous Rounds)
+
+**Method:** POST
+**URL:** `/en/military/battle-console`
+**Auth Required:** Yes
+
+#### Description
+
+Returns campaign progress data used by the "War History" tab in `BattleStatsController`. Despite the name, this action does **not** return per-round historical breakdowns — it returns the **same data structure and content** as `action=battleConsole` (current round state + cumulative campaign totals). The `zoneId` parameter is ignored.
+
+#### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `battleId` | number | Yes | The battle/campaign ID |
+| `zoneId` | number | Yes | The zone (round) number |
+| `battleZoneId` | number | Yes | The specific battle zone ID (division) |
+| `action` | string | Yes | Must be `"warHistory"` |
+| `_token` | string | Yes | CSRF token from `SERVER_DATA.csrfToken` |
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -d 'battleId=869119&zoneId=8&battleZoneId=38158390&action=warHistory&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Example Response
+
+Response is **identical in structure** to [`action=battleConsole`](#get-battle-console-data). Tested on battle 869713 (round 5, 4 rounds of history):
+
+```json
+{
+  "division": [
+    {
+      "id": 38185661,
+      "division": 1,
+      "countries": {
+        "24": {
+          "roundDominationPoints": 1830,
+          "defenceShield": 0,
+          "totalPointsWonByDivision": 1,
+          "wall": 100,
+          "combatOrders": []
+        },
+        "42": {
+          "roundDominationPoints": 1470,
+          "defenceShield": null,
+          "totalPointsWonByDivision": 0,
+          "wall": 0,
+          "combatOrders": []
+        },
+        "divisionWinner": 24,
+        "dominatingCountry": 24
+      },
+      "type": "tank",
+      "divisionWinner": false,
+      "isEpic": false,
+      "epicState": 0,
+      "epicBattleProgress": 0,
+      "campaignPoints": 1,
+      "winnerInfo": {
+        "message": "Division 1 of USA won this battle",
+        "countryName": "USA",
+        "countryPermalink": "USA",
+        "campaignFinished": false,
+        "waiting": true
+      }
+    }
+  ],
+  "totalPointsByDivision": {
+    "1": { "42": 3, "24": 2 },
+    "2": { "42": 8, "24": 0 },
+    "3": { "42": 15, "24": 0 },
+    "4": { "42": 25, "24": 0 },
+    "11": { "42": 35, "24": 0 }
+  },
+  "totalPoints": { "24": 2, "42": 86 },
+  "isResistance": false,
+  "isRevolution": false,
+  "isDictatorship": false,
+  "allies": { "42": [], "24": [] },
+  "battle_time": 7130,
+  "serverTime": 1771042613
+}
+```
+
+> Note: Only 1 of 5 divisions shown for brevity — full response contains all 5 divisions identical to `battleConsole`.
+
+#### Notes
+
+- **Functionally identical to `battleConsole`**: Live testing confirmed this returns the **exact same** data structure and content as `action=battleConsole`. The "warHistory" name reflects the frontend's usage context (populating the War History tab), not a different data format
+- **`zoneId` parameter is ignored**: Tested with `zoneId=1` and `zoneId=5` on a round-5 battle — same response each time
+- **No per-round history**: Does **not** return round-by-round historical data, timestamps, or breakdown of previous rounds. Only shows current round state + cumulative `totalPointsByDivision`
+- **No finish timestamps**: Does not contain any round finish or campaign finish timestamps (see [Determining Battle Finish Time](#determining-battle-finish-time))
+- **`winnerInfo` differences from finished battles**: For active battles with finished divisions, `winnerInfo` has `waiting: true` and no `isConquered`/`timeUntil` fields (compared to finished battles which have `campaignFinished: true`, `isConquered`, `waiting: false`, `timeUntil: 0`)
+- **Same endpoint**: Uses the same `POST /en/military/battle-console` endpoint as `battleConsole`, `battleStatistics`, `fighterStatistics`, and `combatOrders` actions
 
 ---
 
@@ -3011,10 +3129,11 @@ curl -X POST 'https://www.erepublik.com/en/military/battle-console' \
 
 #### Notes
 
-- `action=battleStatistics` — returns live domination stats, wall info, allied forces
-- `action=fighterStatistics` — returns top fighters on each side with damage rankings
+- `action=battleStatistics` — returns live domination stats, wall info, allied forces. See [Get Battle Statistics](#get-battle-statistics)
+- `action=fighterStatistics` — returns top fighters on each side with damage rankings. See [Get Battle Statistics (Console)](#get-battle-statistics-console)
 - `action=combatOrders` — returns active combat orders (bounties) for each side
-- `action=warHistory` — returns previous rounds' results
+- `action=warHistory` — returns previous rounds' results. **Response not yet documented** — see [Get War History](#get-war-history-previous-rounds)
+- `action=battleConsole` — returns overall battle state for all divisions. See [Get Battle Console Data](#get-battle-console-data)
 
 ---
 
@@ -3609,6 +3728,81 @@ For fighting automation, the key endpoints and data flow are:
 | `boosters.inactive` | `SERVER_DATA.boosters.inactive` | Available boosters to activate |
 | `specialWeapons` | `SERVER_DATA.specialWeapons` | Available bombs to deploy |
 | `playerStrength` | `erepublik.promos.April1st2017.playerStrength` | Current strength value |
+
+---
+
+## Determining Battle Finish Time
+
+There is **no known endpoint** that returns an explicit "battle finished at" timestamp for a completed campaign. Live testing (Feb 2026) confirmed this gap and eliminated several hypotheses.
+
+### Available Timing Data
+
+| Source | Field | Type | Behavior When Finished | Contains Finish Time? |
+|--------|-------|------|----------------------|----------------------|
+| [`campaignsJson/list`](#list-active-campaigns) | `div.*.end` | Unix timestamp | Per-division finish timestamp | ✅ **Yes** — but battle disappears from endpoint after finishing |
+| [`battleConsole`](#get-battle-console-data) | `battle_time` | Seconds | ❌ Keeps ticking (`= serverTime - start_unix`) | ❌ No |
+| [`battleConsole`](#get-battle-console-data) | `serverTime` | Unix timestamp | Current server time | ❌ No |
+| [Battlefield page](#get-battlefield-page) | `battle_start_at` | Date string | Preserved (campaign start time) | ❌ No (start only) |
+| [Battlefield page](#get-battlefield-page) | `battleFinished` | `0` / `1` | `1` when finished | ❌ Flag only, no timestamp |
+| [Battlefield page](#get-battlefield-page) | `zoneElapsedTime` | `"H:M:S"` | ❌ Keeps ticking (≈ `battle_time`) | ❌ No |
+| [`warHistory`](#get-war-history-previous-rounds) | *(same as battleConsole)* | — | Identical to battleConsole response | ❌ No |
+
+### Disproven: `battle_time` Is NOT Frozen for Finished Battles
+
+Initial hypothesis: `battle_time` freezes at the final value when a battle finishes, enabling `finish_time = battle_start_at + battle_time`.
+
+**Live test results (battle 864000, finished):**
+
+| Call | `battle_time` | `serverTime` | `serverTime - battle_time` |
+|------|--------------|-------------|--------------------------|
+| Call 1 | 1,551,813 | 1,771,042,657 | **1,769,490,844** |
+| Call 2 (19s later) | 1,551,832 | 1,771,042,676 | **1,769,490,844** |
+
+`battle_time` increased by exactly 19 seconds between calls. The constant `serverTime - battle_time = 1,769,490,844` equals the campaign start time (Mon, 26 Jan 2026 21:14:04 -0800), confirmed against the page's `battle_start_at`.
+
+**Conclusion:** `battle_time` is always computed as `serverTime - campaign_start_unix`. It never freezes.
+
+> **Useful side-effect:** `battle_time` provides `battle_start_at` as a Unix timestamp: `start_unix = serverTime - battle_time`. This avoids parsing the date string.
+
+### Disproven: `warHistory` Does Not Contain Round Timestamps
+
+Initial hypothesis: `action=warHistory` returns per-round historical data with timestamps.
+
+**Live test results:** The response is structurally and content-wise **identical** to `action=battleConsole`. It shows the current round's state plus cumulative `totalPointsByDivision` — no per-round breakdown, no timestamps. The `zoneId` parameter is also ignored. See [Get War History](#get-war-history-previous-rounds) for full details.
+
+### Only Working Approach: Capture `div.*.end` While Battle Is Active
+
+The `campaignsJson/list` endpoint provides per-division `end` timestamps (Unix) as each division finishes within a round. The **last** division to report `division_end: true` in the final round effectively marks the campaign's conclusion:
+
+```
+finish_time = max(div.*.end for all divisions where division_end == true)
+```
+
+**Example** from battle 863509 (captured while still active):
+```json
+{ "div": 1, "end": 1769344144, "division_end": true },
+{ "div": 2, "end": 1769342524, "division_end": true },
+{ "div": 3, "end": 1769342524, "division_end": true },
+{ "div": 4, "end": 1769342645, "division_end": true },
+{ "div": 11, "end": 1769342645, "division_end": true }
+```
+→ `max(end) = 1769344144` (Div 1 finished last)
+
+**Limitations:**
+- **Ephemeral**: Once the campaign finishes completely, it disappears from `campaignsJson/list`. You must capture this data while the battle is still listed
+- **Requires polling**: Best suited for bots or monitoring systems that periodically check active battles
+- **Not retrospective**: Cannot determine finish time for battles that already ended without having cached data
+- **Per-round only**: Shows the current round's division finish times, not previous rounds
+
+### Summary
+
+| Approach | Status | Works Retrospectively? |
+|----------|--------|----------------------|
+| Capture `max(div.*.end)` from `campaignsJson/list` | ✅ **Only working method** | ❌ No — must capture during battle |
+| Compute from `battle_start_at + battle_time` | ❌ **Disproven** — `battle_time` never freezes | N/A |
+| Extract from `warHistory` response | ❌ **Disproven** — identical to `battleConsole` | N/A |
+
+> **Open question:** There may be undiscovered endpoints (e.g., war history pages, citizen fight logs, or admin APIs) that contain historical battle timing data. The public-facing API currently provides no way to retrospectively determine when a battle finished.
 
 ---
 
