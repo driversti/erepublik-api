@@ -1901,7 +1901,7 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
 | `weapons[].uses` | number | Total uses available (amount × uses per weapon) |
 | `weapons[].preselect` | boolean | Whether this weapon should be preselected in UI |
 | `weapons[].attributes` | object | Weapon attributes (firepower, maxEnergy) |
-| `weapons[].attributes.firepower` | string/null | Firepower bonus (e.g., "+100%") |
+| `weapons[].attributes.firepower` | string/null | Firepower bonus (e.g., "+100%"). ⚠️ May contain invisible Unicode word joiner characters (U+2060) around the text — use `.trim()` or strip non-printable chars before comparing |
 | `weapons[].attributes.maxEnergy` | number/null | Maximum energy that can be consumed per hit |
 | `weapons[].damageperHit` | number | Calculated damage per hit with this weapon |
 | `weapons[].isBest` | boolean | Whether this is the highest quality weapon available |
@@ -1953,7 +1953,7 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
 - **Energy sources**:
   - `type: "pool"` represents the citizen's energy pool (regenerates over time)
   - `type: "food"` represents consumable food items of various qualities
-  - `type: "energy_bar"` represents premium energy bars (typically Q11)
+  - `type: "energy_bar"` represents premium energy bars (tier/quality varies — e.g., Q11 at 200 energy/bar, Q16 at 50 energy/bar)
 - **Food tiers**:
   - Tier 1 (Q1): 2 energy per unit
   - Tier 2 (Q2): 4 energy per unit
@@ -3370,60 +3370,6 @@ Returns an HTML fragment containing the player's PvP-related inventory. Rendered
 
 - Returns **HTML**, not JSON
 - Used to display weapons/items available during PvP duels
-
----
-
-### Get Deployment Inventory
-
-**Method:** POST
-**URL:** `/en/military/fightDeploy-getInventory`
-**Auth Required:** Yes
-
-#### Description
-
-Fetches the player's inventory for deployment — available weapons, vehicles, energy sources (food, energy bars, treats), fuel, and deployment configuration limits. Called by `DeploymentController` when opening the deploy panel.
-
-#### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `battleId` | number | Yes | The battle/campaign ID |
-| `battleZoneId` | number | Yes | The specific battle zone ID |
-| `sideCountryId` | number | Yes | Country ID to fight for |
-| `_token` | string | Yes | CSRF token |
-
-#### Example Request
-
-```bash
-curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -d 'battleId=869119&battleZoneId=38158390&sideCountryId=72&_token=YOUR_CSRF_TOKEN'
-```
-
-#### Expected Response Structure
-
-```json
-{
-  "energySources": [
-    { "type": "food", "quality": 1, "amount": 500 },
-    { "type": "energy_bar", "quality": 1, "amount": 200 },
-    { "type": "winter_treat", "quality": 1, "amount": 100 }
-  ],
-  "weapons": [...],
-  "vehicles": [...],
-  "minEnergy": 0,
-  "maxEnergy": 10000,
-  "fuel": { "amount": 500 }
-}
-```
-
-#### Notes
-
-- Response includes `energySources` array grouped by type
-- `minEnergy`/`maxEnergy` define the deployment energy slider range
-- Weapons and vehicles include quality, damage bonuses, and selection state
 
 ---
 
