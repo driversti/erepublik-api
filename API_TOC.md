@@ -28,6 +28,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | Notifications | Alerts, reports, notifications | [API_NOTIFICATIONS.md](API_NOTIFICATIONS.md) |
 | Economy | Marketplace, work, companies, currencies | [API_ECONOMY.md](API_ECONOMY.md) |
 | Rewards | Daily objectives, missions, achievements | [API_REWARDS.md](API_REWARDS.md) |
+| Power Spin | Wheel of Fortune — prizes, spins, jackpots | [API_POWERSPIN.md](API_POWERSPIN.md) |
 | Reference Data | Country & region ID lookup tables | [API_REFERENCE.md](API_REFERENCE.md) |
 
 ---
@@ -143,6 +144,12 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/main/mission-solve` | POST | Claim rewards for a completed mission |
 | `/en/main/weekly-challenge-data` | GET | Get weekly challenge progress and rewards |
 | `/en/main/weekly-challenge-collect-reward` | POST | Collect a weekly challenge reward |
+
+### Power Spin
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/en/main/wheeloffortune-build` | POST | Build Wheel of Fortune configuration (prizes, costs, progress) |
+| `/en/main/wheeloffortune-spin` | POST | Spin the Wheel of Fortune (deducts currency, awards prize) |
 
 ---
 
