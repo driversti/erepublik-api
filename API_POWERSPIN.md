@@ -743,29 +743,74 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
 }
 ```
 
+### Example Response (Success — Single Spin)
+
+```json
+{
+  "cost": 2000,
+  "estCost": 1900,
+  "account": {
+    "initial": 6278874,
+    "spent": 1900,
+    "remaining": 6276974
+  },
+  "jackpot": 0,
+  "free_spin": 0,
+  "spins": 15,
+  "prizes": [
+    {
+      "prize": "small_bomb",
+      "index": 10,
+      "icon": "https://www.erepublik.net/images/icons/industry/2/q21_128x128.png?1763108780",
+      "tooltip": "Small Bomb"
+    }
+  ],
+  "multispin": {
+    "1": { "spins": 1, "cost": 2000, "text": "Spin 1 times" },
+    "5": { "spins": 5, "cost": 11000, "text": "Spin 5 times" }
+  }
+}
+```
+
 ### Response Fields
 
-The response returns the same structure as `wheeloffortune-build` (see above), plus:
+**IMPORTANT:** The success response has a **different structure** from the error response and from `wheeloffortune-build`. Progress fields are **flat** (not nested under `progress`), and `prizes` is an **array** of won items (not the wheel configuration map).
 
 | Field | Type | Description |
 |-------|------|-------------|
+| cost | number | Price for the **next** spin (progressive pricing) |
+| estCost | number | The cost that was charged for this spin (matches `_currentCost` sent) |
+| account | object | Player's currency balance details for this transaction |
+| account.initial | number | CC balance before this spin |
+| account.spent | number | CC deducted for this spin |
+| account.remaining | number | CC balance after this spin |
+| jackpot | number | Current jackpot progress (0-3), flat — NOT nested under `progress` |
+| free_spin | number | Free spins remaining, flat |
+| spins | number | Total spins performed, flat |
+| prizes | array | **Array of won prize objects** (NOT the wheel prize map) |
+| prizes[].prize | string | Prize type identifier (e.g., `"small_bomb"`, `"energy_bars"`) |
+| prizes[].index | number | Wheel slot index (maps to `prizes.prizes[index]` from `wheeloffortune-build`) |
+| prizes[].icon | string | URL to the prize icon |
+| prizes[].tooltip | string | Human-readable prize description |
+| multispin | object | Updated bulk spin options with new costs |
 | error | boolean | Whether the spin failed (`true` = error, absent on success) |
 | message | string | Error code (only present when `error: true`) |
-
-On a **successful spin**, the response likely includes a `result` field indicating the won prize slot. The `progress`, `cost`, and `multispin` fields are updated to reflect the post-spin state.
 
 ### Error Codes
 
 | Code | Description |
 |------|-------------|
-| `WOF_ERR_INVALID_CLIENT_STATE` | The `_currentCost` sent by the client doesn't match the server's current spin price. Re-fetch the wheel state via `wheeloffortune-build` and retry with the updated `cost` value. |
+| `WOF_ERR_INVALID_CLIENT_STATE` | The `_currentCost` sent by the client doesn't match the server's current spin price. Even on this error, the response includes updated state, so the client can retry with the correct `cost` without re-calling `wheeloffortune-build`. |
 
 ### Notes
 
+- **Success vs Error response structures differ significantly**: On error, the response mirrors `wheeloffortune-build` (with nested `progress` and `prizes` as the wheel map). On success, fields are flat and `prizes` becomes an array of won items
 - The `_currentCost` parameter acts as an **optimistic concurrency check** — the client must know the exact current price before spinning
-- Even on error, the response includes the full updated wheel state (prizes, cost, progress), so the client can retry with correct values without a separate `wheeloffortune-build` call
 - The `cost` field in the response reflects the price for the **next** spin (progressive pricing)
 - The `spins` parameter should match a valid key from the `multispin` object (currently `1` or `5`)
+- The `account.spent` field provides server-authoritative spending data — more reliable than client-side cost tracking
+- The `prizes[].index` field corresponds to wheel slot numbers from the `wheeloffortune-build` response, which can be used to look up the full prize details (including `amount`)
+- For multi-spin (`spins=5`), the `prizes` array likely contains 5 elements, one per individual spin result
 - Insufficient currency balance likely returns a different error code (not yet documented)
 
 ---

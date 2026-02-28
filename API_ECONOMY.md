@@ -3410,7 +3410,7 @@ var energyData = {
 | `energyPoolLimit` | number | Maximum energy pool capacity |
 | `recoverableEnergy` | number | Energy that can be recovered |
 | `energyPerInterval` | number | Energy recovered per 6-minute interval |
-| `energyStatus` | string | Recovery status: `"recovering"` or `"full"` |
+| `energyStatus` | string | Recovery status: `"recovering"`, `"full"`, or `"limitReached"` (when current energy exceeds pool limit, e.g. after eating food) |
 
 #### Scalar Configuration Variables
 

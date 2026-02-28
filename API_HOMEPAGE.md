@@ -397,7 +397,7 @@ Energy recovery status (also merged into `erepublik.citizen` via `$j.extend`):
 | `energyPoolLimit` | number | Maximum energy pool (affected by residence) |
 | `recoverableEnergy` | number | Energy that can be recovered by eating |
 | `energyPerInterval` | number | Energy recovered per 6-minute interval |
-| `energyStatus` | string | Recovery status: `"recovering"`, `"full"` |
+| `energyStatus` | string | Recovery status: `"recovering"`, `"full"`, or `"limitReached"` (when current energy exceeds pool limit, e.g. after eating food) |
 
 ---
 
