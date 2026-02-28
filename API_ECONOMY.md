@@ -3522,3 +3522,6 @@ Any additional information, gotchas, or observations.
 - [Authentication](API_AUTH.md)
 - [Military API](API_MILITARY.md)
 - [Social API](API_SOCIAL.md)
+- [[VIP_Shop]] — VIP levels, daily gift schedule, VIP points from purchases, weekly inventory items
+- [[Loyalty_Program]] — 5-level spending program (Bronze–Diamond), benefits, LP bonus on level-up
+- [[Gold]] — Gold Store items and pricing, Gold Bonus (referral rewards) mechanics
