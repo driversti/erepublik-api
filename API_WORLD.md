@@ -1482,58 +1482,66 @@ curl 'https://www.erepublik.com/en/main/map-data?updated_at=2026-02-01T23%3A22%3
 
 ### Example Response
 
+The response is an object keyed by region ID (string). The example below shows region `143` (Donbas), which is occupied and has a recently concluded battle:
+
 ```json
 {
-  "1": {
+  "143": {
     "resources": [
-      {"id": 11, "name": "Fish", "mtype": "food", "rarity": "common", "bonus": 15},
-      {"id": 1, "name": "Grain", "mtype": "food", "rarity": "very common", "bonus": 10}
+      {
+        "id": "1",
+        "image": "/images/resources/1.png",
+        "name": "Grain",
+        "industry": "food",
+        "bonus": "25"
+      }
     ],
-    "original_country": {"id": 1, "name": "Romania", "code": "ro"},
-    "current_country": {"id": 1, "name": "Romania", "code": "ro"},
+    "original_country": {
+      "id": "40",
+      "permalink": "Ukraine",
+      "name": "Ukraine",
+      "flag": "//www.erepublik.net/images/flags_png/M/Ukraine.png"
+    },
+    "current_country": {
+      "id": "29",
+      "permalink": "United-Kingdom",
+      "name": "United Kingdom",
+      "flag": "//www.erepublik.net/images/flags_png/M/United-Kingdom.png"
+    },
     "city": {
-      "id": 36,
-      "name": "Constanta",
-      "permalink": "Constanta",
-      "population": 20,
-      "lnglat": [28.652, 44.173]
+      "name": "Donetsk",
+      "latitude": 48.015883,
+      "longitude": 37.80285,
+      "is_capital": false
     },
     "region": {
-      "id": 1,
-      "name": "Dobrogea",
-      "permalink": "Dobrogea",
-      "bbox": [27.45, 43.68, 29.7, 45.22],
-      "center": [28.575, 44.45]
-    }
-  },
-  "2": {
-    "resources": [
-      {"id": 3, "name": "Cattle", "mtype": "food", "rarity": "uncommon", "bonus": 20}
-    ],
-    "original_country": {"id": 1, "name": "Romania", "code": "ro"},
-    "current_country": {"id": 1, "name": "Romania", "code": "ro"},
-    "city": {
-      "id": 35,
-      "name": "Bucharest",
-      "permalink": "Bucharest",
-      "population": 228,
-      "lnglat": [26.103, 44.426]
+      "name": "Donbas",
+      "id": "143",
+      "population": "151",
+      "centroid_lat": 48.5119,
+      "centroid_lon": 38.34001,
+      "bbox_min_lat": 46.87564,
+      "bbox_max_lat": 50.06317,
+      "bbox_min_lon": 36.53113,
+      "bbox_max_lon": 40.15923,
+      "area": 52902.34297
     },
-    "region": {
-      "id": 2,
-      "name": "Muntenia",
-      "permalink": "Muntenia",
-      "bbox": [24.45, 43.66, 27.45, 45.0],
-      "center": [25.95, 44.33]
-    },
-    "active_battle_info": {
-      "battle_id": 561895,
-      "region_permalink": "Muntenia",
-      "attacker_id": 45,
-      "attacker_code": "ua",
-      "defender_id": 1,
-      "defender_code": "ro",
-      "type": "resistance"
+    "past_battle_info": {
+      "invader": {
+        "id": "29",
+        "name": "United Kingdom",
+        "flag": "//www.erepublik.net/images/flags_png/M/United-Kingdom.png"
+      },
+      "victim": {
+        "id": "40",
+        "name": "Ukraine",
+        "flag": "//www.erepublik.net/images/flags_png/M/Ukraine.png"
+      },
+      "war_id": "213028",
+      "is_resistance": false,
+      "status": "3",
+      "id": "871728",
+      "finished": "6,667"
     }
   }
 }
@@ -1551,64 +1559,80 @@ curl 'https://www.erepublik.com/en/main/map-data?updated_at=2026-02-01T23%3A22%3
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | number | Resource ID |
-| name | string | Resource display name (e.g., "Fish", "Iron", "Oil") |
-| mtype | string | Material type: `food` or `weapon` |
-| rarity | string | Rarity level: `very common`, `common`, `uncommon`, `rare` |
-| bonus | number | Production bonus percentage (10-25%) |
+| id | string | Resource ID |
+| image | string | Relative path to the resource icon image |
+| name | string | Resource display name (e.g., "Grain", "Iron", "Oil") |
+| industry | string | Industry type: `food` or `weapon` |
+| bonus | string | Production bonus percentage (e.g., `"25"`) |
 
 #### original_country / current_country (object)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | number | Country ID |
-| name | string | Country name |
-| code | string | Two-letter country code (lowercase) |
+| id | string | Country ID |
+| permalink | string | URL-friendly country name (e.g., `"United-Kingdom"`) |
+| name | string | Country display name |
+| flag | string | Protocol-relative URL to the country flag image |
 
 #### city (object)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | number | City ID |
 | name | string | City name |
-| permalink | string | URL-friendly city name |
-| population | number | Number of residents in the city |
-| lnglat | array | Geographic coordinates `[longitude, latitude]` |
+| latitude | number | City latitude coordinate |
+| longitude | number | City longitude coordinate |
+| is_capital | boolean | Whether this city is the country capital |
 
 #### region (object)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| id | number | Region ID |
+| id | string | Region ID |
 | name | string | Region name |
-| permalink | string | URL-friendly region name |
-| bbox | array | Bounding box `[minLng, minLat, maxLng, maxLat]` |
-| center | array | Centroid coordinates `[longitude, latitude]` |
+| population | string | Number of residents in the region |
+| centroid_lat | number | Centroid latitude of the region |
+| centroid_lon | number | Centroid longitude of the region |
+| bbox_min_lat | number | Bounding box minimum latitude |
+| bbox_max_lat | number | Bounding box maximum latitude |
+| bbox_min_lon | number | Bounding box minimum longitude |
+| bbox_max_lon | number | Bounding box maximum longitude |
+| area | number | Region area in square kilometers |
 
 #### active_battle_info (object, optional)
 
-| Field | Type | Description |
-|-------|------|-------------|
-| battle_id | number | Battle ID |
-| region_permalink | string | URL-friendly region name |
-| attacker_id | number | Attacking country ID |
-| attacker_code | string | Attacker two-letter country code |
-| defender_id | number | Defending country ID |
-| defender_code | string | Defender two-letter country code |
-| type | string | Battle type: `resistance`, `direct`, `airstrike` |
+Present when a battle is currently ongoing in the region. Structure is likely similar to `past_battle_info` (see below); exact fields for active battles are not yet verified.
 
 #### past_battle_info (object, optional)
 
-Same structure as `active_battle_info`. Present when a battle recently ended in the region.
+Present when a battle recently concluded in the region.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| invader | object | The attacking country (see country sub-object below) |
+| victim | object | The defending country (see country sub-object below) |
+| war_id | string | War ID this battle belongs to |
+| is_resistance | boolean | Whether this was a resistance war |
+| status | string | Battle outcome status code |
+| id | string | Battle ID |
+| finished | string | Formatted number indicating when the battle finished (eRepublik day or tick) |
+
+**Country sub-object** (used in `invader` and `victim`):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| id | string | Country ID |
+| name | string | Country display name |
+| flag | string | Protocol-relative URL to the country flag image |
 
 ### Notes
 
 - **Incremental Updates:** Use the `updated_at` parameter to fetch only regions that changed since the last request. This is essential for real-time map tracking applications to minimize bandwidth.
 - **Response Size:** Full response is approximately 620KB (574 regions). Using incremental updates significantly reduces payload size.
-- **Geographic Data:** The `bbox` and `center` coordinates are suitable for map rendering libraries (Leaflet, Mapbox, etc.).
-- **Battle Tracking:** Regions with active battles include `active_battle_info`. Recently concluded battles may show in `past_battle_info`.
-- **Occupation Status:** Compare `original_country` vs `current_country` to determine if a region is occupied.
-- **Resources:** Each region can have multiple natural resources providing production bonuses.
+- **Geographic Data:** The bounding box fields (`bbox_min_lat`, `bbox_max_lat`, `bbox_min_lon`, `bbox_max_lon`) and centroid fields (`centroid_lat`, `centroid_lon`) are suitable for map rendering libraries (Leaflet, Mapbox, etc.).
+- **Battle Tracking:** Regions with active battles include `active_battle_info`. Recently concluded battles appear in `past_battle_info`. The `active_battle_info` structure is not yet verified from a live response.
+- **Occupation Status:** Compare `original_country.id` vs `current_country.id` to determine if a region is occupied.
+- **Resources:** Each region can have multiple natural resources providing production bonuses. All numeric-looking fields (`id`, `bonus`, `population`) are returned as strings.
+- **Flag URLs:** Flag image URLs use protocol-relative format (`//www.erepublik.net/...`) — prepend `https:` before use.
 - **Timestamp Format:** The `updated_at` parameter must be URL-encoded. Example: `2026-02-01T23:22:47-08:00` becomes `2026-02-01T23%3A22%3A47-08%3A00`.
 
 ---
