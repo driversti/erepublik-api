@@ -93,6 +93,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/military/battle-map-status/{battleId}` | POST | Get campaign map division results |
 | `/en/military/armory-data/overview` | GET | Get armory overview data |
 | `/en/military/armory-data/protectors` | GET | Get protectors data |
+| `/en/military/armory-actions` | POST | Enroll vehicle for a country (action=enroll) |
 | `/en/main/battlefieldTravel` | POST | Choose side & travel to battle region |
 | `/en/main/switch-division` | POST | Switch between divisions |
 | `/en/main/pvp-queue` | POST | Join/leave PvP queue |
@@ -103,6 +104,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/economy/refillEnergy` | POST | Eat food / use energy bars |
 | `/en/economy/energyRefill-getInventory` | POST | Get energy refill inventory |
 | `/en/country/military/{countryName}` | GET | Country military page (natural enemy, defence shield, airstrike, wars, MPP) |
+| `/en/military/rw-support` | POST | Fund a resistance war in an occupied region |
 
 ### Social
 | Endpoint | Method | Description |
@@ -125,6 +127,9 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | `/en/economy/marketplace` | GET | Marketplace page - product browser with AngularJS, industry/quality filters, industryJSON (HTML) |
 | `/en/main/shopItemsJson` | GET | Get Gold Shop and VIP Shop items |
 | `/en/main/job-data` | GET | Get employment and work status |
+| `/en/economy/job-market-json/{countryId}/{page}/{sort}` | GET | Browse job market offers by country, sorted by salary |
+| `/en/economy/resign` | POST | Resign from current employer |
+| `/en/economy/job-market-apply` | POST | Apply for a job (requires citizenId + salary from listing) |
 | `/en/economy/workOvertime` | POST | Work overtime for extra salary |
 | `/en/economy/work` | POST | Work as Manager (WAM) in companies |
 | `/en/main/training-grounds-json` | GET | Get training grounds status |
@@ -140,6 +145,7 @@ This documentation covers the unofficial API endpoints for [eRepublik](https://w
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/en/main/objective-status` | POST | Get daily objective progress and rewards |
+| `/en/main/objective-claim-reward` | POST | Claim a daily objective tier reward (20/40/60/80/100 pts) |
 | `/en/main/daily-missions-data` | POST | Get all daily missions with progress |
 | `/en/main/mission-solve` | POST | Claim rewards for a completed mission |
 | `/en/main/weekly-challenge-data` | GET | Get weekly challenge progress and rewards |

@@ -625,7 +625,7 @@ curl -X POST 'https://www.erepublik.com/en/economy/train' \
   - Submit multiple grounds in a single request (up to 4 facilities)
   - Array indices start at 0: `grounds[0]`, `grounds[1]`, etc.
   - Each ground requires both `id` and `train` parameters
-  - Set `train=1` to train, `train=0` to skip that facility
+  - **WARNING:** The `train=0` flag is ignored by the server — ALL grounds included in the request body will be trained regardless of the flag value. To train selectively, only include the desired grounds in the body and omit the rest entirely. (Verified 2026-02-28)
 
 - **Response Fields:**
   - `strength_bonus`: Total strength gained from this training session
@@ -1396,14 +1396,13 @@ curl -X POST 'https://www.erepublik.com/en/economy/marketplaceActions' \
   - `error`: `false` on success, `true` on failure
   - `message`: Success message with purchase details (quantity, total cost, currency)
   - `offerUpdate`: Refreshed marketplace offers list (same format as `marketplaceAjax` endpoint)
-  - `currency`: Updated citizen's local currency balance (in smallest units, divide by 100)
-  - `gold`: Updated citizen's Gold balance (in smallest units, divide by 100)
+  - `currency`: Updated citizen's local currency balance (actual value with decimals, e.g. `46261.07` = 46,261.07 PLN)
+  - `gold`: Updated citizen's Gold balance (actual value with decimals, e.g. `0.01` = 0.01 Gold)
 
 - **Currency Handling:**
   - Purchases are made in the market country's local currency
   - If citizen lacks sufficient currency, the transaction fails with an error
-  - Currency balance is returned in hundredths (e.g., `6274006` = 62,740.06 LTL)
-  - Gold balance is also returned in hundredths (e.g., `72916` = 729.16 Gold)
+  - Currency and Gold balances are returned as actual values with decimals (e.g., `46261.07` = 46,261.07 PLN). Verified 2026-02-28 — NOT in hundredths.
 
 - **Offer Updates:**
   - The `offerUpdate.offers` array reflects the updated marketplace after purchase
@@ -2077,19 +2076,175 @@ curl 'https://www.erepublik.com/en/economy/job-market-json/72/1/desc' \
   - (See other endpoints for more country IDs)
 
 - **Application Flow:**
-  - If employed, citizen must quit current job first
-  - Quitting typically requires navigating to profile and clicking "Quit Job"
-  - After quitting, citizen can apply for any job in the market
+  - If employed, citizen must resign first via `POST /en/economy/resign`
+  - After resigning, apply via `POST /en/economy/job-market-apply` with `citizenId` and `salary` from the listing
   - Application is instant (no approval process)
 
 - **Related Endpoints:**
   - Use `/en/main/job-data` to get current employment details
   - Use `/en/economy/work` to work at current job
-  - This endpoint is read-only (GET) - job applications require separate POST action
+  - Use `/en/economy/resign` to quit current job
+  - Use `/en/economy/job-market-apply` to apply for a listed job
 
 - Response time is typically fast (<100ms) since data is cached and indexed
 - Job listings update in real-time as employers create or remove offers
 - Only shows jobs in companies that have available positions and sufficient funds
+
+---
+
+## Resign from Job
+
+**Method:** POST
+**URL:** `/en/economy/resign`
+**Auth Required:** Yes
+
+### Description
+
+Resigns from the current employer. After resigning, the citizen becomes unemployed and can apply for a new job on the job market. This action is irreversible — the work streak (days in a row) is reset to zero, affecting progress toward the Hard Worker medal (awarded every 30 consecutive work days).
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `action_type` | string | Yes | Must be `resign` |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/economy/resign' \
+  -X POST \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d '_token=CSRF_TOKEN&action_type=resign'
+```
+
+### Example Response
+
+**Success:**
+
+```json
+{
+  "status": true,
+  "message": true,
+  "error": false
+}
+```
+
+**Already unemployed (expected):**
+
+```json
+{
+  "status": false,
+  "message": "You are not employed."
+}
+```
+
+### Notes
+
+- Citizen must be currently employed for this to succeed
+- Resets the consecutive work day streak to zero
+- After resigning, use `/en/economy/job-market-json/{countryId}/{page}/{sortOrder}` to browse new jobs
+- After resigning, use `/en/economy/job-market-apply` to apply for a new position
+- The game UI shows a confirmation dialog before resigning — API calls bypass this
+
+### Related Endpoints
+
+- `GET /en/main/job-data` — Check current employment status before resigning
+- `GET /en/economy/job-market-json/{countryId}/{page}/{sortOrder}` — Browse available jobs
+- `POST /en/economy/job-market-apply` — Apply for a new job after resigning
+
+---
+
+## Apply for Job
+
+**Method:** POST
+**URL:** `/en/economy/job-market-apply`
+**Auth Required:** Yes
+
+### Description
+
+Applies for a job from the job market. The citizen must be unemployed (resigned from any previous job). Requires the employer's citizen ID and the exact salary amount from the job listing. Application is instant — there is no approval process.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `citizenId` | number | Yes | Employer's citizen ID (from job market listing `jobs[].citizen.id`) |
+| `salary` | number | Yes | Exact gross salary from the listing (from `jobs[].salary`). Must match an active offer |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/economy/job-market-apply' \
+  -X POST \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d '_token=CSRF_TOKEN&citizenId=9699126&salary=7902.03'
+```
+
+### Example Response
+
+**Success:**
+
+```json
+{
+  "message": "Congratulation, you are now working for <a href='/en/citizen/profile/9699126'>Jozsika90</a>."
+}
+```
+
+**Still employed (must resign first):**
+
+```json
+{
+  "message": "You already have a job. You must resign first."
+}
+```
+
+### Notes
+
+- The `salary` parameter must exactly match an active job offer — you cannot request an arbitrary salary
+- The `citizenId` is the **employer's** citizen ID, not your own
+- Application is instant: the response confirms employment immediately
+- The success `message` contains HTML with a link to the employer's profile
+- If the offer has been taken or removed between fetching the listing and applying, the request will fail
+- The `salaryLimit` from the job listing indicates the employer's total salary budget — if the budget is exhausted, the offer may no longer be available
+- A `salaryLimit` of `0` means the employer has no salary cap (unlimited)
+
+### Typical Workflow
+
+```
+1. GET  /en/economy/job-market-json/35/1/desc   → Browse offers (page 1, highest first)
+2. POST /en/economy/resign                       → Quit current job (if employed)
+3. POST /en/economy/job-market-apply              → Apply for chosen offer
+4. GET  /en/main/job-data                         → Verify new employment
+```
+
+### Related Endpoints
+
+- `GET /en/economy/job-market-json/{countryId}/{page}/{sortOrder}` — Browse available jobs to get `citizenId` and `salary` values
+- `POST /en/economy/resign` — Resign from current job (required before applying)
+- `GET /en/main/job-data` — Verify employment status after applying
+- `POST /en/economy/work` — Work at the new employer
 
 ---
 

@@ -1523,6 +1523,68 @@ curl -X POST 'https://www.erepublik.com/en/military/armory-data/overview' \
 
 ---
 
+## Enroll Vehicle (Armory Actions)
+
+**Method:** POST
+**URL:** `/en/military/armory-actions`
+**Auth Required:** Yes
+
+#### Description
+
+Enrolls a military vehicle (tank or aircraft) for a specific country's Protector program. The vehicle must be owned and have status `notEnrolled` (intStatus=2). Once enrolled, the vehicle earns "Protector of {Country}" XP when used in battles for that country, providing increasing damage bonuses as the protection level rises (up to level 50).
+
+#### Request Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| action | string | Yes | Must be `enroll` |
+| skinId | number | Yes | Vehicle ID (from armory overview `vehicles[].id`) |
+| countryId | number | Yes | Country ID to enroll for (use `get_countries` for the full list) |
+| _token | string | Yes | CSRF token for request validation |
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+#### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/armory-actions' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw 'action=enroll&skinId=14&countryId=35&_token=YOUR_CSRF_TOKEN'
+```
+
+#### Example Response (Success)
+
+```json
+{"status": true, "message": "Vehicle successfully enrolled"}
+```
+
+#### Example Response (Error — Invalid Parameters)
+
+```json
+{"status": false, "message": "Invalid parameters"}
+```
+
+#### Notes
+
+- **Modifying action** — this endpoint changes game state (enrolls vehicle for a country)
+- The `skinId` parameter corresponds to `vehicles[].id` from the `/en/military/armory-data/overview` endpoint
+- Only vehicles with status `notEnrolled` (intStatus=2) can be enrolled
+- Vehicles with status `blueprints` (intStatus=4) or `unavailable` (intStatus=5) cannot be enrolled
+- Each vehicle can only be enrolled for ONE country at a time
+- Maximum 3 vehicles can be enrolled per country (`maxEnrollPerCountry` from armory settings)
+- The `action` parameter uses `enroll` (not `enrollVehicle`)
+- Returns `"Invalid parameters"` if the vehicle ID or country ID is invalid, or if the vehicle cannot be enrolled
+
+---
+
 ## Get Armory Protectors
 
 **Method:** POST
@@ -1913,7 +1975,7 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
 | `energySources[].energy` | number | Total energy available from this source |
 | `recoverableEnergy` | number | Energy that can be recovered from previous battles |
 | `minEnergy` | number | Minimum energy cost per hit (typically 10) |
-| `fuelConsumed` | number | Fuel consumed per hit (for vehicles) |
+| `fuelConsumed` | number | Fuel consumed per new battle zone deployment (typically 1) |
 | `vehicles` | array | List of all available vehicles for this battle type |
 | `vehicles[].id` | number | Unique vehicle ID |
 | `vehicles[].type` | string | Vehicle type ("aircraft" or "tanks") |
@@ -2080,7 +2142,7 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-startDeploy' \
 - **Vehicle selection**: The `skinId` must be a vehicle the citizen owns and should be appropriate for the battle type:
   - Aircraft skins for air divisions (division 11)
   - Tank skins for ground divisions (divisions 1-4)
-- **Fuel consumption**: The `fuelLeft` value shows remaining vehicle fuel after deployment; fuel is consumed per hit
+- **Fuel consumption**: The `fuelLeft` value shows remaining fuel after deployment starts; 1 fuel is consumed per new battle zone (see [Get Fuel Status](#get-fuel-status-campaigns-page) for current fuel balance)
 - **Auto-fight behavior**: Once deployed, the system automatically executes combat until:
   - All allocated energy is consumed
   - The battle round ends
@@ -2088,6 +2150,104 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-startDeploy' \
 - **Energy allocation**: The `totalEnergy` should match the sum of energy from all sources in `energySources`
 - **Deployment ID**: Save the `deploymentId` to check deployment status or cancel the deployment later
 - **Country matching**: For optimal damage bonuses, use a vehicle enrolled for the `sideCountryId` country
+
+---
+
+## Get Fuel Status (Campaigns Page)
+
+**Method:** GET
+**URL:** `/en/military/campaigns`
+**Auth Required:** Yes
+
+#### Description
+
+Returns the campaigns HTML page which includes the player's current fuel status in the sidebar. Fuel is a **weekly deployment limit** — fighting in a new battle zone consumes 1 fuel. Fuel resets weekly and unused fuel does **not** carry over to the next week. Additional fuel can be purchased from the Gold Shop (`/en/main/gold-items/`).
+
+This is **not a JSON API** — the fuel data is embedded in HTML elements within the page sidebar.
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN; cf_clearance=...` | Yes |
+| User-Agent | Browser user agent | Recommended |
+
+#### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/military/campaigns' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN; erpk_auth=1; cf_clearance=YOUR_CF_TOKEN' \
+  -H 'User-Agent: Mozilla/5.0 ...'
+```
+
+#### Relevant HTML Structure
+
+The fuel data is in the page sidebar, inside a `<div class="energyBg margin-25 fuel">` container:
+
+```html
+<div class="energyBg margin-25 fuel">
+  <div id="citizenFuel" class="energyBar">
+    <img src="//www.erepublik.net/images/modules/sidebar/fuel_icon.png" class="icon fuelIcon" alt=""/>
+    <span class="currentEnergy">
+      <q id="fuelLeft">68</q>&nbsp;/&nbsp;<q id="maxFuel">70</q>
+    </span>
+    <div class="currentEnergyBar fuel" style="width: 97%"><q></q></div>
+    <a class="recoverEnergy" href="/en/main/gold-items/">
+      <div class="recoverEnergyBtn"></div>
+    </a>
+  </div>
+  <div id="fuelTooltip" class="fuelTooltip tooltip">
+    <!-- Tooltip contains: -->
+    <p class="title">Fuel</p>
+    <p>You recover up to <big id="fuelPerInterval">70</big> Fuel every week</p>
+    <p class="bullets">Fighting in a new Battle Zone consumes 1 Fuel</p>
+    <p class="bullets">You can purchase more Fuel in the shop</p>
+    <p class="bullets">Your Fuel tank resets weekly</p>
+    <p class="bullets">Leftover Fuel does not carry over to the next week</p>
+  </div>
+</div>
+```
+
+#### Data Extraction
+
+| HTML Element | ID | Type | Description |
+|---|---|---|---|
+| `<q>` | `fuelLeft` | number | Current fuel remaining this week |
+| `<q>` | `maxFuel` | number | Maximum fuel capacity (base + purchased) |
+| `<big>` | `fuelPerInterval` | number | Fuel recovered per weekly reset (equals base max fuel) |
+
+#### Extraction Example (JavaScript)
+
+```javascript
+function extractTagValue(html, id) {
+  const regex = new RegExp(`id="${id}"[^>]*>\\s*(\\d+)\\s*<`);
+  const match = html.match(regex);
+  return match ? parseInt(match[1], 10) : null;
+}
+
+const fuelLeft = extractTagValue(html, "fuelLeft");       // e.g. 68
+const maxFuel = extractTagValue(html, "maxFuel");          // e.g. 70
+const fuelPerInterval = extractTagValue(html, "fuelPerInterval"); // e.g. 70
+```
+
+#### Fuel Mechanics
+
+| Property | Details |
+|----------|---------|
+| **Consumption** | 1 fuel per new battle zone (not per hit) |
+| **Reset** | Weekly (does not carry over) |
+| **Recovery** | `fuelPerInterval` fuel restored on weekly reset |
+| **Purchase** | Gold Shop (`/en/main/gold-items/`) — price starts at 1 Gold, increases with each purchase |
+| **Base capacity** | Depends on citizen level/upgrades; `maxFuel` may exceed `fuelPerInterval` if extra fuel was purchased |
+| **Relation to `fuelConsumed`** | The `fuelConsumed` field in deploy inventory (`fightDeploy-getInventory`) shows the cost per deployment (typically 1) |
+| **Relation to `fuelLeft`** | The `fuelLeft` field in deploy response (`fightDeploy-startDeploy`) shows remaining fuel after that deployment |
+
+#### Notes
+
+- The fuel sidebar is only present on the campaigns page (`/en/military/campaigns`), not on the homepage or other pages
+- The `style="width: 97%"` on `div.currentEnergyBar.fuel` reflects the visual progress bar percentage
+- The tooltip is shown on hover via `hoverTooltip('#citizenFuel', '#fuelTooltip')` (JavaScript at bottom of page)
+- `maxFuel` can temporarily exceed `fuelPerInterval` when the player has purchased additional fuel from the Gold Shop
 
 ---
 
@@ -3674,6 +3834,68 @@ For fighting automation, the key endpoints and data flow are:
 | `boosters.inactive` | `SERVER_DATA.boosters.inactive` | Available boosters to activate |
 | `specialWeapons` | `SERVER_DATA.specialWeapons` | Available bombs to deploy |
 | `playerStrength` | `erepublik.promos.April1st2017.playerStrength` | Current strength value |
+
+---
+
+## Support Resistance War (Fund)
+
+**Method:** POST
+**URL:** `/en/military/rw-support?_nonce={nonce}`
+**Auth Required:** Yes
+
+### Description
+
+Funds a resistance war (RW) in an occupied region. Citizens contribute gold to reach the funding threshold required to start the resistance war, which allows the occupied country's citizens to fight for liberation of the region.
+
+### Query Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_nonce` | number | Yes | Client-generated timestamp nonce (e.g., `1772438609287`) |
+
+### Body Parameters (form-encoded)
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `type` | string | Yes | Type of support action. Known value: `fund` |
+| `regionId` | number | Yes | ID of the occupied region to fund the RW in |
+| `_token` | string | Yes | CSRF token (from page or session) |
+| `captcha-response` | string | Yes | Turnstile captcha response token |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded; charset=UTF-8` | Yes |
+
+### Example Request (cURL)
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/military/rw-support?_nonce=1772438609287' \
+  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  --data-raw 'type=fund&regionId=114&_token=YOUR_CSRF_TOKEN&captcha-response=YOUR_CAPTCHA_RESPONSE'
+```
+
+### Example Response
+
+```json
+{
+  "error": false,
+  "message": "SUCCESS"
+}
+```
+
+### Notes
+
+- `type=fund` is the only observed value; other types may exist (e.g., for endorsing or voting on an RW)
+- Requires Turnstile captcha — cannot be fully automated without captcha solving
+- The `_nonce` appears to be a client-generated timestamp (milliseconds since epoch)
+- The region must be occupied by a foreign country for the RW option to be available
+- See also: [Country Military Page](API_TOC.md) (`/en/country/military/{countryName}`) which lists active resistance wars and determination levels
 
 ---
 

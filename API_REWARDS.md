@@ -281,6 +281,124 @@ curl -X POST 'https://www.erepublik.com/en/main/objective-status' \
 
 ---
 
+## Claim Daily Objective Tier Reward
+
+**Method:** POST
+**URL:** `/en/main/objective-claim-reward`
+**Auth Required:** Yes
+
+### Description
+
+Claims a daily objective tier reward. When a player's activity points reach a threshold (20, 40, 60, 80, or 100), they can claim the corresponding reward box. Each tier can only be claimed once per day. Use `/en/main/objective-status` first to check which tiers are claimable.
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| objectiveCost | number | Yes | The tier threshold to claim: `20`, `40`, `60`, `80`, or `100` |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+| Referer | `https://www.erepublik.com/en` | Yes |
+
+### Example Request
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/objective-claim-reward' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Referer: https://www.erepublik.com/en' \
+  --data-raw 'objectiveCost=20&_token=YOUR_CSRF_TOKEN'
+```
+
+### Example Response
+
+```json
+{
+  "rewards": [
+    {
+      "type": "strength",
+      "name": "Strength",
+      "amount": 2
+    },
+    {
+      "type": "overtime_points",
+      "name": "Overtime Points",
+      "amount": 1
+    },
+    {
+      "type": "food_raw",
+      "name": "Food Raw Materials",
+      "amount": 1,
+      "new_player_ramp_up_factor": 0.1
+    },
+    {
+      "type": "collection_part_3",
+      "name": "Barrel",
+      "amount": 1
+    },
+    {
+      "type": "currency",
+      "name": "Currency",
+      "amount": 10,
+      "new_player_ramp_up_factor": 0.1
+    }
+  ]
+}
+```
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| rewards | array | List of rewards granted for claiming this tier |
+| rewards[].type | string | Reward type identifier (e.g., `strength`, `overtime_points`, `food_raw`, `collection_part_3`, `currency`) |
+| rewards[].name | string | Human-readable reward name |
+| rewards[].amount | number | Quantity of the reward granted |
+| rewards[].new_player_ramp_up_factor | number | Optional scaling factor for newer players (lower multiplier) |
+
+### Known Reward Types
+
+| Type | Name | Description |
+|------|------|-------------|
+| strength | Strength | Strength points (same as training) |
+| overtime_points | Overtime Points | Points for overtime work |
+| food_raw | Food Raw Materials | Raw materials for food production |
+| currency | Currency | Local currency (CC) |
+| collection_part_3 | Barrel | Weapon collection part |
+| collection_part_4 | Projectile | Weapon collection part |
+| collection_part_5 | Scope | Weapon collection part |
+| collection_part_6 | Trigger Kit | Weapon collection part |
+| collection_part_7 | Stock | Weapon collection part |
+| damage_accelerator | x2 Damage Accelerator | Combat booster (has `minutes` field) |
+| ghost_booster | Ghost Booster | Combat booster (has `minutes` field) |
+| fuel | Fuel | Used in aircraft battles |
+| energy_bar | Energy Bar | Restores 200 energy |
+| weapon_raw | Weapon Raw Materials | Raw materials for weapon production |
+| house_raw | House Raw Materials | Raw materials for house production |
+| aircraft_raw | Aircraft Weapons Raw Materials | Raw materials for aircraft weapon production |
+
+### Notes
+
+- The `objectiveCost` must match one of the five tier thresholds: 20, 40, 60, 80, or 100
+- The player's activity points (from `/en/main/objective-status` → `status.progress`) must be >= the requested tier
+- Each tier can only be claimed once per day; claiming an already-claimed tier will fail
+- Rewards vary by tier — higher tiers give better rewards
+- The `Referer` header is required for this endpoint
+- Items with `new_player_ramp_up_factor` may scale differently for newer accounts
+- Tiers should be claimed in order (lowest first), matching how the game UI works
+- Daily objectives reset at midnight PST (eRepublik day change)
+- Discovered via ebot source code (`collectObjectiveRewards` in `src/actions/collectRewards.js`). Verified 2026-02-28.
+
+---
+
 ## Get Daily Missions Data
 
 **Method:** POST
