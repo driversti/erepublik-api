@@ -287,7 +287,7 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionGetChallenge' \
 
 | Field | Type | Description |
 |-------|------|-------------|
-| src | string | Base64-encoded data URI of the CAPTCHA image (WebP format) |
+| src | string | Base64-encoded data URI of the CAPTCHA image (format varies: WebP, PNG, or AVIF depending on browser support) |
 | imageId | string | SHA-256 hash identifier for this specific CAPTCHA image |
 | challengeId | string | SHA-256 hash identifier for this challenge session |
 | onLoad | string | JavaScript code to execute on load (sets tracking cookie) |
@@ -296,7 +296,7 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionGetChallenge' \
 
 ### Notes
 
-- The CAPTCHA image is returned as a WebP format data URI (base64-encoded)
+- The CAPTCHA image is returned as a data URI (base64-encoded) in WebP, PNG, or AVIF format depending on browser support
 - The image shows symbols/objects that the user must identify and click in order (left to right)
 - The `minCnt` field indicates how many items must be clicked (typically 3)
 - The `onLoad` JavaScript sets a temporary cookie used for tracking/validation
@@ -338,7 +338,7 @@ This is the final step in the session verification flow. The user's click coordi
 | clickMatrix | string | Yes | URL-encoded JSON array of click coordinates, e.g., `[{"x":377,"y":50},{"x":237,"y":104}]` |
 | isMobile | boolean | Yes | Whether the user is on a mobile device (`true`/`false`) |
 | env | string | Yes | Base64-encoded environment data (browser fingerprint, tracking info) |
-| src | string | Yes | The CAPTCHA image data URI (same as received from `sessionGetChallenge`) |
+| src | string | Yes | The CAPTCHA image data URI — format varies: WebP, PNG, or AVIF (same as received from `sessionGetChallenge`) |
 
 ### Headers
 
@@ -365,7 +365,7 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionUnlock' \
   --data-urlencode 'clickMatrix=[{"x":377,"y":50},{"x":237,"y":104},{"x":372,"y":91}]' \
   --data-urlencode 'isMobile=false' \
   --data-urlencode 'env=BASE64_ENCODED_ENV_DATA' \
-  --data-urlencode 'src=data:image/png;base64,...'
+  --data-urlencode 'src=data:image/avif;base64,...'
 ```
 
 ### Example Response (Incorrect Solution)
@@ -423,6 +423,7 @@ The `clickMatrix` parameter is a JSON array of coordinate objects representing w
 - On failure, the response indicates `mustReload: true`, suggesting a new challenge is needed
 - Multiple incorrect attempts may result in additional restrictions or longer lockouts
 - All hash IDs (`imageId`, `challengeId`) must match those received from `sessionGetChallenge`
+- **CAPTCHA tracking cookies are required:** The `onLoad` callback from `sessionGetChallenge` sets temporary cookies (e.g., `f6b735ea`, `2789c3fd`) scoped to `/en/main/sessionUnlock`. The server validates these cookies exist when processing the unlock submission. Cookie names are dynamic and change per challenge — always execute the `onLoad` JavaScript to set them before submitting
 
 ### Complete Verification Flow
 
