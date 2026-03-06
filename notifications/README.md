@@ -1,36 +1,30 @@
-# eRepublik API - Notifications
-
-#erepublik #api #notifications
-
-[< Back to Table of Contents](API_TOC.md)
-
----
-
-## Overview
+# Notifications
 
 Notification endpoints handle in-game alerts, reports, and notifications for players. This includes production reports, deployment reports, battle results, political updates, and other game events.
 
+#erepublik #api #notifications
+
+[< Back to Table of Contents](../API_TOC.md)
+
 ---
 
-## Endpoints
-
-### Get Notifications (Paginated)
+## Get Notifications (Paginated)
 
 **Method:** GET
 **URL:** `/en/main/notificationsAjax/report/{page}`
 **Auth Required:** Yes
 
-#### Description
+### Description
 
 Retrieves paginated notifications/alerts for the authenticated user. Returns various notification types including production reports, deployment reports, battle results, and other in-game events. Each notification includes HTML-formatted content for display.
 
-#### Path Parameters
+### Path Parameters
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | page | number | Yes | Page number (1-indexed) for pagination |
 
-#### Headers
+### Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
@@ -38,7 +32,8 @@ Retrieves paginated notifications/alerts for the authenticated user. Returns var
 | X-Requested-With | `XMLHttpRequest` | Yes |
 | Accept | `application/json, text/plain, */*` | Recommended |
 
-#### Example Request
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
@@ -47,7 +42,10 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
   -H 'Accept: application/json, text/plain, */*'
 ```
 
-#### Example Response
+</details>
+
+<details>
+<summary>Example Response</summary>
 
 ```json
 {
@@ -76,7 +74,7 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
       "createdAt": "2026-01-25 01:18:01",
       "identifierType": "deployment_report",
       "identifierId": 122111562,
-      "title": "🛩️ Deployment Report",
+      "title": "Deployment Report",
       "body": "<div class=\"rowWrapper headingRow\">Deployment finished</div>...",
       "timeAgo": "5 hours ago",
       "isWebActionable": false,
@@ -89,7 +87,9 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
 }
 ```
 
-#### Response Fields
+</details>
+
+### Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -98,7 +98,7 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
 | totalAlerts | number | Total count of all notifications |
 | alertsList | array | Array of notification objects for current page |
 
-#### Alert Object Fields
+### Alert Object Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -116,7 +116,7 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
 | alertTypeId | number | Numeric identifier for alert type |
 | isCustomizableReport | boolean | Whether this report type can be customized |
 
-#### Common Notification Types
+### Common Notification Types
 
 | identifierType | Description |
 |----------------|-------------|
@@ -125,7 +125,7 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
 | `battle_report` | Battle participation or completion report |
 | `political_report` | Political activity notifications |
 
-#### Notes
+### Notes
 
 - Requires authentication - endpoint will fail without valid session cookie
 - Pagination starts at page 1 (not 0)
@@ -134,64 +134,12 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
 - The API typically shows 10 notifications per page
 - `isRead` uses numeric boolean (1/0) instead of true/false
 - HTML content in `body` may include inline images, links, and formatted data
-- Some notifications include emojis in the `title` field (e.g., 🛩️, 🪖)
-
----
-
-## Template
-
-Use this template when documenting new endpoints:
-
-```markdown
-## Endpoint Name
-
-**Method:** GET/POST
-**URL:** `/en/path/to/endpoint`
-**Auth Required:** Yes/No
-
-### Description
-
-Brief explanation of what this endpoint does.
-
-### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| param1 | string | Yes | Description |
-
-### Headers
-
-| Header | Value | Description |
-|--------|-------|-------------|
-| Content-Type | application/json | ... |
-
-### Example Request (cURL)
-
-\`\`\`bash
-curl -X GET "https://www.erepublik.com/en/..." \
-  -H "Cookie: erpk=..."
-\`\`\`
-
-### Example Response
-
-\`\`\`json
-{
-  "success": true,
-  "data": {}
-}
-\`\`\`
-
-### Notes
-
-Any additional information, gotchas, or observations.
-```
+- Some notifications include special characters in the `title` field
 
 ---
 
 ## Related
 
-- [API Table of Contents](API_TOC.md)
-- [Authentication](API_AUTH.md)
-- [Social API](API_SOCIAL.md)
-- [Military API](API_MILITARY.md)
-- [Economy API](API_ECONOMY.md)
+- [API Table of Contents](../API_TOC.md)
+- [Authentication](../auth/README.md)
+- [Homepage](../homepage/README.md)

@@ -1,39 +1,38 @@
-# eRepublik API - Homepage (Dashboard)
+# Homepage (Dashboard)
+
+The homepage (`/en`) is the main authenticated dashboard that loads when a logged-in citizen visits eRepublik. It returns a full HTML page (~131 KB) with multiple embedded JavaScript data objects containing citizen state, social feeds, battle listings, settings, and more.
 
 #erepublik #api #homepage #dashboard
 
-[< Back to Table of Contents](API_TOC.md)
+[< Back to Table of Contents](../API_TOC.md)
 
 ---
 
 ## Overview
 
-The homepage (`/en`) is the main authenticated dashboard that loads when a logged-in citizen visits eRepublik. It returns a full HTML page (~131 KB) with multiple embedded JavaScript data objects containing citizen state, social feeds, battle listings, settings, and more.
-
-Unlike JSON API endpoints, the homepage requires HTML parsing to extract the embedded data. It serves as a rich "bootstrap" page — the client-side AngularJS app reads these objects to render the dashboard without additional API calls.
+Unlike JSON API endpoints, the homepage requires HTML parsing to extract the embedded data. It serves as a rich "bootstrap" page -- the client-side AngularJS app reads these objects to render the dashboard without additional API calls.
 
 ---
 
-## Endpoints
-
-### Homepage (Dashboard)
+## Homepage (Dashboard)
 
 **Method:** GET
 **URL:** `/en`
 **Auth Required:** Yes (redirects to login if unauthenticated)
 
-#### Description
+### Description
 
 Returns the main citizen dashboard page. Contains social feeds (country, friends, military unit, party, community), daily order progress, battle listings, citizen state, energy data, event popups, and navigation shortcuts. All data is embedded in `<script>` blocks as JavaScript objects.
 
-#### Headers
+### Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
 | `Cookie` | `erpk=YOUR_SESSION_TOKEN` | Yes |
 | `Accept` | `text/html` | Recommended |
 
-#### Example Request
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl 'https://www.erepublik.com/en' \
@@ -42,7 +41,9 @@ curl 'https://www.erepublik.com/en' \
   -H 'User-Agent: Mozilla/5.0 ...'
 ```
 
-#### Response
+</details>
+
+### Response
 
 Returns an HTML page (~131 KB, ~2200 lines). The key data is embedded in `<script>` blocks:
 
@@ -59,11 +60,14 @@ Returns an HTML page (~131 KB, ~2200 lines). The key data is embedded in `<scrip
 
 ---
 
-### Embedded Data Objects
+## Embedded Data Objects
 
-#### `erepublik` (main global object)
+### `erepublik` (main global object)
 
 The primary JavaScript global with 6 top-level keys:
+
+<details>
+<summary>Object Structure</summary>
 
 ```javascript
 var erepublik = {
@@ -76,11 +80,16 @@ var erepublik = {
 };
 ```
 
+</details>
+
 ---
 
-#### `erepublik.settings`
+### `erepublik.settings`
 
 Platform configuration and real-time connection settings:
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -102,6 +111,8 @@ Platform configuration and real-time connection settings:
 }
 ```
 
+</details>
+
 | Field | Type | Description |
 |-------|------|-------------|
 | `domainname` | string | Base domain (`erepublik.com`) |
@@ -121,11 +132,14 @@ Platform configuration and real-time connection settings:
 
 ---
 
-#### `erepublik.citizen`
+### `erepublik.citizen`
 
-Full citizen state (42 keys). This is the same object available on the battlefield page — see [API_MILITARY.md](API_MILITARY.md) (`erepublik.citizen` section) for the full 43-key reference with field descriptions.
+Full citizen state (42 keys). This is the same object available on the battlefield page -- see Military API (`erepublik.citizen` section) for the full 43-key reference with field descriptions.
 
-The homepage version has the same structure. Example:
+The homepage version has the same structure.
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -174,13 +188,18 @@ The homepage version has the same structure. Example:
 }
 ```
 
-> **Note:** The `division` field may differ from the battlefield page — on the homepage it shows the citizen's natural division (`4`), while on the battlefield it may show the currently viewed division (e.g., `11` for aircraft).
+</details>
+
+> **Note:** The `division` field may differ from the battlefield page -- on the homepage it shows the citizen's natural division (`4`), while on the battlefield it may show the currently viewed division (e.g., `11` for aircraft).
 
 ---
 
-#### `erepublik.i18n`
+### `erepublik.i18n`
 
 Localized UI strings (10 sections):
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -265,14 +284,19 @@ Localized UI strings (10 sections):
 }
 ```
 
+</details>
+
 - Text placeholders use `%%1%%`, `%%2%%` for variable substitution
 - The `currencyAmount` template is localized with the citizen's currency name
 
 ---
 
-#### `erepublik.promos`
+### `erepublik.promos`
 
 Active promotional events (all boolean flags):
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -286,13 +310,18 @@ Active promotional events (all boolean flags):
 }
 ```
 
+</details>
+
 When an event is active, the corresponding flag is `true` and additional event-specific UI is rendered on the homepage.
 
 ---
 
-#### `erepublik.shortcuts`
+### `erepublik.shortcuts`
 
 Navigation shortcuts displayed in the sidebar:
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -323,12 +352,14 @@ Navigation shortcuts displayed in the sidebar:
 }
 ```
 
-- `links` — URL path for each shortcut (some protocol-relative, some path-only)
-- `names` — Display label for each shortcut
+</details>
+
+- `links` -- URL path for each shortcut (some protocol-relative, some path-only)
+- `names` -- Display label for each shortcut
 
 ---
 
-#### `erepublik.angularTemplates`
+### `erepublik.angularTemplates`
 
 Template URLs loaded by AngularJS controllers:
 
@@ -345,9 +376,12 @@ These are short URL references (e.g., `/angularTemplates/CitizenAchievements`) l
 
 ---
 
-#### `Environment`
+### `Environment`
 
 Session environment flags:
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -363,6 +397,8 @@ Session environment flags:
 }
 ```
 
+</details>
+
 | Field | Type | Description |
 |-------|------|-------------|
 | `facebookSession` | number | `0` = not a Facebook session |
@@ -377,9 +413,12 @@ Session environment flags:
 
 ---
 
-#### `energyData`
+### `energyData`
 
 Energy recovery status (also merged into `erepublik.citizen` via `$j.extend`):
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -391,6 +430,8 @@ Energy recovery status (also merged into `erepublik.citizen` via `$j.extend`):
 }
 ```
 
+</details>
+
 | Field | Type | Description |
 |-------|------|-------------|
 | `energy` | number | Current energy |
@@ -401,9 +442,12 @@ Energy recovery status (also merged into `erepublik.citizen` via `$j.extend`):
 
 ---
 
-#### `SERVER_DATA.wallData`
+### `SERVER_DATA.wallData`
 
 Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA, { wallData: {...} })`:
+
+<details>
+<summary>Example Data</summary>
 
 ```json
 {
@@ -471,7 +515,9 @@ Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA,
 }
 ```
 
-**`citizenFeeds`** — 5 feed tabs (country, friends, militaryUnit, party, community), each with:
+</details>
+
+**`citizenFeeds`** -- 5 feed tabs (country, friends, militaryUnit, party, community), each with:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -489,7 +535,7 @@ Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA,
 | `postAs` | object/null | Posting identity (null = post as self) |
 | `placeholder` | string | Input placeholder text |
 
-**`citizenInfo`** — Extended citizen info for the wall (different from `erepublik.citizen`):
+**`citizenInfo`** -- Extended citizen info for the wall (different from `erepublik.citizen`):
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -510,7 +556,7 @@ Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA,
 | `avatar` | string | Full avatar URL (CDN) |
 | `profile_url` | string | Protocol-relative URL to citizen profile |
 
-**`dailyOrder`** — Daily order widget shown on all feeds:
+**`dailyOrder`** -- Daily order widget shown on all feeds:
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -526,9 +572,12 @@ Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA,
 
 ---
 
-#### `ErpkPvp` + `dictatorships` + `empires`
+### `ErpkPvp` + `dictatorships` + `empires`
 
 PvP/chat configuration and political state maps:
+
+<details>
+<summary>Example Data</summary>
 
 ```javascript
 var ErpkPvp = (ErpkPvp || {});
@@ -540,19 +589,24 @@ const dictatorships = {"47":1,"67":1,"28":1,"26":1,"33":1,"69":1,"170":1,"168":1
 const empires = {"35":1};
 ```
 
+</details>
+
 | Variable | Type | Description |
 |----------|------|-------------|
 | `ErpkPvp.bosh_service` | string | BOSH/XMPP service endpoint (often `"unassigned"`) |
 | `ErpkPvp.muc_host` | string | Multi-user chat host (often `"unassigned"`) |
 | `ErpkPvp.citizenId` | number | Current citizen ID |
-| `dictatorships` | object | Map of country ID → `1` for countries currently under dictatorship |
-| `empires` | object | Map of country ID → `1` for countries currently holding empire status |
+| `dictatorships` | object | Map of country ID -> `1` for countries currently under dictatorship |
+| `empires` | object | Map of country ID -> `1` for countries currently holding empire status |
 
 > **Useful:** The `dictatorships` and `empires` maps provide a real-time snapshot of the political state of all countries. As of this capture: 9 dictatorships (country IDs: 47, 67, 28, 26, 33, 69, 170, 168, 30) and 1 empire (country ID: 35).
 
 ---
 
-#### Other Embedded Variables
+### Other Embedded Variables
+
+<details>
+<summary>Example Data</summary>
 
 ```javascript
 var csrfToken = '99e749d8bab079654efe0b67c298b9a2';
@@ -570,6 +624,8 @@ var smallestFood = {"q":1,"use":2};
 var eventPopupAutoShowName = 'winterOlympicsPopup';  // or 'valentinesDayPopup'
 ```
 
+</details>
+
 | Variable | Type | Description |
 |----------|------|-------------|
 | `csrfToken` | string | CSRF token for POST requests |
@@ -581,7 +637,7 @@ var eventPopupAutoShowName = 'winterOlympicsPopup';  // or 'valentinesDayPopup'
 
 ---
 
-### AngularJS Controllers
+## AngularJS Controllers
 
 The homepage uses AngularJS (`ng-app="ErpkApp"`) with these controllers:
 
@@ -598,21 +654,28 @@ The homepage uses AngularJS (`ng-app="ErpkApp"`) with these controllers:
 | `CitizenAchievementsController` | Overlay | Achievement popups |
 
 The battle listing section uses Angular templates with `ng-repeat`:
+
+<details>
+<summary>Template Example</summary>
+
 ```html
 <div ng-repeat="(sectionName, section) in campaigns.battles">
   <!-- Sections: contributions, cotd, myCountry, allies, others -->
 </div>
 ```
 
+</details>
+
 Campaign data is loaded asynchronously via the `ListCampaignsControllerHomepage` controller (uses `/en/military/campaignsJson/citizen`).
 
 ---
 
-### Data Extraction
+## Data Extraction
 
 To extract embedded data from the homepage HTML:
 
-**Python example:**
+<details>
+<summary>Python Example</summary>
 
 ```python
 import re
@@ -657,21 +720,30 @@ match = re.search(r'\$j\.extend\(SERVER_DATA, \{\s*wallData:', html)
 # ... use brace counting + key quoting (see Notes)
 ```
 
+</details>
+
 > **Note:** The `wallData` block uses unquoted JavaScript keys (e.g., `wallData: {citizenFeeds: ...}`). Convert with: `re.sub(r'(\{|,)\s*(\w+)\s*:', r'\1"\2":', raw)` before parsing as JSON.
 
 ---
 
-### Notes
+## Notes
 
 - **HTML page, not JSON API**: Returns a full HTML document (~131 KB, ~2200 lines). All data is embedded in `<script>` blocks.
 - **Multiple `<script>` blocks**: The page contains ~37 script blocks. Key data is in scripts 0, 20, 21, 30, 34, and 35.
 - **`erepublik.citizen` is shared**: The same citizen object structure appears on the homepage, battlefield page, and other pages. It is extended by `energyData` via `$j.extend(erepublik.citizen, energyData)`.
 - **Campaign data is async**: Unlike other embedded objects, the battle listing data is loaded by the `ListCampaignsControllerHomepage` AngularJS controller via AJAX after page load (see `/en/military/campaignsJson/citizen`).
-- **`SERVER_DATA` is extended multiple times**: At least 2 `$j.extend(SERVER_DATA, ...)` calls — one for `csrfToken` refresh, one for `wallData`.
+- **`SERVER_DATA` is extended multiple times**: At least 2 `$j.extend(SERVER_DATA, ...)` calls -- one for `csrfToken` refresh, one for `wallData`.
 - **Event popups are seasonal**: `eventPopupAutoShowName` changes based on active events (e.g., `winterOlympicsPopup`, `valentinesDayPopup`). Multiple event popups can coexist.
 - **`dictatorships` and `empires` maps**: These `const` declarations provide a real-time snapshot of which countries are dictatorships or empires. Useful for bot logic that needs to check political status without additional API calls.
-- **Pomelo WebSocket**: `erepublik.settings.pomelo` contains the same WebSocket configuration as the battlefield page — `gate.erepublik.com:3050` with the session token as auth. Can be used for real-time notifications on the homepage.
-- **XMPP/PvP chat**: `ErpkPvp.bosh_service` and `muc_host` are typically `"unassigned"` — the PvP chat system appears inactive or deprecated.
+- **Pomelo WebSocket**: `erepublik.settings.pomelo` contains the same WebSocket configuration as the battlefield page -- `gate.erepublik.com:3050` with the session token as auth. Can be used for real-time notifications on the homepage.
+- **XMPP/PvP chat**: `ErpkPvp.bosh_service` and `muc_host` are typically `"unassigned"` -- the PvP chat system appears inactive or deprecated.
 - **`citizenInfo` vs `citizen`**: `wallData.citizenInfo` contains account metadata (`created_at`, `is_alive`, `is_validated`, `is_payer`) not available in `erepublik.citizen`, while `erepublik.citizen` has gameplay data (energy, gold, division, daily orders) not in `citizenInfo`.
 
 ---
+
+## Related
+
+- [API Table of Contents](../API_TOC.md)
+- [Authentication](../auth/README.md)
+- [Notifications](../notifications/README.md)
+- [CAPTCHA & Verification](../captcha/README.md)

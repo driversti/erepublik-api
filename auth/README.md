@@ -1,18 +1,16 @@
-# eRepublik API - Authentication
+# Authentication
+
+eRepublik uses cookie-based session authentication. After a successful login, the server returns a session cookie (`erpk`) that must be included in all subsequent authenticated requests.
 
 #erepublik #api #authentication
 
-[< Back to Table of Contents](API_TOC.md)
+[< Back to Table of Contents](../API_TOC.md)
 
 ---
 
 ## Overview
 
-eRepublik uses cookie-based session authentication. After a successful login, the server returns a session cookie (`erpk`) that must be included in all subsequent authenticated requests.
-
----
-
-## Login Flow
+### Login Flow
 
 1. **POST** credentials to the login endpoint
 2. **Receive** session cookie in response
@@ -55,7 +53,8 @@ Authenticates a user and establishes a session. On success, returns a 302 redire
 | Origin | `https://www.erepublik.com` | Yes |
 | Referer | `https://www.erepublik.com/en` | Yes |
 
-### Example Request (cURL)
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X POST "https://www.erepublik.com/en/login" \
@@ -71,11 +70,16 @@ curl -X POST "https://www.erepublik.com/en/login" \
   -c cookies.txt
 ```
 
+</details>
+
 ### Example Response
 
 On success, the response includes:
 - HTTP 302 redirect to homepage
 - Multiple `Set-Cookie` headers establishing the session
+
+<details>
+<summary>Response Headers</summary>
 
 ```
 HTTP/2 302
@@ -84,6 +88,8 @@ Set-Cookie: erpk=abc123xyz...; expires=...; path=/; domain=.erepublik.com; secur
 Set-Cookie: erpk_auth=1; path=/; domain=.erepublik.com; secure; SameSite=None
 Set-Cookie: erpk_rm=def456...; expires=...; path=/; domain=.erepublik.com; secure; HttpOnly; SameSite=None
 ```
+
+</details>
 
 ### Response Cookies
 
@@ -109,11 +115,16 @@ Set-Cookie: erpk_rm=def456...; expires=...; path=/; domain=.erepublik.com; secur
 
 Once authenticated, include the `erpk` cookie in all requests:
 
+<details>
+<summary>Example Request (cURL)</summary>
+
 ```bash
 curl -X GET "https://www.erepublik.com/en/some-endpoint" \
   -H "Cookie: erpk=abc123xyz..." \
   -H "X-Requested-With: XMLHttpRequest"
 ```
+
+</details>
 
 ---
 
@@ -146,7 +157,8 @@ None
 | Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
 | User-Agent | Browser user agent | Recommended |
 
-### Example Request (cURL)
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X GET "https://www.erepublik.com/en/logout" \
@@ -154,13 +166,18 @@ curl -X GET "https://www.erepublik.com/en/logout" \
   -H "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 ```
 
-### Example Response
+</details>
+
+<details>
+<summary>Example Response</summary>
 
 ```
 HTTP/2 302
 Location: https://www.erepublik.com/en
 Set-Cookie: erpk=YOUR_SESSION_TOKEN; expires=Sun, 25 Jan 2026 16:45:56 GMT; Max-Age=900; path=/; domain=.erepublik.com; secure; HttpOnly; SameSite=None
 ```
+
+</details>
 
 ### Notes
 
@@ -182,7 +199,6 @@ Set-Cookie: erpk=YOUR_SESSION_TOKEN; expires=Sun, 25 Jan 2026 16:45:56 GMT; Max-
 
 ## Related
 
-- [API Table of Contents](API_TOC.md)
-- [Military API](API_MILITARY.md)
-- [Social API](API_SOCIAL.md)
-- [Economy API](API_ECONOMY.md)
+- [API Table of Contents](../API_TOC.md)
+- [CAPTCHA & Verification](../captcha/README.md)
+- [Homepage](../homepage/README.md)

@@ -1,43 +1,40 @@
-# eRepublik API - Social
+# Citizen Profiles
 
-#erepublik #api #social #citizens
+#erepublik #api #social #profiles #citizens
 
-[< Back to Table of Contents](API_TOC.md)
+Endpoints for retrieving citizen profile data, including comprehensive profile JSON and lightweight hovercard tooltips.
 
----
+[< Back to Social API](README.md)
 
-## Overview
-
-Social endpoints cover citizen profiles, friends, messages, notifications, and community interactions.
+**Related:** [Friends](friends.md) | [Search Citizens](search.md) | [Wall Posts](wall.md)
 
 ---
 
-## Endpoints
-
-### Get Citizen Profile (Global JSON)
+## Get Citizen Profile (Global JSON)
 
 **Method:** GET
 **URL:** `/en/main/citizen-profile-json-global/{citizenId}`
 **Auth Required:** No (public endpoint, but works better with session cookie)
 
-#### Description
+### Description
 
 Retrieves comprehensive profile data for a citizen including personal info, location, achievements, military stats, friends list, decorations, and more. This is the main endpoint used by the citizen profile page to load all data.
 
-#### Path Parameters
+### Path Parameters
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | citizenId | number | Yes | The unique citizen ID |
 
-#### Headers
+### Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
 | X-Requested-With | `XMLHttpRequest` | Yes |
 | Cookie | `erpk=YOUR_SESSION_TOKEN` | No (enhances response with friendship data) |
 
-#### Example Request (cURL)
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/4690052" \
@@ -45,7 +42,10 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
   -H "Cookie: erpk=YOUR_SESSION_TOKEN"
 ```
 
-#### Example Response
+</details>
+
+<details>
+<summary>Example Response</summary>
 
 ```json
 {
@@ -237,7 +237,9 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
 }
 ```
 
-#### Response Fields
+</details>
+
+### Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -259,7 +261,7 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
 | nationalRank | object | National ranking position |
 | pvpStats | object | PvP match statistics |
 
-#### Notes
+### Notes
 
 - This is a **public endpoint** - no authentication required, but having a session cookie adds `isFriend` and `isFriendRequestPending` data
 - The `friends.list` array contains only a sample of friends (first ~9), not the complete list
@@ -270,32 +272,33 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
 
 ---
 
-### Get Citizen Profile (Personal JSON)
+## Get Citizen Profile (Personal JSON)
 
 **Method:** GET
 **URL:** `/en/main/citizen-profile-json-personal/{citizenId}`
 **Auth Required:** Yes
 
-#### Description
+### Description
 
 Retrieves extended profile data for a citizen, including hovercard interaction data and event status. This endpoint requires authentication and returns additional data not available in the public global endpoint.
 
 > **Note:** All fields from the [Global JSON endpoint](#get-citizen-profile-global-json) are also present. This documentation covers only the **additional/different fields** unique to the personal endpoint.
 
-#### Path Parameters
+### Path Parameters
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | citizenId | number | Yes | The unique citizen ID |
 
-#### Headers
+### Headers
 
 | Header | Value | Required |
 |--------|-------|----------|
 | X-Requested-With | `XMLHttpRequest` | Yes |
 | Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
 
-#### Example Request (cURL)
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-personal/4416327" \
@@ -303,11 +306,16 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-personal/441
   -H "Cookie: erpk=YOUR_SESSION_TOKEN"
 ```
 
-#### Additional Response Fields (not in Global endpoint)
+</details>
 
-##### `loggedIn.hovercardData`
+### Additional Response Fields (not in Global endpoint)
+
+#### `loggedIn.hovercardData`
 
 Rich hovercard data for UI rendering. In the global endpoint, `loggedIn` is an empty array `[]`.
+
+<details>
+<summary>loggedIn.hovercardData JSON</summary>
 
 ```json
 {
@@ -411,9 +419,14 @@ Rich hovercard data for UI rendering. In the global endpoint, `loggedIn` is an e
 }
 ```
 
-##### `events`
+</details>
+
+#### `events`
 
 Event status flags. In the global endpoint, `events` is an empty array `[]`.
+
+<details>
+<summary>events JSON</summary>
 
 ```json
 {
@@ -431,7 +444,9 @@ Event status flags. In the global endpoint, `events` is an empty array `[]`.
 }
 ```
 
-#### Hovercard Data Fields
+</details>
+
+### Hovercard Data Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
@@ -444,7 +459,7 @@ Event status flags. In the global endpoint, `events` is an empty array `[]`.
 | fighterInfo | object | Compact fighter stats for military and aviation |
 | interactionButtons | array | Available UI actions (viewProfile, sendMessage, addFriend/removeFriend) |
 
-#### Activity Types
+### Activity Types
 
 | Type | Description |
 |------|-------------|
@@ -452,7 +467,7 @@ Event status flags. In the global endpoint, `events` is an empty array `[]`.
 | politicalParty | Party membership with orientation info |
 | militaryUnit | Military unit membership |
 
-#### Interaction Button Types
+### Interaction Button Types
 
 | Type | Action | Description |
 |------|--------|-------------|
@@ -461,321 +476,13 @@ Event status flags. In the global endpoint, `events` is an empty array `[]`.
 | addFriend | addFriend | AJAX action to add friend |
 | removeFriend | removeFriend | AJAX action to remove friend |
 
-#### Notes
+### Notes
 
 - Requires authentication - returns error without valid session cookie
 - `interactionButtons` change based on relationship (addFriend vs removeFriend)
 - `politicalTitle` includes roles like "Country President", "Congressman", etc.
 - `activity[].social_orientation` only appears for politicalParty type
 - Events object keys may vary depending on currently active game events
-
----
-
-## Add/Remove Friend
-
-**Method:** POST
-**URL:** `/en/main/citizen-addRemoveFriend/`
-**Auth Required:** Yes
-
-### Description
-
-Adds or removes a friendship connection with another citizen. This endpoint handles both sending friend requests and removing existing friendships.
-
-### Request Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| _token | string | Yes | CSRF token for request validation |
-| citizenId | number | Yes | The target citizen ID to add/remove as friend |
-| action | string | Yes | Either `addFriend` or `removeFriend` |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-### Example Request
-
-```bash
-curl -X POST 'https://www.erepublik.com/en/main/citizen-addRemoveFriend/' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw '_token=YOUR_CSRF_TOKEN&citizenId=2886612&action=addFriend'
-```
-
-### Example Response (Success)
-
-```json
-{
-  "status": true,
-  "message": "Friend request sent successfully"
-}
-```
-
-### Example Response (Error - Pending Request)
-
-```json
-{
-  "message": "ghoghnooos already has a friendship request pending from you.",
-  "status": false,
-  "error": true
-}
-```
-
-### Notes
-
-- Requires authentication via session cookie
-- CSRF token (`_token`) must be obtained from the page where the action is triggered
-- The `action` parameter determines whether to add or remove friendship
-- Possible error scenarios:
-  - Pending friend request already exists
-  - Citizen is already a friend (when using `addFriend`)
-  - Not friends with the citizen (when using `removeFriend`)
-- Response includes a user-friendly message describing the result
-
----
-
-## Create Wall Post
-
-**Method:** POST
-**URL:** `/en/main/wall-post/create/json`
-**Auth Required:** Yes
-
-### Description
-
-Creates a new wall post on the citizen's profile or country page. Posts are rate-limited to prevent spam (typically a few minutes between posts).
-
-### Request Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| post_as | number | Yes | Posting mode: `0` = post as self, other values likely for organizations |
-| post_message | string | Yes | The wall post message content |
-| _token | string | Yes | CSRF token for request validation |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-### Example Request (cURL)
-
-```bash
-curl -X POST 'https://www.erepublik.com/en/main/wall-post/create/json' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw 'post_as=0&post_message=Hello%20world&_token=YOUR_CSRF_TOKEN'
-```
-
-### Example Response (Success)
-
-```json
-{
-  "wallData": {
-    "wallType": "friends",
-    "params": {
-      "wallType": "friends",
-      "viewPost": "viewPost",
-      "wallPosts": "wall-post",
-      "wallComments": "wall-comment"
-    },
-    "isGroupWall": false,
-    "showDictator": true,
-    "showPoliticalTitles": false,
-    "canPost": true
-  },
-  "citizenData": {
-    "4690052": {
-      "id": 4690052,
-      "name": "driver sti",
-      "avatar": "https://cdnt.erepublik.net/.../avatar.png",
-      "profileUrl": "//www.erepublik.com/en/citizen/profile/4690052",
-      "isDictator": 0,
-      "politicalTitle": ""
-    }
-  },
-  "wallPosts": [
-    {
-      "id": 26680941,
-      "authorId": 4690052,
-      "title": false,
-      "message": "Here is a more sophisticated post. <q class=\"emoji emoji_1f601\" alt=\"&#x1f601;\" draggable=\"false\">&#x1f601;</q><br />\nІ він містить кирилицю",
-      "createdAt": 1769353893,
-      "createdAtTimeAgo": "now",
-      "canRemove": true,
-      "canReport": false,
-      "showCommentsAndVotes": true,
-      "showLinkToPost": true,
-      "canVote": true,
-      "canReact": true,
-      "isVoted": false,
-      "numVotes": 0,
-      "reactions": {
-        "1f44d": 0,
-        "1f60d": 0,
-        "1f606": 0,
-        "1f632": 0,
-        "1f614": 0,
-        "1f621": 0,
-        "1f44e": 0
-      },
-      "reactionId": false,
-      "votedBy": [],
-      "canComment": true,
-      "numComments": 0,
-      "commentedBy": [],
-      "meta": {
-        "reportURL": "//www.erepublik.com/en/main/tickets-report/26680941/wall-post",
-        "isAutopost": false,
-        "isOwnPost": true,
-        "isLatestEvent": false,
-        "seeMoreURL": null,
-        "isInternationalEvent": false,
-        "isNewCitizensPost": false,
-        "isAutomaticMedalPost": false,
-        "isMuCommanderPost": false,
-        "isCountryLeaderPost": false,
-        "cssClasses": []
-      }
-    }
-  ],
-  "currentPage": 1,
-  "pages": 100,
-  "hasMore": true
-}
-```
-
-### Example Response (Error - Rate Limited)
-
-```json
-{
-  "error": true,
-  "message": "You must wait 4 minutes before posting again"
-}
-```
-
-### Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| wallData | object | Metadata about the wall (type, permissions, display settings) |
-| citizenData | object | Author citizen data keyed by citizen ID |
-| wallPosts | array | Array containing the newly created post object |
-| currentPage | number | Current page number for pagination |
-| pages | number | Total number of pages |
-| hasMore | boolean | Whether more posts exist |
-
-### Wall Post Object Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | number | Unique post ID |
-| authorId | number | Citizen ID of the post author |
-| message | string | Post content (HTML encoded, may contain emoji tags) |
-| createdAt | number | Unix timestamp of creation |
-| createdAtTimeAgo | string | Human-readable time (e.g., "now", "5 minutes ago") |
-| canRemove | boolean | Whether viewer can delete this post |
-| canVote | boolean | Whether viewer can vote on this post |
-| canReact | boolean | Whether viewer can add reactions |
-| reactions | object | Reaction counts by emoji unicode (e.g., "1f44d" = 👍) |
-| numVotes | number | Total vote count |
-| numComments | number | Total comment count |
-| meta | object | Additional post metadata (report URL, post type flags) |
-
-### Notes
-
-- Requires authentication via session cookie
-- CSRF token (`_token`) must be obtained from the page where the post is created
-- **Rate limiting:** Enforced server-side to prevent spam (typically 3-5 minutes between posts)
-- The `post_as` parameter likely controls posting as citizen (0) vs organization/other entity
-- Returns HTTP 200 even when rate-limited (check `error` field in JSON response)
-- Wall posts appear on the citizen's profile page or country wall, depending on context
-- **Unicode/Emoji support:** Full unicode support including emojis (converted to HTML tags) and Cyrillic/other scripts
-- Response includes full wall context with pagination metadata
-- The newly created post appears as the first item in the `wallPosts` array
-
----
-
-## Delete Wall Post
-
-**Method:** POST
-**URL:** `/en/main/wall-post/delete/json`
-**Auth Required:** Yes
-
-### Description
-
-Deletes a wall post by its ID. Only the post author can delete their own posts.
-
-### Request Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| postId | number | Yes | The ID of the wall post to delete |
-| _token | string | Yes | CSRF token for request validation |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-### Example Request (cURL)
-
-```bash
-curl -X POST 'https://www.erepublik.com/en/main/wall-post/delete/json' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw 'postId=12345678&_token=YOUR_CSRF_TOKEN'
-```
-
-### Example Response (Success)
-
-```json
-{
-  "status": true,
-  "message": "Post deleted successfully"
-}
-```
-
-### Example Response (Error - Post Not Found)
-
-```json
-{
-  "error": true,
-  "message": "This post is not available anymore"
-}
-```
-
-### Example Response (Error - Not Authorized)
-
-```json
-{
-  "error": true,
-  "message": "You are not authorized to delete this post"
-}
-```
-
-### Notes
-
-- Requires authentication via session cookie
-- CSRF token (`_token`) must be obtained from the page context
-- Only the post author can delete their own posts
-- Returns HTTP 200 even on error (check `error` field in JSON response)
-- Possible error scenarios:
-  - Post ID doesn't exist or was already deleted
-  - User doesn't have permission to delete the post (not the author)
-  - Invalid or expired CSRF token
 
 ---
 
@@ -787,7 +494,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wall-post/delete/json' \
 
 ### Description
 
-Returns a compact citizen profile used for hover tooltips across the site. Significantly richer than expected — includes online status, badge/rank icons, political title, party/MU/city memberships, and detailed fighter stats. This endpoint powers the popup that appears when hovering over a citizen's name in the game UI.
+Returns a compact citizen profile used for hover tooltips across the site. Significantly richer than expected -- includes online status, badge/rank icons, political title, party/MU/city memberships, and detailed fighter stats. This endpoint powers the popup that appears when hovering over a citizen's name in the game UI.
 
 ### Path Parameters
 
@@ -802,7 +509,8 @@ Returns a compact citizen profile used for hover tooltips across the site. Signi
 | Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
 | X-Requested-With | `XMLHttpRequest` | Yes |
 
-### Example Request (cURL)
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
@@ -810,7 +518,10 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
   -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-### Example Response
+</details>
+
+<details>
+<summary>Example Response</summary>
 
 ```json
 {
@@ -888,6 +599,8 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
 }
 ```
 
+</details>
+
 ### Response Fields
 
 | Field | Type | Description |
@@ -926,229 +639,8 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
 ### Notes
 
 - **Lightweight alternative to profile endpoints**: Returns key citizen data in a single compact response, ideal for tooltips or quick lookups
-- **Online status**: The `isOnline` field provides real-time online status — not available from the profile JSON endpoints
+- **Online status**: The `isOnline` field provides real-time online status -- not available from the profile JSON endpoints
 - **Friendship context**: `isFriend` and `isSelf` are relative to the authenticated session
 - **Error handling**: Returns `{"error": true, "message": "citizen error"}` for invalid citizen IDs or system accounts
-- **Activity array**: Contains up to 3 entries (city, party, MU) — entries are omitted if the citizen has no membership
+- **Activity array**: Contains up to 3 entries (city, party, MU) -- entries are omitted if the citizen has no membership
 - **Organization accounts**: When `isOrg: true`, the response represents a company/organization rather than a player
-
----
-
-## Search Citizens
-
-**Method:** GET
-**URL:** `/en/main/citizen-search`
-**Auth Required:** Yes
-
-### Description
-
-Searches for citizens by name prefix. Returns up to ~10 matching results ordered by relevance. Used for autocomplete in the game's citizen search functionality (e.g., when composing messages or adding friends).
-
-### Query Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| name | string | Yes | Search query (citizen name prefix, minimum ~2 characters) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-
-### Example Request (cURL)
-
-```bash
-curl 'https://www.erepublik.com/en/main/citizen-search?name=plato' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest'
-```
-
-### Example Response
-
-```json
-{
-  "query": "plato",
-  "citizens": [
-    {
-      "id": 2,
-      "name": "Plato",
-      "level": 27,
-      "birthday": "Day 169",
-      "xp": 10365,
-      "countryId": 30,
-      "avatar": "https://cdnt.erepublik.net/.../c81e728d9d4c2f636f067f89cc14862c.jpg"
-    },
-    {
-      "id": 9435044,
-      "name": "Plato Aparato",
-      "level": 1,
-      "birthday": "Day 4,008",
-      "xp": 0,
-      "countryId": 64,
-      "avatar": "https://cdnt.erepublik.net/.../default_male.gif"
-    }
-  ]
-}
-```
-
-### Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `query` | string | The search query that was submitted |
-| `citizens` | array | Array of matching citizen results |
-| `citizens[].id` | number | Citizen ID |
-| `citizens[].name` | string | Citizen display name |
-| `citizens[].level` | number | Experience level |
-| `citizens[].birthday` | string | In-game birthday (e.g., "Day 169") |
-| `citizens[].xp` | number | Experience points |
-| `citizens[].countryId` | number | Citizenship country ID |
-| `citizens[].avatar` | string | Avatar image URL |
-
-### Notes
-
-- **Prefix matching**: Searches by name prefix, not substring — "plato" matches "Plato" and "Platoctm" but not "xPlato"
-- **Result limit**: Returns approximately 10 results maximum
-- **Error handling**: Returns `{"error": {"message": "Invalid name parameter"}}` if the `name` parameter is missing
-- **Inactive citizens**: Results include inactive/dead citizens (check `level: 1` and `xp: 0` as indicators of never-played accounts)
-- **Use cases**: Citizen lookup, autocomplete for message composition, friend search, building citizen directories
-
----
-
-## News RSS Feed
-
-**Method:** GET
-**URL:** `/en/main/news/{sorting}/{country}/{category}/{page}/rss`
-**Auth Required:** No (public, but session cookie may affect results)
-
-### Description
-
-Returns an RSS/XML feed of news articles (player-written newspapers). Provides article titles, links, publication dates, and description excerpts. Useful for building news readers, monitoring political developments, or tracking player-generated content.
-
-### Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| sorting | string | Yes | Sort order: `rated` (by votes/endorsements) or `latest` (newest first) |
-| country | string | Yes | Must be `all` — country-specific values return HTML instead of RSS |
-| category | string | Yes | Must be `all` — category-specific values return HTML instead of RSS |
-| page | number | Yes | Page number (starts at 1) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | No (may personalize results) |
-
-### Example Request (cURL)
-
-```bash
-curl 'https://www.erepublik.com/en/main/news/rated/all/all/1/rss'
-```
-
-### Example Response
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0"
-  xmlns:content="//purl.org/rss/1.0/modules/content/"
-  xmlns:wfw="//wellformedweb.org/CommentAPI/">
-  <channel>
-    <title><![CDATA[eRepublik News]]></title>
-    <link>https://erepublik.com/en/main/news/rated/all/all/1/rss</link>
-    <description><![CDATA[eRepublik News]]></description>
-    <language>en-us</language>
-    <pubDate>Fri, 13 Feb 2026 20:38:50 -0800</pubDate>
-    <item>
-      <title><![CDATA[Gold farming, Feb 1-8]]></title>
-      <link>https://www.erepublik.com/en/article/gold-farming-feb-1-8-2794000/1/20</link>
-      <guid>https://www.erepublik.com/en/article/gold-farming-feb-1-8-2794000/1/20</guid>
-      <pubDate>Sun, 08 Feb 2026 00:36:08 -0800</pubDate>
-      <description><![CDATA[Greetings! I decided to publish another data slice...]]></description>
-    </item>
-  </channel>
-</rss>
-```
-
-### Response Fields (per `<item>`)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `title` | string | Article title (CDATA-wrapped) |
-| `link` | string | Full URL to the article page |
-| `guid` | string | Unique article identifier (same as link) |
-| `pubDate` | string | RFC 2822 publication date |
-| `description` | string | Article excerpt/summary (CDATA-wrapped, truncated) |
-
-### Notes
-
-- **RSS 2.0 format**: Standard RSS with `content` and `wfw` XML namespace extensions
-- **Article URL pattern**: `/en/article/{slug}-{articleId}/{page}/{commentsPerPage}`
-- **Sorting**: Two sort orders work: `rated` (by votes) and `latest` (newest first). Other values return 404
-- **No filtering**: Country and category path segments must be `all` — specific values (e.g., `Lithuania`, `politics`) return HTML pages instead of RSS
-- **Pagination**: Use `page` parameter to get older articles
-- **Public endpoint**: Works without authentication, but results may differ with a session cookie
-- **Use cases**: News aggregation, monitoring political articles, tracking community developments
-
----
-
-## Template
-
-Use this template when documenting new endpoints:
-
-```markdown
-## Endpoint Name
-
-**Method:** GET/POST
-**URL:** `/en/path/to/endpoint`
-**Auth Required:** Yes/No
-
-### Description
-
-Brief explanation of what this endpoint does.
-
-### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| param1 | string | Yes | Description |
-
-### Headers
-
-| Header | Value | Description |
-|--------|-------|-------------|
-| Content-Type | application/json | ... |
-
-### Example Request (cURL)
-
-\`\`\`bash
-curl -X GET "https://www.erepublik.com/en/..." \
-  -H "Cookie: erpk=..."
-\`\`\`
-
-### Example Response
-
-\`\`\`json
-{
-  "success": true,
-  "data": {}
-}
-\`\`\`
-
-### Notes
-
-Any additional information, gotchas, or observations.
-```
-
----
-
-## Related
-
-- [API Table of Contents](API_TOC.md)
-- [Authentication](API_AUTH.md)
-- [Country API](API_COUNTRY.md)
-- [Notifications API](API_NOTIFICATIONS.md)
-- [Military API](API_MILITARY.md)
-- [Economy API](API_ECONOMY.md)

@@ -1,12 +1,10 @@
-# eRepublik API - CAPTCHA & Verification
+# CAPTCHA & Verification
+
+This module covers session verification and CAPTCHA endpoints. eRepublik uses various verification mechanisms to detect automation and ensure fair gameplay. These endpoints handle verification challenges, countdowns, and validation.
 
 #erepublik #api #captcha #verification #security
 
-> 🤖 **Maintained by Claude** - This API documentation is managed by Claude Code. Feel free to ask Claude to add, update, or reorganize endpoints as you discover them.
-
-## Overview
-
-This module covers session verification and CAPTCHA endpoints. eRepublik uses various verification mechanisms to detect automation and ensure fair gameplay. These endpoints handle verification challenges, countdowns, and validation.
+[< Back to Table of Contents](../API_TOC.md)
 
 ---
 
@@ -38,7 +36,8 @@ None
 | X-Requested-With | `XMLHttpRequest` | Yes |
 | Referer | Current page URL (e.g., battlefield URL) | No |
 
-### Example Request
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl 'https://www.erepublik.com/en/main/sessionCaptcha' \
@@ -46,7 +45,10 @@ curl 'https://www.erepublik.com/en/main/sessionCaptcha' \
   -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-### Example Response
+</details>
+
+<details>
+<summary>Example Response (HTML)</summary>
 
 ```html
 <div id="verificationContainer" about="Pride and Prejudice and Zombies and Scripts" class="sessionVerify critical" data-remaining-time="107">
@@ -91,6 +93,8 @@ $j.extend(SERVER_DATA, {
 <link rel="stylesheet preload" as="style" type="text/css" href="//www.erepublik.net/css/sessionCaptcha/sliderCaptcha.1698060170.css"/>
 ```
 
+</details>
+
 ### Response Data Structure
 
 The embedded JavaScript object `SERVER_DATA.sessionValidation` contains:
@@ -113,7 +117,7 @@ The embedded JavaScript object `SERVER_DATA.sessionValidation` contains:
 - The `data-remaining-time` attribute shows seconds until forced verification
 - Maximum countdown appears to be 300 seconds (5 minutes)
 - Users can choose to "Verify later" but may face restrictions until verified
-- The humorous HTML comments ("Pride and Prejudice and Zombies and Scripts", "Hello there, General Kenobi") are Easter eggs from the developers 🎮
+- The humorous HTML comments ("Pride and Prejudice and Zombies and Scripts", "Hello there, General Kenobi") are Easter eggs from the developers
 
 ---
 
@@ -147,7 +151,8 @@ None
 | X-Requested-With | `XMLHttpRequest` | Yes |
 | Referer | Current page URL (e.g., battlefield URL) | No |
 
-### Example Request
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl 'https://www.erepublik.com/en/main/sessionUnlockPopup' \
@@ -155,11 +160,14 @@ curl 'https://www.erepublik.com/en/main/sessionUnlockPopup' \
   -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-### Example Response
+</details>
+
+<details>
+<summary>Example Response (HTML)</summary>
 
 ```html
 <div id="sessionUnlockModal" class="blueBorderPopup captchaEngine_sliderCaptcha captchaEngine_clickCaptcha loading" style="display: block;">
-    <a href="javascript:" class="close closeButton" title="Close" id="cancelCaptcha">✖</a>
+    <a href="javascript:" class="close closeButton" title="Close" id="cancelCaptcha">&#10006;</a>
     <h2>Account verification</h2>
     <p class="text">Please verify your account to ensure a fair gaming environment for all Citizens.</p>
     <div id="sessionUnlockCaptchaDiv">
@@ -193,6 +201,8 @@ curl 'https://www.erepublik.com/en/main/sessionUnlockPopup' \
 </div>
 ```
 
+</details>
+
 ### UI Elements
 
 | Element ID | Purpose | Description |
@@ -217,7 +227,7 @@ curl 'https://www.erepublik.com/en/main/sessionUnlockPopup' \
 - The "Continue" button is initially disabled and becomes enabled once the CAPTCHA is solved
 - Refresh icon allows requesting a new CAPTCHA if the current one is too difficult
 - Help icon toggles display of instructions
-- The modal includes both close (✖) and cancel options
+- The modal includes both close and cancel options
 - JavaScript callback `showSessionValidationCaptcha` is set to initialize the CAPTCHA widget
 
 ---
@@ -257,7 +267,8 @@ The response includes:
 | Origin | `https://www.erepublik.com` | Yes |
 | Referer | Current page URL (e.g., battlefield URL) | No |
 
-### Example Request
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X POST 'https://www.erepublik.com/en/main/sessionGetChallenge' \
@@ -270,7 +281,10 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionGetChallenge' \
   --data-urlencode 'env=BASE64_ENCODED_ENV_DATA'
 ```
 
-### Example Response
+</details>
+
+<details>
+<summary>Example Response</summary>
 
 ```json
 {
@@ -282,6 +296,8 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionGetChallenge' \
   "srcsetId": "4942cbd1727fae29068cd4135f8901d2f139e875ae2cefd4e96c10dcef4676b8ccd86ba0f46614d2b79657a7b3e8962644938387c9bee3a727a365c5627b7420"
 }
 ```
+
+</details>
 
 ### Response Fields
 
@@ -304,14 +320,6 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionGetChallenge' \
 - All hash IDs are SHA-256 hashes used for validation and tracking
 - The `env` parameter contains base64-encoded browser fingerprinting data to detect automation
 - Request returns HTTP 200 even if successful
-
-### Related Flow
-
-1. User receives verification countdown → `sessionCaptcha` endpoint
-2. User clicks "Verify" → `sessionUnlockPopup` endpoint displays modal
-3. Modal loads challenge data → **`sessionGetChallenge`** endpoint (this one)
-4. User solves CAPTCHA → Submit solution endpoint (to be documented)
-5. Verification complete → Session unlocked
 
 ---
 
@@ -338,7 +346,7 @@ This is the final step in the session verification flow. The user's click coordi
 | clickMatrix | string | Yes | URL-encoded JSON array of click coordinates, e.g., `[{"x":377,"y":50},{"x":237,"y":104}]` |
 | isMobile | boolean | Yes | Whether the user is on a mobile device (`true`/`false`) |
 | env | string | Yes | Base64-encoded environment data (browser fingerprint, tracking info) |
-| src | string | Yes | The CAPTCHA image data URI — format varies: WebP, PNG, or AVIF (same as received from `sessionGetChallenge`) |
+| src | string | Yes | The CAPTCHA image data URI -- format varies: WebP, PNG, or AVIF (same as received from `sessionGetChallenge`) |
 
 ### Headers
 
@@ -350,7 +358,8 @@ This is the final step in the session verification flow. The user's click coordi
 | Origin | `https://www.erepublik.com` | Yes |
 | Referer | Current page URL (e.g., battlefield URL) | No |
 
-### Example Request
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X POST 'https://www.erepublik.com/en/main/sessionUnlock' \
@@ -368,7 +377,10 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionUnlock' \
   --data-urlencode 'src=data:image/avif;base64,...'
 ```
 
-### Example Response (Incorrect Solution)
+</details>
+
+<details>
+<summary>Example Response (Incorrect Solution)</summary>
 
 ```json
 {
@@ -379,7 +391,10 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionUnlock' \
 }
 ```
 
-### Example Response (Successful - Expected)
+</details>
+
+<details>
+<summary>Example Response (Successful - Expected)</summary>
 
 ```json
 {
@@ -389,6 +404,8 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionUnlock' \
   "mustReload": false
 }
 ```
+
+</details>
 
 ### Response Fields
 
@@ -401,7 +418,8 @@ curl -X POST 'https://www.erepublik.com/en/main/sessionUnlock' \
 
 ### Click Matrix Format
 
-The `clickMatrix` parameter is a JSON array of coordinate objects representing where the user clicked on the CAPTCHA image:
+<details>
+<summary>Example Click Matrix</summary>
 
 ```json
 [
@@ -410,6 +428,8 @@ The `clickMatrix` parameter is a JSON array of coordinate objects representing w
   {"x": 372, "y": 91}
 ]
 ```
+
+</details>
 
 - Coordinates are relative to the CAPTCHA image (not the page)
 - Order matters - clicks must match the expected symbol order (left to right)
@@ -423,16 +443,18 @@ The `clickMatrix` parameter is a JSON array of coordinate objects representing w
 - On failure, the response indicates `mustReload: true`, suggesting a new challenge is needed
 - Multiple incorrect attempts may result in additional restrictions or longer lockouts
 - All hash IDs (`imageId`, `challengeId`) must match those received from `sessionGetChallenge`
-- **CAPTCHA tracking cookies are required:** The `onLoad` callback from `sessionGetChallenge` sets temporary cookies (e.g., `f6b735ea`, `2789c3fd`) scoped to `/en/main/sessionUnlock`. The server validates these cookies exist when processing the unlock submission. Cookie names are dynamic and change per challenge — always execute the `onLoad` JavaScript to set them before submitting
+- **CAPTCHA tracking cookies are required:** The `onLoad` callback from `sessionGetChallenge` sets temporary cookies (e.g., `f6b735ea`, `2789c3fd`) scoped to `/en/main/sessionUnlock`. The server validates these cookies exist when processing the unlock submission. Cookie names are dynamic and change per challenge -- always execute the `onLoad` JavaScript to set them before submitting
 
-### Complete Verification Flow
+---
 
-1. **Detection** → Anti-bot system triggers verification
-2. **Countdown** → `GET /en/main/sessionCaptcha` - Shows countdown UI
-3. **Popup** → `GET /en/main/sessionUnlockPopup` - Displays CAPTCHA modal
-4. **Challenge** → `POST /en/main/sessionGetChallenge` - Loads CAPTCHA image and IDs
-5. **Solution** → **`POST /en/main/sessionUnlock`** (this endpoint) - Submits click coordinates
-6. **Result** → Session unlocked or retry required
+## Complete Verification Flow
+
+1. **Detection** -- Anti-bot system triggers verification
+2. **Countdown** -- `GET /en/main/sessionCaptcha` - Shows countdown UI
+3. **Popup** -- `GET /en/main/sessionUnlockPopup` - Displays CAPTCHA modal
+4. **Challenge** -- `POST /en/main/sessionGetChallenge` - Loads CAPTCHA image and IDs
+5. **Solution** -- `POST /en/main/sessionUnlock` - Submits click coordinates
+6. **Result** -- Session unlocked or retry required
 
 ---
 
@@ -443,7 +465,8 @@ Additional CAPTCHA-related endpoints to be documented:
 
 ---
 
-## Related Links
+## Related
 
-- [[API_AUTH]] - Authentication and session management
-- [API Table of Contents](API_TOC.md)
+- [Authentication](../auth/README.md)
+- [API Table of Contents](../API_TOC.md)
+- [Homepage](../homepage/README.md)

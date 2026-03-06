@@ -1,20 +1,18 @@
-# eRepublik API - Power Spin
+# Power Spin
+
+Power Spin (Wheel of Fortune) is a gamification feature where players spend currency to spin a prize wheel. The wheel has 12 regular prize slots and a progressive jackpot system with 3 tiers. Players can spin using Country Currency (CC) with single or bulk spin options.
 
 #erepublik #api #powerspin #wheeloffortune #gamification
 
-[< Back to Table of Contents](API_TOC.md)
+[< Back to Table of Contents](../API_TOC.md)
 
 ---
 
 ## Overview
 
-Power Spin (Wheel of Fortune) is a gamification feature where players spend currency to spin a prize wheel. The wheel has 12 regular prize slots and a progressive jackpot system with 3 tiers. Players can spin using Country Currency (CC) with single or bulk spin options.
-
-**Spin pricing:** The first spin is free. The second spin costs 500 CC. Each subsequent spin increases by 100 CC (i.e., 0 → 500 → 600 → 700 → 800 → ...).
+**Spin pricing:** The first spin is free. The second spin costs 500 CC. Each subsequent spin increases by 100 CC (i.e., 0 -> 500 -> 600 -> 700 -> 800 -> ...).
 
 ---
-
-## Endpoints
 
 ## Build Wheel of Fortune
 
@@ -24,7 +22,7 @@ Power Spin (Wheel of Fortune) is a gamification feature where players spend curr
 
 ### Description
 
-Builds the Wheel of Fortune (Power Spin) configuration, returning the complete wheel setup including all available prizes, jackpot prizes, spin costs, player progress, and multispin pricing. This is a read/init endpoint — it does not perform a spin, only returns the data needed to render the wheel UI.
+Builds the Wheel of Fortune (Power Spin) configuration, returning the complete wheel setup including all available prizes, jackpot prizes, spin costs, player progress, and multispin pricing. This is a read/init endpoint -- it does not perform a spin, only returns the data needed to render the wheel UI.
 
 ### Request Parameters
 
@@ -40,7 +38,8 @@ Builds the Wheel of Fortune (Power Spin) configuration, returning the complete w
 | X-Requested-With | `XMLHttpRequest` | Yes |
 | Content-Type | `application/x-www-form-urlencoded` | Yes |
 
-### Example Request (cURL)
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-build' \
@@ -50,7 +49,10 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-build' \
   --data-raw '_token=YOUR_CSRF_TOKEN'
 ```
 
-### Example Response
+</details>
+
+<details>
+<summary>Example Response</summary>
 
 ```json
 {
@@ -205,6 +207,8 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-build' \
 }
 ```
 
+</details>
+
 ### Response Fields
 
 | Field | Type | Description |
@@ -215,8 +219,8 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-build' \
 | progress.spins | number | Total spins performed |
 | type | string | Currency type used for spins (`"cc"` = Country Currency) |
 | cost | number | Base cost per spin in the specified currency |
-| prizes.jackpot | object | Jackpot prize tiers (keyed `"1"`, `"2"`, `"3"`) — awarded when jackpot progress is filled |
-| prizes.prizes | object | Regular wheel prizes (keyed `"1"` through `"12"`) — one per wheel segment |
+| prizes.jackpot | object | Jackpot prize tiers (keyed `"1"`, `"2"`, `"3"`) -- awarded when jackpot progress is filled |
+| prizes.prizes | object | Regular wheel prizes (keyed `"1"` through `"12"`) -- one per wheel segment |
 | multispin | object | Bulk spin options with per-option cost and count |
 | theme | string/null | Active seasonal theme identifier (`null` when no theme) |
 
@@ -250,17 +254,17 @@ Each prize in `prizes.jackpot` and `prizes.prizes` contains:
 | `prestige_points` | Prestige Points (permanent) | +100 Prestige Points |
 | `overtime_points` | Overtime Points | +1 Overtime Point |
 | `gold` | Gold currency (jackpot only) | 500 Gold |
-| `jackpot` | Jackpot slot — increments jackpot progress | Advances toward jackpot prizes |
+| `jackpot` | Jackpot slot -- increments jackpot progress | Advances toward jackpot prizes |
 
 ### Notes
 
 - CSRF token (`_token`) must be obtained from the page
 - The `type` field value `"cc"` indicates the wheel costs Country Currency
-- **Progressive pricing**: The first spin is free, the second costs 500 CC, and each subsequent spin increases by 100 CC (0 → 500 → 600 → 700 → ...). The `cost` field always reflects the current price for the next spin
+- **Progressive pricing**: The first spin is free, the second costs 500 CC, and each subsequent spin increases by 100 CC (0 -> 500 -> 600 -> 700 -> ...). The `cost` field always reflects the current price for the next spin
 - Multispin costs also escalate with spin count
 - The jackpot has 3 progressive tiers; landing on the `"jackpot"` wheel slot (prize #7) increments `progress.jackpot`
 - Prize `ttl` values represent item expiration: 600s (10 minutes) for boosters, 604800s (7 days) for energy centers, 1209600s (14 days) for triple energy bars, 2592000s (30 days) for bombs
-- The `plate` object follows the same item metadata schema used across the game's inventory system (see `fightDeploy-getInventory` in [Military API](API_MILITARY.md))
+- The `plate` object follows the same item metadata schema used across the game's inventory system (see `fightDeploy-getInventory` in Military API)
 - The `theme` field activates seasonal wheel variants (e.g., holiday themes); `null` means the standard wheel
 - Prize amounts and types may rotate periodically or vary by player level
 
@@ -274,7 +278,7 @@ Each prize in `prizes.jackpot` and `prizes.prizes` contains:
 
 ### Description
 
-Performs a spin (or multi-spin) on the Wheel of Fortune, deducting currency from the player's account and awarding a random prize. Returns the updated wheel state including new cost, progress, and prizes. The client must send the current expected cost (`_currentCost`) which the server validates against its own state — a mismatch returns `WOF_ERR_INVALID_CLIENT_STATE`.
+Performs a spin (or multi-spin) on the Wheel of Fortune, deducting currency from the player's account and awarding a random prize. Returns the updated wheel state including new cost, progress, and prizes. The client must send the current expected cost (`_currentCost`) which the server validates against its own state -- a mismatch returns `WOF_ERR_INVALID_CLIENT_STATE`.
 
 ### Request Parameters
 
@@ -292,7 +296,8 @@ Performs a spin (or multi-spin) on the Wheel of Fortune, deducting currency from
 | X-Requested-With | `XMLHttpRequest` | Yes |
 | Content-Type | `application/x-www-form-urlencoded` | Yes |
 
-### Example Request (cURL)
+<details>
+<summary>Example Request (cURL)</summary>
 
 ```bash
 curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
@@ -302,7 +307,10 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
   --data-raw '_token=YOUR_CSRF_TOKEN&_currentCost=1400&spins=1'
 ```
 
-### Example Response (Error — Client State Mismatch)
+</details>
+
+<details>
+<summary>Example Response (Error -- Client State Mismatch)</summary>
 
 ```json
 {
@@ -346,7 +354,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           },
           "description": "Hit 150% stronger in Ground Battles for 10 minutes",
           "amount": 1,
-          "amountDisplay": "⁠1⁠"
+          "amountDisplay": "\u20601\u2060"
         },
         "value": 1,
         "icon": "https://www.erepublik.net/images/icons/boosters/128px/damage.png"
@@ -387,7 +395,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           },
           "description": "eRepublik's universal currency",
           "amount": 500,
-          "amountDisplay": "⁠500⁠"
+          "amountDisplay": "\u2060500\u2060"
         },
         "icon": "https://www.erepublik.net/images/icons/rewards/128px/gold.png"
       }
@@ -409,20 +417,20 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           "attributes": {
             "canBeSold": true,
             "food": true,
-            "energy": "⁠+300⁠",
-            "refillValue": "⁠+300⁠"
+            "energy": "\u2060+300\u2060",
+            "refillValue": "\u2060+300\u2060"
           },
           "tooltip": {
             "attributes": [
               { "type": "quantity", "text": "Quantity", "value": 1 },
-              { "type": "energy", "text": "Energy", "value": "⁠+300⁠" }
+              { "type": "energy", "text": "Energy", "value": "\u2060+300\u2060" }
             ],
             "info": null,
             "help": null
           },
           "description": "Consuming food recovers your Energy",
           "amount": 1,
-          "amountDisplay": "⁠1⁠",
+          "amountDisplay": "\u20601\u2060",
           "amountForSale": 1
         },
         "value": 1,
@@ -458,7 +466,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           },
           "description": "Hit x5 faster for 10 minutes",
           "amount": 1,
-          "amountDisplay": "⁠1⁠"
+          "amountDisplay": "\u20601\u2060"
         },
         "value": 2,
         "icon": "https://www.erepublik.net/images/icons/boosters/128px/speed.png"
@@ -494,7 +502,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           },
           "description": "Hit 20% stronger in Air Battles for 10 minutes",
           "amount": 1,
-          "amountDisplay": "⁠1⁠"
+          "amountDisplay": "\u20601\u2060"
         },
         "value": 3,
         "icon": "https://www.erepublik.net/images/icons/boosters/128px/air_damage.png"
@@ -530,7 +538,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           "description": null,
           "uses": 9,
           "amount": 3,
-          "amountDisplay": "⁠3⁠",
+          "amountDisplay": "\u20603\u2060",
           "amountForSale": 3
         },
         "value": 4,
@@ -573,20 +581,20 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           "attributes": {
             "canBeSold": true,
             "food": true,
-            "energy": "⁠+100⁠",
-            "refillValue": "⁠+100⁠"
+            "energy": "\u2060+100\u2060",
+            "refillValue": "\u2060+100\u2060"
           },
           "tooltip": {
             "attributes": [
               { "type": "quantity", "text": "Quantity", "value": 2 },
-              { "type": "energy", "text": "Energy", "value": "⁠+100⁠" }
+              { "type": "energy", "text": "Energy", "value": "\u2060+100\u2060" }
             ],
             "info": null,
             "help": null
           },
           "description": "Consuming food recovers your Energy",
           "amount": 2,
-          "amountDisplay": "⁠2⁠",
+          "amountDisplay": "\u20602\u2060",
           "amountForSale": 2
         },
         "value": 8,
@@ -623,7 +631,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           },
           "description": "Hit 100% stronger in Ground Battles for 10 minutes",
           "amount": 1,
-          "amountDisplay": "⁠1⁠"
+          "amountDisplay": "\u20601\u2060"
         },
         "value": 9,
         "icon": "https://www.erepublik.net/images/icons/boosters/128px/damage.png"
@@ -661,7 +669,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           "description": "Instantly deal 75k damage without using Energy",
           "uses": 1,
           "amount": 1,
-          "amountDisplay": "⁠1⁠"
+          "amountDisplay": "\u20601\u2060"
         },
         "value": 10,
         "icon": "https://www.erepublik.net/images/icons/industry/2/q21_128x128.png"
@@ -683,20 +691,20 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
             "booster": "prestige_points",
             "duration": "10m",
             "durationSeconds": 600,
-            "prestigePoints": "⁠+1⁠",
+            "prestigePoints": "\u2060+1\u2060",
             "prestige_points": 1
           },
           "tooltip": {
             "attributes": [
               { "type": "quantity", "text": "Quantity", "value": 1 },
-              { "type": "prestigePoints", "text": "Prestige Boost", "value": "⁠+1⁠" }
+              { "type": "prestigePoints", "text": "Prestige Boost", "value": "\u2060+1\u2060" }
             ],
             "info": null,
             "help": null
           },
           "description": "Increase your prestige by +1 for 10 minutes",
           "amount": 1,
-          "amountDisplay": "⁠1⁠"
+          "amountDisplay": "\u20601\u2060"
         },
         "value": 11,
         "icon": "https://www.erepublik.net/images/icons/boosters/128px/prestige_points.png"
@@ -726,7 +734,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
           },
           "description": "You receive one Overtime Point every hour for each active house you own.",
           "amount": 1,
-          "amountDisplay": "⁠1⁠"
+          "amountDisplay": "\u20601\u2060"
         },
         "value": 12,
         "icon": "https://www.erepublik.net/images/icons/industry/1000/overtime_points_128x128.png"
@@ -743,7 +751,10 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
 }
 ```
 
-### Example Response (Success — Single Spin)
+</details>
+
+<details>
+<summary>Example Response (Success -- Single Spin)</summary>
 
 ```json
 {
@@ -772,6 +783,8 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
 }
 ```
 
+</details>
+
 ### Response Fields
 
 **IMPORTANT:** The success response has a **different structure** from the error response and from `wheeloffortune-build`. Progress fields are **flat** (not nested under `progress`), and `prizes` is an **array** of won items (not the wheel configuration map).
@@ -784,7 +797,7 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
 | account.initial | number | CC balance before this spin |
 | account.spent | number | CC deducted for this spin |
 | account.remaining | number | CC balance after this spin |
-| jackpot | number | Current jackpot progress (0-3), flat — NOT nested under `progress` |
+| jackpot | number | Current jackpot progress (0-3), flat -- NOT nested under `progress` |
 | free_spin | number | Free spins remaining, flat |
 | spins | number | Total spins performed, flat |
 | prizes | array | **Array of won prize objects** (NOT the wheel prize map) |
@@ -805,68 +818,18 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
 ### Notes
 
 - **Success vs Error response structures differ significantly**: On error, the response mirrors `wheeloffortune-build` (with nested `progress` and `prizes` as the wheel map). On success, fields are flat and `prizes` becomes an array of won items
-- The `_currentCost` parameter acts as an **optimistic concurrency check** — the client must know the exact current price before spinning
+- The `_currentCost` parameter acts as an **optimistic concurrency check** -- the client must know the exact current price before spinning
 - The `cost` field in the response reflects the price for the **next** spin (progressive pricing)
 - The `spins` parameter should match a valid key from the `multispin` object (currently `1` or `5`)
-- The `account.spent` field provides server-authoritative spending data — more reliable than client-side cost tracking
+- The `account.spent` field provides server-authoritative spending data -- more reliable than client-side cost tracking
 - The `prizes[].index` field corresponds to wheel slot numbers from the `wheeloffortune-build` response, which can be used to look up the full prize details (including `amount`)
 - For multi-spin (`spins=5`), the `prizes` array likely contains 5 elements, one per individual spin result
 - Insufficient currency balance likely returns a different error code (not yet documented)
 
 ---
 
-## Template
-
-Use this template when documenting new endpoints:
-
-```markdown
-## Endpoint Name
-
-**Method:** GET/POST
-**URL:** `/en/path/to/endpoint`
-**Auth Required:** Yes/No
-
-### Description
-
-Brief explanation of what this endpoint does.
-
-### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| param1 | string | Yes | Description |
-
-### Headers
-
-| Header | Value | Description |
-|--------|-------|-------------|
-| Content-Type | application/json | ... |
-
-### Example Request (cURL)
-
-\`\`\`bash
-curl -X GET "https://www.erepublik.com/en/..." \
-  -H "Cookie: erpk=..."
-\`\`\`
-
-### Example Response
-
-\`\`\`json
-{
-  "success": true,
-  "data": {}
-}
-\`\`\`
-
-### Notes
-
-Any additional information, gotchas, or observations.
-```
-
----
-
 ## Related
 
-- [API Table of Contents](API_TOC.md)
-- [Authentication](API_AUTH.md)
-- [Rewards API](API_REWARDS.md)
+- [API Table of Contents](../API_TOC.md)
+- [Authentication](../auth/README.md)
+- [Rewards](../rewards/README.md)

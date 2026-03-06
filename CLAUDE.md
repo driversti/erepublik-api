@@ -8,18 +8,30 @@ This is a **documentation repository** for the unofficial eRepublik API, discove
 
 ## Structure
 
-- **API_TOC.md** - Table of contents and overview (start here)
-- **API_AUTH.md** - Authentication (login, sessions, cookies)
-- **API_MILITARY.md** - Combat, battles, wars, weapons
-- **API_SOCIAL.md** - Citizens, friends, messages, notifications
-- **API_ECONOMY.md** - Marketplace, work, companies, currencies
+Documentation is organized into domain folders, each with a `README.md` overview and use-case-specific files:
+
+- **README.md** - Master index with quick reference for all endpoints (start here)
+- **auth/** - Authentication (login, sessions, cookies)
+- **captcha/** - Session verification, anti-bot challenges
+- **homepage/** - Main dashboard and embedded data objects
+- **world/** - Travel, cities, world map, regions
+- **country/** - Society, economy, politics, military, administration pages
+- **military/** - Campaigns, battles, deployment, armory, battlefield, websocket
+- **social/** - Citizen profiles, friends, wall posts, search
+- **notifications/** - Alerts and reports
+- **economy/** - Work, marketplace, exchange, companies, inventory
+- **rewards/** - Daily objectives, missions, weekly challenges, VIP
+- **powerspin/** - Wheel of Fortune
+- **reference/** - Country & region ID lookup tables
 
 ## Documentation Conventions
 
 - All files use Markdown with GitHub-flavored formatting
 - Hashtags for Knowledge Base linking: `#erepublik #api #<module>`
-- Each module file includes a template for documenting new endpoints
+- Each module's README.md includes a template for documenting new endpoints
 - Wiki-style links: `[[eRepublik]]` for cross-referencing other KB notes
+- cURL examples and JSON responses use collapsible `<details><summary>` blocks
+- Cross-references between files use relative paths
 
 ## Endpoint Documentation Template
 
@@ -35,8 +47,25 @@ When adding new endpoints, use this structure:
 ### Description
 ### Parameters (table)
 ### Headers (table)
-### Example Request (cURL)
-### Example Response
+
+<details>
+<summary>Example Request (cURL)</summary>
+
+```bash
+curl ...
+```
+
+</details>
+
+<details>
+<summary>Example Response</summary>
+
+```json
+{ ... }
+```
+
+</details>
+
 ### Notes
 ```
 
