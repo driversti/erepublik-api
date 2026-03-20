@@ -339,13 +339,31 @@ curl 'https://www.erepublik.com/en/economy/inventory-json' \
   - `storage`: Storage space occupied by this item stack
   - `highStorage`: Warning flag for items using excessive storage
   - `energy`: Energy restored when consumed (food)
+  - `energyRecovery`: Energy recovery rate boost
   - `durability`: Number of uses (weapons)
-  - `battleDamageGnd/Air`: Combat damage boost percentage
+  - `battleDamageGnd` / `battleDamageAir`: Combat damage boost percentage (directional)
+  - `battleInfluence` / `battleInfluenceGnd` / `battleInfluenceAir`: Battle influence boost (flat or directional)
   - `fixedDamage`: Weapon deals fixed damage (not affected by boosters)
-  - `firepowerGnd/Air`: Fixed damage value
+  - `firepowerGnd` / `firepowerAir`: Fixed damage value (directional)
+  - `militaryRank` / `militaryRankGnd` / `militaryRankAir`: Military rank point boost (flat or directional)
+  - `prestigePoints` / `prestige_points`: Prestige point boost — **note:** API uses both camelCase and snake_case inconsistently
+  - `deploySize` / `deploy_size`: Deploy size boost — **note:** same API inconsistency in naming
+  - `ground_deploy_influence` / `air_deploy_influence`: Deploy influence boost (directional)
+  - `ground_deploy_rank_points` / `air_deploy_rank_points`: Rank points from deploy (directional)
+  - `air_damage`: Air damage boost (specific naming for some booster types)
+  - `acceleration`: Movement/speed acceleration boost
+  - `speed`: Speed boost
+  - `distance`: Travel distance bonus
+  - `heroReward`: Hero reward bonus
+  - `overtimePoints`: Overtime point generation rate (e.g. `+1/h` from Houses)
   - `temporary`: Time-limited item with expiration data
   - `actionable`: Item can be activated/used (boosters, houses)
   - `component`: Used in assembly/production
+  - `armory`: Item associated with armory mechanics
+  - `packBooster`: Pack booster indicator
+  - `blitzkrieg_pack`: Blitzkrieg pack booster type
+  - `catchup`: Catch-up mechanic booster
+  - `power_pack`: Power pack booster type
 
 - **Boosters Section:**
   - Contains all available (inactive) boosters
