@@ -515,7 +515,7 @@ Known resource IDs (from region page `data-resourceId` attributes):
 | ID | Name | Industry | Rarity | Bonus |
 |----|------|----------|--------|-------|
 | 1 | Grain | Food | rare | +5% |
-| 2 | Fish (*) | Food | very common | +2% |
+| 2 | Fish | Food | very common | +2% |
 | 3 | Fruits | Food | common | +3% |
 | 4 | Cattle | Food | uncommon | +4% |
 | 5 | Deer | Food | very rare | +6% |
@@ -535,8 +535,6 @@ Known resource IDs (from region page `data-resourceId` attributes):
 | 19 | Titanium | Aircraft | common | +3% |
 | 20 | Wolfram | Aircraft | uncommon | +4% |
 
-> (*) Fish (id=2) is inferred -- not yet directly observed on a region page. It fills the only missing food ID slot and is assigned `rarity-verycommon` (+2%) to complete the one-resource-per-rarity pattern seen in all other industries.
->
 > **Note on food resource ID discrepancy:** The region page and the [map-data endpoint](#get-world-map-data) use **different resource ID schemas for food**. On region pages: Grain=1, Fish=2, Fruits=3, Cattle=4, Deer=5. In map-data: Grain=1, Cattle=3, Fish=11. IDs 1 match (Grain), but other food resources have different IDs across the two endpoints. Non-food resource IDs (6-20) appear consistent between both endpoints.
 >
 > **Note on bonus values:** The map-data endpoint uses a different bonus scale than region pages. For example, Iron shows `bonus: 10` in map-data but `data-bonus="2"` on region pages. Both refer to the same resource (id=6). The map-data bonus appears to represent a percentage of base production, while the region page bonus represents the resource's contribution to the country's total industry bonus.
