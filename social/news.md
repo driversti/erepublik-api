@@ -86,7 +86,7 @@ curl 'https://www.erepublik.com/en/main/news/rated/all/all/1/rss'
 - **RSS 2.0 format**: Standard RSS with `content` and `wfw` XML namespace extensions
 - **Article URL pattern**: `/en/article/{slug}-{articleId}/{page}/{commentsPerPage}`
 - **Sorting**: Two sort orders work: `rated` (by votes) and `latest` (newest first). Other values return 404
-- **No filtering**: Country and category path segments must be `all` -- specific values (e.g., `Lithuania`, `politics`) return HTML pages instead of RSS
-- **Pagination**: Use `page` parameter to get older articles
+- **No filtering** (for article feeds): Country and category path segments must be `all` -- specific values return HTML pages instead of RSS. A separate **military event feed** supports both global (`all`) and country-specific filtering: see [Military News RSS Feed](../military/wars.md#military-news-rss-feed)
+- **Pagination**: Use `page` parameter to get older articles. Page `0` is treated as equivalent to page `1` (identical results)
 - **Public endpoint**: Works without authentication, but results may differ with a session cookie
 - **Use cases**: News aggregation, monitoring political articles, tracking community developments

@@ -101,7 +101,9 @@ Unofficial API documentation for [eRepublik](https://www.erepublik.com), a brows
 | `/en/main/mercenary-campaign/unsubscribe/` | POST | Unsubscribe from mercenary campaign |
 | `/en/economy/refillEnergy` | POST | Eat food / use energy bars |
 | `/en/economy/energyRefill-getInventory` | POST | Get energy refill inventory |
+| `/en/wars/show/{warId}` | GET | War page — countries, allies, battle history (HTML) |
 | `/en/military/rw-support` | POST | Fund a resistance war |
+| `/en/main/news/military/all/{countryName}/{page}/rss` | GET | Military news RSS feed (per country) |
 
 ### Social
 | Endpoint | Method | Description |

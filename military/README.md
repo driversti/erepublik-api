@@ -23,7 +23,7 @@ Military endpoints cover combat mechanics, battles, wars, weapons, and related f
 | [battlefield.md](battlefield.md) | Battlefield page and embedded data | Get Battlefield Page, BATTLE_SERVER_DATA JSON structure |
 | [battlefield-ajax.md](battlefield-ajax.md) | Battlefield AJAX action endpoints | Battle Console, Deploy Bomb, Activate Booster, Battlefield Travel, Switch Division, PvP Queue, PvP Inventory, Activate Battle Effect, List Battle Objectives, Battle Stats, Energy Refill, Refill Energy, Mercenary Campaign, Battle Map Status |
 | [websocket.md](websocket.md) | Real-time battle updates | Pomelo WebSocket |
-| [wars.md](wars.md) | War support and timing | Support Resistance War (Fund), Determining Battle Finish Time |
+| [wars.md](wars.md) | War pages, support, timing, and military news | War Page, Support Resistance War (Fund), Military News RSS Feed, Determining Battle Finish Time |
 | [frontend-reference.md](frontend-reference.md) | Frontend code references | AngularJS Controllers, JavaScript Bundles, Battlefield Automation Summary |
 
 ---
@@ -60,7 +60,9 @@ Military endpoints cover combat mechanics, battles, wars, weapons, and related f
 | `/en/main/mercenary-campaign/subscribe/` | POST | Yes | [battlefield-ajax.md](battlefield-ajax.md) |
 | `/en/main/mercenary-campaign/unsubscribe/` | POST | Yes | [battlefield-ajax.md](battlefield-ajax.md) |
 | `/en/military/battle-map-status/{battleId}` | POST | Yes | [battlefield-ajax.md](battlefield-ajax.md) |
+| `/en/wars/show/{warId}` | GET | Yes | [wars.md](wars.md) |
 | `/en/military/rw-support` | POST | Yes | [wars.md](wars.md) |
+| `/en/main/news/military/all/{countryName}/{page}/rss` | GET | No | [wars.md](wars.md) |
 
 ---
 
