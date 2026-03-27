@@ -182,7 +182,7 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
 |-------|------|-------------|
 | `weapons` | array | List of available weapons for this battle type (air or ground) |
 | `weapons[].industryId` | number | Industry ID for the weapon type (e.g., 23 = aircraft weapons) |
-| `weapons[].quality` | number | Weapon quality (-1 for no weapon, 1-7 for weapons) |
+| `weapons[].quality` | number | Weapon quality (-1 for no weapon, 1-7 for regular weapons, 51 for SLG Peacemaker) |
 | `weapons[].name` | string | Display name of the weapon |
 | `weapons[].amount` | number/null | Number of weapons in inventory (null for "No weapon") |
 | `weapons[].uses` | number | Total uses available (amount x uses per weapon) |
@@ -212,8 +212,8 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
 | `vehicles[].blueprints` | object/null | Blueprint progress (null if not applicable) |
 | `vehicles[].countryId` | number/null | Country ID for enrolled vehicles |
 | `vehicles[].countryData` | object/null | Country-specific protection data |
-| `vehicles[].countryData.level` | number | Protection level for this country (1-50) |
-| `vehicles[].countryData.damageBonus` | number | Damage bonus percentage |
+| `vehicles[].countryData.level` | number | Protection level for this country (1-50). At max level (50), `xp` and `requiredXP` are null |
+| `vehicles[].countryData.damageBonus` | number/null | Damage bonus percentage (200 at max level 50; null for non-max-level vehicles where the bonus is derived from level) |
 | `vehicles[].countryData.title` | string | Protection title (e.g., "Protector of Lithuania") |
 | `vehicles[].title` | string/null | Current protection title |
 | `vehicles[].attributes` | array | Vehicle attributes (typically damage bonus) |
@@ -250,14 +250,21 @@ curl -X POST 'https://www.erepublik.com/en/military/fightDeploy-getInventory' \
   - `isRecommended: true` indicates the vehicle is enrolled for the battle's side country
   - Vehicles enrolled for the correct country provide damage bonuses
   - Vehicles enrolled for other countries appear but are not recommended
-- **Weapon uses**: The `uses` field shows total available uses (e.g., 1169 weapons x 5 uses each = 5844 total uses)
+- **Weapon uses**: The `uses` field shows total available uses, calculated as `floor(maxEnergy / minEnergy)`. Uses per unit varies by type:
+  - Air-to-Air Missiles: uses/unit = quality (e.g., Q5 → 5 uses/unit)
+  - Ground Ammunition: Q1=1, Q2=2, Q3=3, Q4=4, Q5=5, Q6=6, Q7=10 uses/unit
+  - Special weapons (SLG Peacemaker, AIM-7 Grid-Lock): 1 use/unit
 - **Energy limits**: `maxEnergy` represents the citizen's maximum energy capacity including pool and storage
 - **Industry IDs**:
-  - 23 = Aircraft weapons (air-to-air missiles)
-  - 1 = Ground weapons (various weapon types)
-- **Quality scale**: Weapons range from Q1 (lowest) to Q7 (highest), with Q5+ providing significant bonuses
+  - 2 = Ground weapons (Ammunition Q1–Q7)
+  - 23 = Aircraft weapons (Air-to-Air Missile Q1–Q7)
+- **Quality scale**: Regular weapons range from Q1 (lowest) to Q7 (highest), with Q5+ providing significant bonuses
+- **Special weapons** (quality=51): Always marked `isBest: true` when present, overriding regular `isBest` logic. 1 use per unit.
+  - **SLG Peacemaker** (ground, industryId=2): Fixed **50,000,000** damage per hit (firepower: "50M")
+  - **AIM-7 Grid-Lock** (air, industryId=23): Fixed **50,000** damage per hit (firepower: "50k")
 - **No weapon option**: Always available with `quality: -1` and basic damage per hit
 - **Country matching**: The `sideCountryId` parameter determines which vehicles are recommended based on their enrollment status
+- **Max-level protectors**: At level 50, `countryData.xp` and `countryData.requiredXP` are `null` (no further progression), and `damageBonus` is 200 (the maximum)
 
 ---
 
