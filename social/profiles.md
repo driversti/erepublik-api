@@ -251,15 +251,263 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
 | city | object | City residence information |
 | achievements | array | List of achievements with counts |
 | isAmbassador/isTopPlayer/isPresident/etc | boolean | Various role flags |
+| isAssociateMember | boolean | Whether citizen is an associate member |
+| isDictator | boolean | Whether citizen is currently a dictator |
+| isModerator | boolean | Whether citizen is a game moderator |
+| isBanned | boolean | Whether citizen is banned |
+| isFallen | boolean | Whether citizen account is "fallen" (permanently inactive) |
+| freedomFighter | object | Freedom Fighter progress: `milestone` (array) and `progress` (array) |
 | friends | object | Friend count and sample list |
 | military | object | Military stats, rank, MU, true patriot progress |
-| nukes | object | Bomb/nuke usage count and last deployment |
+| nukes | object/false | Bomb/nuke usage count and last deployment (`false` if none) |
+| title | array | Earned titles (empty array if none) |
 | decorations | array | Earned decorations and medals |
 | activePacks | object | Active enhancement packs |
-| newspaper | object | Owned newspaper info (if any) |
+| activePacksAmount | number | Count of currently active packs |
+| newspaper | object/false | Owned newspaper info (`false` if none) |
 | partyData | object | Political party membership |
 | nationalRank | object | National ranking position |
 | pvpStats | object | PvP match statistics |
+| isPlatoFoundationCurrentMember | boolean | Whether citizen is a current Plato Foundation member |
+| isPlatoFoundationFormerMember | boolean | Whether citizen was a former Plato Foundation member |
+| organization | object | **Org accounts only.** Financial balances (see [Organization Accounts](#organization-accounts)) |
+
+### Organization Accounts
+
+When `citizen.is_organization` is `true`, the response represents an **organization** (e.g., a national bank or holding company) rather than a player. Organization accounts have a different response shape:
+
+#### Player vs Organization Differences
+
+| Field | Player Account | Organization Account |
+|-------|---------------|---------------------|
+| `citizen.is_organization` | `false` | `true` |
+| `citizen.level` | Varies (1–2000+) | Always `1` |
+| `citizen.avatar_version` | Hash string | `null` |
+| `citizen.avatar_file` | `"jpg"` / `"png"` | `null` |
+| `citizenAttributes.experience_points` | Varies | `0` |
+| `organization` | Absent | Object with `accounts` array (currency + gold balances) |
+| `military.militaryData.strength` | Varies | `35` (default) |
+| `military.militaryUnit` | Object or `false` | `false` |
+| `military.bestDamageData` | Object or `false` | `false` |
+| `nukes` | Object or `false` | `false` |
+| `newspaper` | Object or `false` | `false` |
+| `partyData` | Object | Absent |
+| `city.residenceCityId` | Number | `null` |
+| `friends.number` | Varies | Typically very low |
+
+#### `organization` Object
+
+Only present when `is_organization: true`. Exposes the org's **publicly visible financial balances**.
+
+```json
+{
+  "organization": {
+    "accounts": [
+      { "type": "currency", "amount": 83049113.96 },
+      { "type": "gold", "amount": 2148.43 }
+    ]
+  }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| accounts | array | List of financial accounts |
+| accounts[].type | string | `"currency"` (local currency) or `"gold"` |
+| accounts[].amount | number | Balance amount (2 decimal places) |
+
+<details>
+<summary>Full Organization Account Example Response (citizen 1442329)</summary>
+
+```json
+{
+  "citizen": {
+    "id": 1442329,
+    "name": "Lietuvos Taupomasis Bankas",
+    "created_at": "2009-04-26",
+    "is_organization": true,
+    "is_alive": true,
+    "has_avatar": true,
+    "avatar_version": null,
+    "avatar_file": null,
+    "level": 1,
+    "avatar": "https://cdnt.erepublik.net/.../avatar.jpg",
+    "profile_url": "//www.erepublik.com/en/citizen/profile/1442329",
+    "onlineStatus": false,
+    "banStatus": { "type": false, "reason": false },
+    "nextLevelXp": 10
+  },
+  "citizenAttributes": {
+    "citizen_id": 1442329,
+    "experience_points": 0,
+    "level": 1
+  },
+  "isAdult": true,
+  "aboutMe": "Į kebabus reikia dėti bulves",
+  "location": {
+    "citizenLocationInfo": {
+      "citizen_id": 1442329,
+      "citizenship_country_id": 72,
+      "residence_country_id": 23,
+      "residence_region_id": 100
+    },
+    "residenceCountry": {
+      "id": 23,
+      "name": "Canada",
+      "permalink": "Canada",
+      "empire": 0
+    },
+    "citizenshipCountry": {
+      "id": 72,
+      "name": "Lithuania",
+      "permalink": "Lithuania",
+      "empire": 0
+    },
+    "residenceRegion": {
+      "id": 100,
+      "name": "Quebec",
+      "current_owner_country_id": 23,
+      "original_owner_country_id": 23,
+      "permalink": "Quebec"
+    }
+  },
+  "city": {
+    "residenceCityId": null,
+    "residenceRoleName": ""
+  },
+  "achievements": [
+    {
+      "name": "Freedom Fighter",
+      "img": "achievement_freedomfighter",
+      "descriptionBefore": "Liberate occupied regions by fighting in Resistance Wars.",
+      "descriptionAfter": "Liberate occupied regions by fighting in Resistance Wars.",
+      "moreInfo": "<a href='/en/main/latest-updates/0/74'><strong>More info</strong></a>",
+      "count": 0
+    }
+  ],
+  "isAmbassador": false,
+  "isTopPlayer": false,
+  "isPresident": false,
+  "isCongressman": false,
+  "isPartyPresident": false,
+  "isPartyMember": false,
+  "isAssociateMember": false,
+  "isDictator": false,
+  "isModerator": false,
+  "isBanned": false,
+  "freedomFighter": {
+    "milestone": [],
+    "progress": []
+  },
+  "friends": {
+    "number": 1,
+    "list": [
+      {
+        "id": 2580095,
+        "name": "Greenday_1989",
+        "created_at": "2010-01-18 03:00:03",
+        "is_alive": 1,
+        "is_organization": 0,
+        "has_avatar": 1,
+        "avatar_version": "afd07d8d1a944e1c3867f2ea89094394",
+        "avatar_file": "jpg",
+        "avatar": "https://cdnt.erepublik.net/.../avatar.jpg?afd07d8d1a944e1c3867f2ea89094394"
+      }
+    ],
+    "isFriend": false,
+    "isFriendRequestPending": false
+  },
+  "military": {
+    "militaryData": {
+      "strength": 35,
+      "temporaryStrength": 35,
+      "divisionData": {
+        "division": 1,
+        "smallBombDamage": 75000,
+        "bazookaBoosterDamage": 10000,
+        "battleHeroReward": 2
+      },
+      "name": "Recruit ",
+      "stars": 0,
+      "points": 0,
+      "rankNumber": 1,
+      "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/001_recruit.png",
+      "nextRankAt": 15,
+      "progress": 0,
+      "ground": {
+        "strength": 35,
+        "temporaryStrength": 35,
+        "divisionData": {
+          "division": 1,
+          "smallBombDamage": 75000,
+          "bazookaBoosterDamage": 10000,
+          "battleHeroReward": 2
+        },
+        "name": "Recruit ",
+        "stars": 0,
+        "points": 0,
+        "rankNumber": 1,
+        "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/001_recruit.png",
+        "nextRankAt": 15,
+        "progress": 0
+      },
+      "aircraft": {
+        "coordination": 0,
+        "divisionData": {
+          "division": 11,
+          "battleHeroReward": 10
+        },
+        "name": "Airman ",
+        "stars": 0,
+        "points": 0,
+        "rankNumber": 1,
+        "icon": "//www.erepublik.net/images/modules/ranks/aircraft/64px/001_airman.png",
+        "nextRankAt": 10,
+        "progress": 0
+      }
+    },
+    "militaryUnit": false,
+    "bestDamageData": false,
+    "bestDamageAchievementProgress": 0,
+    "bestAirDamageAchievementProgress": 0,
+    "truePatriot": {
+      "hasTruePatriotProgress": false,
+      "progress": 0,
+      "currentLevel": 0,
+      "nextLevel": 100000,
+      "damage": 0,
+      "citizenship_id": 72,
+      "history": []
+    }
+  },
+  "nukes": false,
+  "title": [],
+  "decorations": [],
+  "activePacks": [],
+  "isPlatoFoundationCurrentMember": false,
+  "isPlatoFoundationFormerMember": false,
+  "newspaper": false,
+  "loggedIn": [],
+  "pvpStats": {
+    "matches_played": 0,
+    "matches_won": 0
+  },
+  "isFallen": false,
+  "organization": {
+    "accounts": [
+      { "type": "currency", "amount": 83049113.96 },
+      { "type": "gold", "amount": 2148.43 }
+    ]
+  },
+  "isLoggedIn": false,
+  "isBlocked": false,
+  "nationalRank": { "xp": 0 },
+  "events": [],
+  "activePacksAmount": 0
+}
+```
+
+</details>
 
 ### Notes
 
@@ -269,6 +517,8 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
 - Military rank names and icons are included for both ground and aircraft combat
 - `decorations` can have `amount > 1` indicating multiple instances of the same decoration
 - The response is quite large (~50KB) due to the comprehensive data included
+- **Organization accounts** expose financial balances via the `organization.accounts` array — this data is publicly accessible without authentication
+- Fields like `nukes`, `militaryUnit`, `bestDamageData`, and `newspaper` return `false` (not `null`) when absent
 
 ---
 
