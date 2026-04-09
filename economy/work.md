@@ -165,6 +165,7 @@ Performs overtime work at the citizen's current employer. This action grants add
 |------|------|----------|-------------|
 | _token | string | Yes | CSRF token for request validation |
 | action_type | string | Yes | Must be set to `workOvertime` |
+| useEnergyBar | string | No | Set to `yes` to auto-consume energy bars before working overtime. When omitted, overtime fails if energy is insufficient. |
 
 ### Headers
 
@@ -179,18 +180,27 @@ Performs overtime work at the citizen's current employer. This action grants add
 <summary>Example Request (cURL)</summary>
 
 ```bash
+# Basic overtime (requires sufficient energy)
 curl -X POST 'https://www.erepublik.com/en/economy/workOvertime' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -H 'Accept: application/json, text/plain, */*' \
   --data-raw '_token=YOUR_CSRF_TOKEN&action_type=workOvertime'
+
+# With auto energy bar consumption
+curl -X POST 'https://www.erepublik.com/en/economy/workOvertime' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -H 'Accept: application/json, text/plain, */*' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&action_type=workOvertime&useEnergyBar=yes'
 ```
 
 </details>
 
 <details>
-<summary>Example Response</summary>
+<summary>Example Response (without energy bar)</summary>
 
 ```json
 {
@@ -214,17 +224,47 @@ curl -X POST 'https://www.erepublik.com/en/economy/workOvertime' \
 
 </details>
 
+<details>
+<summary>Example Response (with energy bar consumption)</summary>
+
+```json
+{
+  "status": true,
+  "message": true,
+  "result": {
+    "netSalary": 9900,
+    "grossSalary": 10000,
+    "tax": 100,
+    "currency": "LTL",
+    "days_in_a_row": 3837,
+    "to_achievment": 15,
+    "to_achievment_text": "You have <span id=\"production_to_achievment\">15 days</span> left to work to get the Hardworker medal.",
+    "xp": 2,
+    "health": 100,
+    "consumedSummary": {
+      "13": 2
+    },
+    "daily_tasks_done": false
+  }
+}
+```
+
+</details>
+
 ### Notes
 
 - **Energy Consumption:**
   - 10 energy if the overtime cooldown has passed (>1 hour since last overtime)
   - 100 energy if attempting to work again within the 1-hour cooldown period (anti-spam mechanism)
+- **`useEnergyBar` parameter:**
+  - When set to `yes`, automatically consumes energy bars from inventory to replenish energy before performing overtime
+  - Without this parameter, the request will fail if the citizen doesn't have enough energy
 - `netSalary` is the amount received after tax deduction
 - `days_in_a_row` tracks consecutive work days for achievement progress
 - `to_achievment` shows remaining days needed for the Hardworker medal
 - `xp` indicates experience points gained from this overtime work
 - `health` shows the health points restored (typically 100)
-- `consumedSummary` may contain food/gift items used during work
+- **`consumedSummary`:** Map of item type IDs to quantities consumed. Empty array `[]` if nothing consumed; object `{"13": 2}` when energy bars were used (key = item type ID, value = quantity consumed). Item ID `13` corresponds to energy bars.
 - Currency codes include: LTL, USD, EUR, RON, etc.
 - The CSRF `_token` can be obtained from the page source or previous API responses
 - Overtime is typically available after completing regular daily work
