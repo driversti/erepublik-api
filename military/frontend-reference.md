@@ -36,7 +36,7 @@ Key JS files loaded on the battlefield page:
 | File | Size | Purpose |
 |------|------|---------|
 | `battle_new.{ts}.js` | ~86 KB | Core battle logic: PvP, bomb deployment, division switching, food inventory |
-| `erepublik.{ts}.js` | ~411 KB | Main framework: popups, general UI, page routing |
+| `erepublik.{ts}.js` | ~411 KB | Main framework: popups, general UI, page routing — see [framework/](../framework/README.md) |
 | `erpk_angular_controllers.{ts}.js` | ~391 KB | All AngularJS controllers (battle stats, deploy, boosters, economy) |
 | `erpk_angular_services.{ts}.js` | ~24 KB | Angular services and factories |
 | `pomelo/lib/build/build.{ts}.js` | -- | Pomelo WebSocket client for real-time updates |

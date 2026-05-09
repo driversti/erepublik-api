@@ -27,6 +27,7 @@ Unofficial API documentation for [eRepublik](https://www.erepublik.com), a brows
 | [Economy](economy/README.md) | Work, marketplace, exchange, companies, inventory | 11 |
 | [Rewards](rewards/README.md) | Daily objectives, missions, weekly challenges, VIP | 4 |
 | [Power Spin](powerspin/README.md) | Wheel of Fortune -- prizes, spins, jackpots | 1 |
+| [Framework Bundle](framework/README.md) | Main JS bundle -- popups, client objects, tournaments, shop | 3 |
 | [Reference Data](reference/README.md) | Country & region ID lookup tables (74 countries, 574 regions) | 2 |
 
 ---
@@ -113,6 +114,7 @@ Unofficial API documentation for [eRepublik](https://www.erepublik.com), a brows
 | `/en/main/citizen-addRemoveFriend` | POST | Add or remove friend |
 | `/en/main/citizen-hovercard/{citizenId}` | GET | Get citizen hovercard |
 | `/en/main/citizen-search?name={query}` | GET | Search citizens by name |
+| `/en/main/wall-post/automatic` | POST | Auto-post award/medal to citizen's wall |
 | `/en/main/news/rated/all/all/{page}/rss` | GET | News articles RSS feed |
 
 ### Notifications
@@ -150,6 +152,28 @@ Unofficial API documentation for [eRepublik](https://www.erepublik.com), a brows
 | `/en/main/weekly-challenge-data` | GET | Get weekly challenge progress |
 | `/en/main/weekly-challenge-collect-reward` | POST | Collect weekly challenge reward |
 | `/en/main/vip-claim` | POST | Claim daily VIP points |
+
+### Framework (Popups, Tournaments, Shop)
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/en/main/geoLocation/countryCode` | GET | IP geolocation country detection |
+| `/en/main/money-donation/{action}/{donationId}` | GET | Accept/reject money donation |
+| `/en/main/countries-tournament-national-rankings/{countryId}` | GET | Tournament national rankings |
+| `/en/main/countries-tournament-world-rankings` | GET | Tournament world rankings |
+| `/en/main/countries-tournament-world-rankings/finalists` | GET | Tournament finalist rankings |
+| `/en/main/epic-soldier-event-citizens-rankings/{countryId}/{divisionId}` | GET | Epic Soldier citizen rankings |
+| `/en/main/epic-soldier-event-countries-rankings` | GET | Epic Soldier country rankings |
+| `/en/main/travelPopup` | GET | Travel dialog popup (HTML) |
+| `/en/main/country-mpp-priority` | GET | MPP priority settings popup (HTML) |
+| `/en/main/league-info` | GET | League of Allies popup (HTML) |
+| `/en/main/terrain-priorities-popup` | GET | Terrain priorities popup (HTML) |
+| `/en/main/preset-popup` | GET | Battle filter presets popup (HTML) |
+| `/en/main/energyRefill-refillPopup` | GET | Energy refill popup (HTML) |
+| `/en/main/manage-organizations-popup` | GET | Manage organizations popup (HTML) |
+| `/en/economy/create-holding-popup` | GET | Create holding company popup (HTML) |
+| `/en/economy/edit-holding-popup` | GET | Edit holding company popup (HTML) |
+| `/en/military/fightDeploy-deployReportPopup` | GET | Deployment report popup (HTML) |
+| `/en/main/special-items` | GET | Gold shop page (navigation) |
 
 ### Power Spin
 | Endpoint | Method | Description |

@@ -268,3 +268,106 @@ curl -X POST 'https://www.erepublik.com/en/main/wall-post/delete/json' \
   - Post ID doesn't exist or was already deleted
   - User doesn't have permission to delete the post (not the author)
   - Invalid or expired CSRF token
+
+---
+
+## Auto-Post Award to Wall
+
+**Method:** POST
+**URL:** `/en/main/wall-post/automatic`
+**Auth Required:** Yes
+**Source:** `awards.{ts}.js`
+
+### Description
+
+Automatically posts an award/medal announcement to the citizen's wall. This is triggered from the award popup on the homepage when the citizen checks the "Share on wall" checkbox before clicking "Get Reward".
+
+Unlike the regular `wall-post/create/json` endpoint, this one uses a **dedicated CSRF token** from `#award_token` (not the standard `#_token`), and accepts the message content directly from a pre-filled checkbox value.
+
+### Request Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| _token | string | Yes | CSRF token from `$j('#award_token').val()` — **not** the standard `#_token` |
+| message | string | Yes | Wall post message text (pre-populated by the server in the checkbox value) |
+| awardId | string | Yes | Award identifier (extracted from checkbox element ID) |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+<details>
+<summary>Example Request (cURL)</summary>
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/wall-post/automatic' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-urlencode '_token=YOUR_AWARD_CSRF_TOKEN' \
+  --data-urlencode 'message=I earned a Hard Worker medal!' \
+  --data-urlencode 'awardId=12345'
+```
+
+</details>
+
+<details>
+<summary>Example Response (Success — Expected)</summary>
+
+```json
+{
+  "message": true
+}
+```
+
+</details>
+
+<details>
+<summary>Example Response (Error — Expected)</summary>
+
+```json
+{
+  "message": false,
+  "error_message": "Something went wrong"
+}
+```
+
+</details>
+
+### Response Fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| message | boolean | `true` if the wall post was created successfully |
+| error_message | string | Human-readable error text (only present on failure) |
+
+### How the Frontend Calls This
+
+```javascript
+// In awards.js — only fires if a "Share on wall" checkbox is checked
+var checkbox = $j(this).siblings('p').children('input:checked');
+if (checkbox.length) {
+    var checkbox_id_bits = checkbox.attr('id').split('_');
+    $j.post('/' + erepublik.settings.culture + '/main/wall-post/automatic', {
+        _token: $j('#award_token').val(),
+        message: checkbox.val(),
+        awardId: checkbox_id_bits[3]  // from id="award_checkbox_{index}_{awardId}"
+    }, function(response) { ... }, 'json');
+}
+```
+
+### Notes
+
+- **Optional action** — only fires when the user explicitly checks the "Share on wall" checkbox in the award popup
+- Uses a separate CSRF token (`#award_token`) from the standard page token (`#_token`)
+- The `awardId` is parsed from the checkbox DOM element's `id` attribute, split by `_`, taking the 4th segment (index 3)
+- The `message` comes pre-filled from the server as the checkbox's `value` attribute
+- On error, the message is displayed via `erepublik.functions.displayHumanMsgError()`
+- On success, the response has `message: true` (boolean) — note this is different from the regular wall post endpoint which returns full wall data
+- The award popup system blocks other popups (`erepublik.settings.achievementPopup = true`) until all awards are dismissed — see [framework/client-objects.md](../framework/client-objects.md)
+- Awards are rendered server-side as hidden `.home_reward` divs in the homepage HTML and shown sequentially via `nextAward()`
+- Posts created this way have `meta.isAutomaticMedalPost: true` in the wall post object (see Create Wall Post response above)
