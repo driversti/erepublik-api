@@ -238,8 +238,9 @@ Purchases currency from an existing exchange offer. The citizen buys from anothe
 | _token | string | Yes | CSRF token from the page |
 | offerId | number | Yes | The offer ID to buy from (from `purchase_{offerId}` button) |
 | amount | number | Yes | Amount to buy (max 2 decimal places, cannot exceed `data-max`) |
-| page | number | Yes | Current page number (0-indexed) |
-| currencyId | number | Yes | Current currency view ID (e.g., `62` for GOLD) |
+| buyAction | number | Yes | Set to `1`. Required by the AJAX path (also what ePlus + erepublik-agent send). |
+| page | number | No  | Current page number (0-indexed). Defaults to 0 server-side when omitted. |
+| currencyId | number | No  | Current currency view ID (e.g., `62` for GOLD). Defaults to the current session context when omitted. |
 
 ### Headers
 
@@ -298,6 +299,8 @@ curl -X POST 'https://www.erepublik.com/en/economy/exchange/purchase/' \
 - **`hideOffer`:** `true` if the purchased offer is now fully consumed and should be removed from the table
 - **Exchange rate** is determined by the offer, not passed as a parameter -- the citizen pays at the listed rate
 - The confirmation dialog format: `"Buy {amount} {currency} for {total} {otherCurrency}?"`
+- **Daily cap (Gold-buying side):** 10 gold per citizen per PST day. Exceeding this returns `{ error: true, message: "<contains 'maximum limit'>" }`. The exact message string includes the substring `"maximum limit"` -- automation should pattern-match case-insensitively on that to distinguish "already done today" from genuine failures.
+- **Sort order on the market page:** Offers are rate-sorted ascending in HTML, so the first row with `data-max >= N` is the cheapest available deal.
 
 ---
 
