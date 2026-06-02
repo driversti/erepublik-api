@@ -282,7 +282,7 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
 | `campaigns` | array | Related campaign data |
 | `epicBattle` | number | Epic battle status (0 = not epic) |
 | `activeEffects` | array | Currently active battle effects/boosters |
-| `battleEffects` | object | Named battle effects keyed by event name (e.g., `valentinesDay`), each with `is_active` flag |
+| `battleEffects` | object | Named battle effects keyed by effect name. Two shapes exist: seasonal toggles (e.g., `valentinesDay`) with a simple `is_active` flag, and rich per-side effects (e.g., `heroRewardEffect`) keyed by side `country_id`. See [Battle Effects schema](#battle-effects-schema) |
 | `maxHit` | number | Maximum hit damage recorded |
 | `most_contested` | array | Most contested zones info |
 | `battle_zone_situation` | object | Map of battle zone ID -> situation status code |
@@ -296,8 +296,55 @@ curl 'https://www.erepublik.com/en/military/battle-stats/863499/11/37859365' \
 - **Avatar CDN**: Avatar URLs use Cloudflare CDN with `smart` resizing and size parameters (30x30)
 - **Domination values**: Can exceed 100, representing accumulated domination points
 - **Defence shield**: `null` = no shield mechanic, `0` = shield inactive/depleted, positive number = shield active with remaining health
-- **Battle effects**: `battleEffects` is an object keyed by event name (e.g., `valentinesDay`) with `is_active` flag (0/1) -- tracks seasonal/holiday combat modifiers
+- **Battle effects**: `battleEffects` is an object keyed by effect name and carries two distinct shapes -- seasonal toggles (`{ "is_active": 0|1 }`) and rich per-side effects such as `heroRewardEffect` (see [Battle Effects schema](#battle-effects-schema) below)
 - **Zone situation codes**: The `battle_zone_situation` values likely indicate special states (0 = normal)
+
+### Battle Effects schema
+
+`battleEffects` mixes two unrelated shapes under the same object, distinguished by the effect key:
+
+**1. Seasonal toggle** -- a simple on/off flag for holiday/event modifiers:
+
+```json
+"valentinesDay": { "is_active": 0 }
+```
+
+**2. Hero Reward effect (`heroRewardEffect`)** -- per-side multiplier on the Battle Hero / Sky Hero gold reward, keyed by side `country_id`. Populated by the **Balloon Bonanza** event (Children's Day), where citizens activate **Funky Balloon Boosters** earned through the Weekly Challenge:
+
+```json
+"heroRewardEffect": {
+  "71": {
+    "country_id": 71,
+    "cnt": 10,
+    "effect": 1000,
+    "created_at": "2026-06-02 00:05:22",
+    "updated_at": "2026-06-02 00:22:02",
+    "citizens": [
+      { "id": 8616202, "name": "BoecUkraine" },
+      { "id": 2074238, "name": "pierrelesombre" }
+    ]
+  },
+  "72": { "country_id": 72, "cnt": 10, "effect": 1000, "...": "..." }
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `heroRewardEffect.{countryId}` | object | Aggregated Hero Reward boost for one side, keyed by side `country_id` |
+| `heroRewardEffect.{countryId}.country_id` | number | The side (country) this boost applies to |
+| `heroRewardEffect.{countryId}.cnt` | number | Number of citizens who activated a booster on this side (capped at 10) |
+| `heroRewardEffect.{countryId}.effect` | number | Cumulative **bonus Gold percentage** added to the Battle Hero / Sky Hero achievement reward: `100 × cnt`, so max `1000` (+1000%) |
+| `heroRewardEffect.{countryId}.created_at` | string | Datetime (`YYYY-MM-DD HH:MM:SS`) when the first booster was activated on this side |
+| `heroRewardEffect.{countryId}.updated_at` | string | Datetime when the most recent booster was activated on this side |
+| `heroRewardEffect.{countryId}.citizens` | array | Citizens who activated a booster on this side (`{ id, name }`) -- one entry per citizen, max 10 |
+
+**Funky Balloon Booster mechanics** (Balloon Bonanza event):
+
+- Activated from the **Battlefield**; increases the battlezone's Hero Achievement Reward for the chosen side.
+- Each citizen may activate **one** booster per battlezone/side; up to **10 different citizens** can stack on the same battlezone/side, raising the winner's bonus to **+1000% Gold**.
+- The bonus goes to whoever wins **Battle Hero** (ground) or **Sky Hero** (air, division 11) for that side.
+- **Restrictions**: cannot be used in **Civil Wars**; only during **Fresh** and **Early** battle stages (up to minute 60).
+- Boosters are **Temporary Items** earned via the Weekly Challenge. Battles using them are filterable on the Campaigns page via `#search/heroRewards`.
 
 ---
 
