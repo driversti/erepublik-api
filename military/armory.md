@@ -250,7 +250,10 @@ curl -X POST 'https://www.erepublik.com/en/military/armory-data/overview' \
   - `blueprints` (intStatus=4): Vehicle is locked and requires collecting blueprints to unlock
 - **Country enrollment**: Each vehicle can be enrolled for one country at a time, earning "Protector of {Country}" titles
 - **Protection levels**: Each country enrollment has its own XP progression system (levels 1-50)
-- **Damage bonus**: Higher protection levels provide increased damage bonus percentages
+- **Damage bonus curve differs by vehicle type** (observed in `damageBonus` field across a 40-vehicle sample, recorded 2026-05-22):
+  - **Aircraft**: linear — `damageBonus == level` (confirmed at levels 5, 7, 11, 13).
+  - **Tanks**: non-linear, per-level increment grows with level. Sample points: level 25 → 35, 26 → 38, 27 → 41, 28 → 44 (constant +3/level in that band); level 32 → 60 (avg +4/level for 28→32); level 50 → **200** (avg +7.78/level for 32→50). The +200% at level 50 is the cap for both vehicle types.
+- **Per-country enrollment cap**: `settings.maxEnrollPerCountry: 3` — up to 3 vehicles can be enrolled for the same country simultaneously.
 - **Default vehicles**: Some vehicles (`isDefault: true`) are available to all players at certain division thresholds
 - **Universal points**: Accumulated points that can be used to upgrade vehicle protection levels across countries
 - **Active vehicle**: Only one tank and one aircraft can be `isActive: true` at a time for ground and air combat respectively
