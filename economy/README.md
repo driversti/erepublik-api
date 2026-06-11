@@ -22,7 +22,7 @@ Economy endpoints cover marketplace, work mechanics, companies, currencies (Gold
 | [job-market.md](job-market.md) | Job market browsing and management | Get Job Market Listings, Resign from Job, Apply for Job, Manage Employees Data |
 | [training.md](training.md) | Training grounds and strength | Get Training Grounds Status, Train in Training Grounds |
 | [shop.md](shop.md) | Gold Shop and VIP Shop items | Get Shop Items |
-| [marketplace.md](marketplace.md) | Product marketplace (buy/sell goods) | Marketplace Page, Get Marketplace Offers, Buy from Marketplace |
+| [marketplace.md](marketplace.md) | Product marketplace (buy/sell goods) | Marketplace Page, Get Marketplace Offers, Market Picture, Buy from Marketplace |
 | [my-offers.md](my-offers.md) | Citizen's own marketplace listings | Get My Market Offers |
 | [inventory.md](inventory.md) | Full inventory snapshot | Get Inventory |
 | [exchange.md](exchange.md) | Monetary market (Gold/CC exchange) | Exchange Market Page, Retrieve Offers, Purchase, Create/Update/Delete Offer |
@@ -49,6 +49,7 @@ Economy endpoints cover marketplace, work mechanics, companies, currencies (Gold
 | Get Shop Items | GET | `/en/main/shopItemsJson` | [shop.md](shop.md) |
 | Marketplace Page | GET | `/en/economy/marketplace` | [marketplace.md](marketplace.md) |
 | Get Marketplace Offers | POST | `/en/economy/marketplaceAjax` | [marketplace.md](marketplace.md) |
+| Market Picture (Country Snapshot) | GET | `/en/economy/marketpicture/{countryId}` | [marketplace.md](marketplace.md) |
 | Buy from Marketplace | POST | `/en/economy/marketplaceActions` | [marketplace.md](marketplace.md) |
 | Get My Market Offers | GET | `/en/economy/myMarketOffers` | [my-offers.md](my-offers.md) |
 | Get Inventory | GET | `/en/economy/inventory-json` | [inventory.md](inventory.md) |

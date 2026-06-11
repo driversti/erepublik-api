@@ -436,6 +436,95 @@ curl -X POST 'https://www.erepublik.com/en/economy/marketplaceAjax' \
 
 ---
 
+## Market Picture (Country Snapshot)
+
+**Method:** GET
+**URL:** `/en/economy/marketpicture/{countryId}`
+**Auth Required:** No
+
+### Description
+
+Returns a lightweight **price snapshot** of a single country's marketplace: the cheapest active sell offers for every tradeable industry, grouped by quality tier. Unlike [Get Marketplace Offers](#get-marketplace-offers), this endpoint is **public** -- it needs no session cookie, no CSRF `_token`, and no `X-Requested-With` header -- making it ideal for price-monitoring tools and market dashboards.
+
+Each industry/quality bucket holds **up to 5 offers**, sorted by `gross` price ascending (cheapest first). Buckets with no offers are omitted entirely (e.g. an industry may expose `q1`, `q2`, `q4` but skip `q3`).
+
+### Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| countryId | number | Yes | Path parameter -- country whose market to snapshot (e.g. `72` for Lithuania). See [countries reference](../reference/countries.md). |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| X-Requested-With | `XMLHttpRequest` | No (returned JSON regardless) |
+
+### Example Request
+
+```bash
+curl 'https://www.erepublik.com/en/economy/marketpicture/72'
+```
+
+<details>
+<summary>Example Response (trimmed)</summary>
+
+```json
+{
+  "food": {
+    "q1": [
+      { "amount": 73218,  "net": 1.0594, "gross": 1.07, "import": 5, "vat": 1, "id": 78475926 },
+      { "amount": 19998,  "net": 1.0094, "gross": 1.07, "import": 5, "vat": 1, "id": 78511879 },
+      { "amount": 42112,  "net": 1.0792, "gross": 1.09, "import": 5, "vat": 1, "id": 78346533 },
+      { "amount": 180249, "net": 1.0792, "gross": 1.09, "import": 5, "vat": 1, "id": 78387744 },
+      { "amount": 74990,  "net": 9.901,  "gross": 10,   "import": 5, "vat": 1, "id": 78206148 }
+    ],
+    "q2": [ /* up to 5 offers */ ],
+    "q3": [], "q4": [], "q5": [], "q6": [], "q7": []
+  },
+  "weapons":  { "q1": [], "q2": [], "q3": [], "q4": [], "q5": [], "q7": [] },
+  "tickets":  { "q1": [], "q5": [] },
+  "houses":   { "q1": [], "q2": [], "q3": [], "q4": [], "q5": [] },
+  "frm":      { "q1": [] },
+  "wrm":      { "q1": [] },
+  "hrm":      { "q1": [] },
+  "aircraft": { "q1": [], "q2": [], "q3": [], "q4": [], "q5": [] },
+  "arm":      { "q1": [] }
+}
+```
+
+</details>
+
+### Notes
+
+- **Top-level keys (9 industries):** these are string tokens, not the numeric `industryId` used by `marketplaceAjax`:
+
+  | Key | Industry | `industryId` equivalent | Quality tiers |
+  |-----|----------|-------------------------|---------------|
+  | `food` | Food | 1 | q1-q7 |
+  | `weapons` | Weapons (Ammunition) | 2 | q1-q7 |
+  | `tickets` | Moving Tickets | 3 | q1-q5 |
+  | `houses` | Houses | 4 | q1-q5 |
+  | `aircraft` | Aircraft Weapons | 23 | q1-q5 |
+  | `frm` | Food Raw Materials (Grain) | 7 | q1 only |
+  | `wrm` | Weapon Raw Materials (Iron) | 12 | q1 only |
+  | `hrm` | House Raw Materials (Sand) | 17 | q1 only |
+  | `arm` | Aircraft Raw Materials (Magnesium) | 24 | q1 only |
+
+- **Offer fields:**
+  - `id`: Marketplace offer ID (matches the `id` returned by [Get Marketplace Offers](#get-marketplace-offers), usable as `offerId` in [Buy from Marketplace](#buy-from-marketplace))
+  - `amount`: Available quantity in stock
+  - `net`: Per-unit price **excluding VAT** (the seller's listed price)
+  - `gross`: Per-unit price **including VAT** -- the figure the offers are sorted by
+  - `vat`: VAT percentage applied by the market country (`1` = 1%)
+  - `import`: Import tax percentage charged to buyers from other countries (`5` = 5%)
+
+- The snapshot omits seller identity (`citizen_id`, `name`) and the `is_for_export` flag that `marketplaceAjax` returns -- use the full offers endpoint when those fields are needed.
+- A quality tier key is **absent** rather than empty when there are no offers, so iterate over present keys instead of assuming a fixed `q1`-`q7` shape.
+- Prices are expressed in the market country's local currency (e.g. LTL for Lithuania); the currency code is **not** included in this response.
+
+---
+
 ## Buy from Marketplace
 
 **Method:** POST
