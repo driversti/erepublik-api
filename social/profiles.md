@@ -522,6 +522,50 @@ Only present when `is_organization: true`. Exposes the org's **publicly visible 
 
 ---
 
+## Get Citizen Profile (Base JSON / Alias)
+
+**Method:** GET
+**URL:** `/en/main/citizen-profile-json/{citizenId}`
+**Auth Required:** No (public endpoint, but works better with session cookie)
+
+### Description
+
+The suffix-less base endpoint for citizen profile data. It returns a payload **structurally identical** to the [Global JSON endpoint](#get-citizen-profile-global-json) — the exact same 36 top-level keys (`citizen`, `citizenAttributes`, `location`, `city`, `achievements`, `military`, `nukes`, `decorations`, `activePacks`, `friends`, `organization`, `partyData`, etc.) with the same nesting and types.
+
+In practice this is an alias of the `-global` variant. Use either interchangeably for public profile reads; refer to the [Global JSON](#get-citizen-profile-global-json) section for the full field reference and example response.
+
+### Path Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| citizenId | number | Yes | The unique citizen ID |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | No (enhances `friends` with `isFriend` / `isFriendRequestPending`) |
+
+<details>
+<summary>Example Request (cURL)</summary>
+
+```bash
+curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json/4690052" \
+  -H "X-Requested-With: XMLHttpRequest" \
+  -H "Cookie: erpk=YOUR_SESSION_TOKEN"
+```
+
+</details>
+
+### Notes
+
+- Verified to return the identical top-level key set as `-global` (diff of both responses showed zero key differences).
+- Same caveats as the Global endpoint apply: `friends.list` is only a ~9-entry sample, `aboutMe` is HTML-encoded, absent objects return `false` rather than `null`, and `organization.accounts` financial balances are publicly exposed.
+- The unsuffixed `loggedIn` field is an empty array `[]` here (same as Global); the [Personal JSON endpoint](#get-citizen-profile-personal-json) populates it with `hovercardData`.
+
+---
+
 ## Get Citizen Profile (Personal JSON)
 
 **Method:** GET

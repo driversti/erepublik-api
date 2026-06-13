@@ -12,7 +12,7 @@ Social endpoints cover citizen profiles, friends, messages, notifications, and c
 
 | File | Endpoints | Description |
 |------|-----------|-------------|
-| [profiles.md](profiles.md) | Get Citizen Profile (Global JSON), Get Citizen Profile (Personal JSON), Get Citizen Hovercard | Citizen profile data and hovercard tooltips |
+| [profiles.md](profiles.md) | Get Citizen Profile (Base JSON / Alias), Get Citizen Profile (Global JSON), Get Citizen Profile (Personal JSON), Get Citizen Hovercard | Citizen profile data and hovercard tooltips |
 | [friends.md](friends.md) | Add/Remove Friend, List Friends (Paginated) | Friendship management |
 | [wall.md](wall.md) | Create Wall Post, Delete Wall Post | Wall post creation and deletion |
 | [search.md](search.md) | Search Citizens | Citizen search by name |
