@@ -18,6 +18,7 @@ Static reference tables for countries and regions in eRepublik. This data was ex
 |------|-------------|
 | [countries.md](countries.md) | Complete list of 74 countries with IDs and permalinks |
 | [regions.md](regions.md) | Complete list of 574 regions with IDs, permalinks, and original owners; includes regions-by-country summary |
+| [cities-regions-owners.md](cities-regions-owners.md) | All 574 regions with capital city, coordinates, population, and original owner (from `/en/main/map-data`) |
 
 ---
 
