@@ -57,8 +57,13 @@ curl -X POST 'https://www.erepublik.com/en/Lithuania/new-donation' \
 
 ## Example Response
 
-This endpoint returns an **HTML redirect** (HTTP 302), not JSON:
-- **On success:** Redirects to the country laws/proposals page where the new proposal appears
+This endpoint returns an **HTML redirect** (HTTP 302), not JSON. The body is a minimal HTML meta-refresh page pointing at the redirect target:
+
+```html
+<html><head><meta http-equiv="refresh" content="0;url=https://www.erepublik.com/en/country-administration/Lithuania/1"/></head></html>
+```
+
+- **On success:** Redirects to the [Country Administration page](administration.md), page 1 (`/en/country-administration/{countryName}/1`), where the new proposal appears at the top of the Law proposals list
 - **On failure (not authenticated):** Redirects to homepage (`/en`)
 
 ## Notes
