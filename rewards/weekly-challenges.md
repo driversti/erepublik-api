@@ -244,6 +244,101 @@ curl -X POST 'https://www.erepublik.com/en/main/weekly-challenge-collect-reward'
 
 ---
 
+## Collect All Weekly Challenge Rewards
+
+**Method:** POST
+**URL:** `/en/main/weekly-challenge-collect-all`
+**Auth Required:** Yes
+
+### Description
+
+Claims **all currently unlocked, uncollected** weekly challenge rewards in a single request, up to the specified `maxRewardId` tier. This is the bulk counterpart to [`weekly-challenge-collect-reward`](#collect-weekly-challenge-reward) (which claims one tier at a time).
+
+> **Important:** The response **does not report what was collected** -- the `rewards` array comes back empty even when a reward was actually granted (verified: collecting tiers 12 and 13 each flipped their `weekly-challenge-data` status from `completed` to `rewarded`, yet both calls returned `{"error":false,"rewards":[]}`). To learn what changed, re-fetch [`weekly-challenge-data`](#get-weekly-challenge-data) and compare tier statuses before/after.
+
+### Request Parameters
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| maxRewardId | number | Yes | The highest reward tier ID to collect up to. Corresponds to `maxRewardId` from the [weekly-challenge-data](#get-weekly-challenge-data) response. All unlocked rewards up to this tier are claimed. |
+| _token | string | Yes | CSRF token for request validation |
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Yes |
+| Content-Type | `application/x-www-form-urlencoded` | Yes |
+
+<details>
+<summary>Example Request (cURL)</summary>
+
+```bash
+curl -X POST 'https://www.erepublik.com/en/main/weekly-challenge-collect-all' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw 'maxRewardId=10&_token=YOUR_CSRF_TOKEN'
+```
+
+</details>
+
+This endpoint returns **two different JSON shapes**, both with HTTP `200`:
+
+<details>
+<summary>Example Response A -- valid request (most calls)</summary>
+
+```json
+{
+  "error": false,
+  "rewards": []
+}
+```
+
+Returned whether or not a reward was actually granted. The `rewards` array was **empty in every observed call**, including calls that demonstrably collected a tier (see the Description warning). Treat `error: false` as "request accepted" -- not as proof that something was collected.
+
+</details>
+
+<details>
+<summary>Example Response B -- "no_reward" error</summary>
+
+```json
+{
+  "status": "error",
+  "message": "no_reward"
+}
+```
+
+</details>
+
+### Response Fields
+
+**Response A (valid request):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| error | boolean | `false` on an accepted request |
+| rewards | array | Always observed empty (`[]`), even when a tier was actually collected. Does **not** echo granted items. |
+
+**Response B (error):**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| status | string | `"error"` |
+| message | string | Error code (e.g. `no_reward`) |
+
+### Notes
+
+- **Bulk collection:** Unlike `weekly-challenge-collect-reward` (single `rewardId`), this endpoint sweeps all unlocked, uncollected tiers up to `maxRewardId` at once. Collection is confirmed only via the [`weekly-challenge-data`](#get-weekly-challenge-data) status flip (`completed` -> `rewarded`), not via the response body.
+- `maxRewardId` corresponds to the `maxRewardId` field returned by [`/en/main/weekly-challenge-data`](#get-weekly-challenge-data) (observed value `13` for a fully-progressed weekly challenge). Tiers with `status: "completed"` are unlocked-but-uncollected and will be granted; `rewarded` tiers are already collected; `""` tiers are still locked.
+- **The `rewards` array does not report collected items.** Confirmed across `maxRewardId` 11, 12, and 13: tiers 12 and 13 were genuinely collected (status flipped to `rewarded`, e.g. tier 13 = "5 Q5 Moving Tickets") yet every response was `{"error":false,"rewards":[]}`. To know what you received, diff the `weekly-challenge-data` tier statuses.
+- **HTTP status is always `200`** -- even on the `no_reward` error. Detect failure by checking for the `status:"error"` shape; an accepted request uses the `error:false` (boolean) shape instead.
+- **`no_reward` anomaly:** `maxRewardId=10` returned `{"status":"error","message":"no_reward"}`, while `maxRewardId=11/12/13` returned the `error:false` shape. The exact rule selecting between the two shapes is unclear from the available samples.
+- This differs from the single-reward endpoint, which returns `{"status":..., "message":"Reward collected"/"Already collected"}`.
+
+---
+
 ## Related
 
 - [Daily Objectives](daily-objectives.md)

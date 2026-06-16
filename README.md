@@ -151,6 +151,7 @@ Unofficial API documentation for [eRepublik](https://www.erepublik.com), a brows
 | `/en/main/mission-solve` | POST | Claim mission reward |
 | `/en/main/weekly-challenge-data` | GET | Get weekly challenge progress |
 | `/en/main/weekly-challenge-collect-reward` | POST | Collect weekly challenge reward |
+| `/en/main/weekly-challenge-collect-all` | POST | Collect all unlocked weekly challenge rewards |
 | `/en/main/vip-claim` | POST | Claim daily VIP points |
 
 ### Framework (Popups, Tournaments, Shop)
