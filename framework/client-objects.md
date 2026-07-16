@@ -31,6 +31,24 @@ Available on all authenticated pages. Contains the current logged-in citizen's b
 | `terrainSkills` | object | Terrain skill levels per terrain type |
 | `residence.hasResidence` | boolean | Whether the citizen has a city residence |
 | `residence.regionId` | integer | Region ID of the citizen's residence |
+| `citizenshipCountryId` | integer | Citizenship country ID (present live 2026-07-14; some code also reads `ctCountryId`) |
+| `citizenshipCurrencyName` | string | Currency code of the citizenship country (e.g. `PLN`) |
+| `countryLocationId` | integer | Country ID where the citizen is **currently located** (differs from citizenship when abroad) |
+| `regionLocationId` | integer | Region ID of the citizen's current location |
+| `countryLocationPermalink` | string | URL slug of the current-location country |
+| `energyPoolLimit` | number | Maximum energy pool (e.g. 1200) |
+| `energyToRecover` | number | Energy still to recover up to the pool limit |
+| `recoverableEnergy` | number | Energy available to recover right now |
+| `energyPerInterval` | number | Energy regained per recovery interval (e.g. 21 / 6 min) |
+| `energyFromFoodRemaining` | number | Energy still available from food held in inventory |
+| `energyStatus` | string | Energy state, e.g. `recovering` |
+| `hasFoodInInventory` | boolean | Whether the citizen holds food |
+| `canWorkTrainAgainIn` | number | Seconds until work/train is available again |
+| `division` | integer | Military division (1–4, 11) |
+| `muId` / `muCountryId` / `regimentId` | integer | Military-unit membership IDs |
+| `dailyOrders` | array | Daily-order battle assignments |
+| `dailiesToCollect` | array | Daily tasks ready to collect |
+| `hasCoreLoopAccess` | boolean | Whether the account has core-loop access |
 
 ### Usage in Scripts
 
@@ -52,6 +70,9 @@ if (erepublik.citizen.residence.hasResidence) {
 - For real-time energy, see `SERVER_DATA.health` on the battlefield page
 - The `isEmpire` and `isDictatorship` properties reflect the **current** government type
 - `terrainSkills` maps terrain IDs to skill level values
+- **Auth check:** `gold`, `currencyAmount`, `energy`, `energyPoolLimit`, `recoverableEnergy`, `userLevel` are **owner-only** — reading real values proves an *authenticated* session, not merely a present `erpk` cookie. Verified live 2026-07-14 on `/en` (acct LovelyPony 9742070: energy 1188/1200, gold 2108, currencyAmount 65869 PLN, userLevel 24).
+- **`prestige` was NOT present** in `erepublik.citizen` on `/en` (2026-07-14). If you need prestige/"wealth+prestige" reporting, source it elsewhere (profile JSON / another page) — do not assume this global carries it.
+- Current-**location** fields (`countryLocationId` / `regionLocationId`) differ from `residence.*` and citizenship when the citizen is abroad.
 
 ---
 
