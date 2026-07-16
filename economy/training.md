@@ -141,6 +141,15 @@ curl 'https://www.erepublik.com/en/main/training-grounds-json' \
   - `progress`: Strength gained towards the next medal (medals awarded every 250 strength)
   - `trained`: Indicates if training was completed in this specific facility today
 
+- **Discount Contracts (`contracts` field):**
+  - `false` when no discount contract is active
+  - When active, an array of objects: `{"discount": 90, "active": true, "timeLeft": 2421312}`
+    - `discount`: Percentage off training gold costs (e.g. `90` = 90% off)
+    - `active`: Whether the contract is currently in effect
+    - `timeLeft`: Seconds remaining before the contract expires
+  - `effectiveCost` on each ground = `cost * (1 - discount / 100)`. Verified: cost `0.19` with a 90% discount contract yields `effectiveCost` `0.019`. (Verified 2026-07-16)
+  - This is distinct from `hasTrainingContract` / `contractExpiresAt` in `page_details`-adjacent top-level fields, which reflect the same underlying contract but as a simple boolean + Unix timestamp
+
 - **Training Grounds:**
   - Four types of training facilities: Weights Room, Climbing Center, Shooting Range, Special Forces Center
   - Each facility has a quality level (Q1-Q4) affecting strength gains
