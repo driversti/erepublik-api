@@ -928,7 +928,13 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
 | `fighterInfo` | object | Military and aviation combat stats |
 | `fighterInfo.military` | object | Ground combat: `rank`, `strength`, `division` |
 | `fighterInfo.aviation` | object | Air combat: `rank`, `perception`, `division` |
-| `interactionButtons` | array | Available interaction buttons (empty for self) |
+| `interactionButtons` | array | Available interaction buttons -- empty when `isSelf: true`; populated when viewing another citizen |
+| `interactionButtons[].type` | string | Button type: `"viewProfile"`, `"sendMessage"`, `"addFriend"`, `"removeFriend"`, etc. |
+| `interactionButtons[].title` | string | Button label (e.g., "View profile", "Send message", "Remove friend") |
+| `interactionButtons[].enabled` | boolean | Whether the button is actionable |
+| `interactionButtons[].action` | string | Action kind: `"link"` (navigate to `href`) or an action name like `"removeFriend"` (POST to `actionURL`) |
+| `interactionButtons[].href` | string | Target URL for `action: "link"` buttons |
+| `interactionButtons[].actionURL` | string | Endpoint URL for non-link actions (e.g., add/remove friend) |
 
 ### Notes
 
@@ -938,3 +944,35 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
 - **Error handling**: Returns `{"error": true, "message": "citizen error"}` for invalid citizen IDs or system accounts
 - **Activity array**: Contains up to 3 entries (city, party, MU) -- entries are omitted if the citizen has no membership
 - **Organization accounts**: When `isOrg: true`, the response represents a company/organization rather than a player
+- **Interaction buttons**: Empty (`[]`) when `isSelf: true`. When viewing another citizen, the set adapts to the relationship -- a friend returns `viewProfile`, `sendMessage`, and `removeFriend`; a non-friend would return `addFriend` instead. Example (viewing a friend):
+
+<details>
+<summary>interactionButtons (viewing a friend)</summary>
+
+```json
+"interactionButtons": [
+  {
+    "type": "viewProfile",
+    "title": "View profile",
+    "enabled": true,
+    "action": "link",
+    "href": "//www.erepublik.com/en/citizen/profile/2330404"
+  },
+  {
+    "type": "sendMessage",
+    "title": "Send message",
+    "enabled": true,
+    "action": "link",
+    "href": "//www.erepublik.com/en/main/messages-compose/2330404"
+  },
+  {
+    "type": "removeFriend",
+    "title": "Remove friend",
+    "enabled": true,
+    "action": "removeFriend",
+    "actionURL": "//www.erepublik.com/en/main/citizen-addRemoveFriend"
+  }
+]
+```
+
+</details>
