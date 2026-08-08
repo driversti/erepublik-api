@@ -147,6 +147,8 @@ The buy button's `data-` attributes expose key offer data:
 ### Notes
 
 - **Default View:** Shows "Buy GOLD, Sell CC" for the citizen's country currency
+
+> **This is the default VIEW, not a separate market.** The exchange is ONE shared book: every citizen sees the same offers regardless of their own currency. Live-confirmed 2026-07-17 — three accounts on PLN, UAH and GBP all bought from the **same `offerId` (6867418) at the same rate**, each receiving `ecash` in its own currency. Misreading this line as "each currency has its own book" makes a shared `offerId` look like a bug. It is also why `purchase` works with `currencyId` omitted: there is no per-currency book to select.
 - **Currency Swap:** The "Swap" button switches between buying GOLD for CC vs buying CC for GOLD
 - **Pagination:** 10 offers per page, paginated via AJAX (see Exchange Retrieve Offers endpoint below)
 - **Currency IDs:** `62` = GOLD; country currency IDs vary (e.g., `1` = LTL, see other endpoints for mapping)
@@ -301,6 +303,14 @@ curl -X POST 'https://www.erepublik.com/en/economy/exchange/purchase/' \
 - The confirmation dialog format: `"Buy {amount} {currency} for {total} {otherCurrency}?"`
 - **Daily cap (Gold-buying side):** 10 gold per citizen per PST day. Exceeding this returns `{ error: true, message: "<contains 'maximum limit'>" }`. The exact message string includes the substring `"maximum limit"` -- automation should pattern-match case-insensitively on that to distinguish "already done today" from genuine failures.
 - **Sort order on the market page:** Offers are rate-sorted ascending in HTML, so the first row with `data-max >= N` is the cheapest available deal.
+
+### Live-confirmed 2026-07-17 (Houston's first three real buys)
+
+- **`amount=0.01` is ACCEPTED.** The minimum meaningful buy works; the game does not reject a sub-1 amount. (`erepublik-agent` rejects `< 1` and ePlus hardcodes `10` — both are tool limits, not game limits.)
+- **`purchase` succeeds with `page` AND `currencyId` OMITTED**, after navigating to `/en/economy/exchange-market/`. Body sent: `_token`, `offerId`, `amount`, `buyAction=1` — nothing else. This resolves the contradiction between the params table (both Optional) and the cURL example below (which sends them and omits `buyAction`): **the table is right, the example is misleading.**
+- **Rate sample: `1819.99` CC/gold.** The worked example in this file uses `1082`; `Erepublik/Holding_Companies.md` uses `400`. Neither is current — the rate moves and was ~1.7x the sample. Do not size a budget off these docs.
+- **The response's `gold.value` / `ecash.value` are the balances AFTER the trade**, and `ecash` is in the buyer's own currency (verified against `erepublik.citizen.currencyAmount` read seconds later).
+- **NO FEE OR TAX.** Player-confirmed 2026-07-17: the Monetary Market charges nothing, so the buyer pays exactly `amount x rate` and nothing else. Do NOT reason by analogy from the **Game Tokens** market's 5% buyer tax (`Erepublik/Game_Tokens.md`) — different market, different rules. (The purchase response cannot show this on its own: it reports only the post-trade balance, so a fee would only be visible against a balance captured immediately BEFORE the buy.)
 
 ---
 

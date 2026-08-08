@@ -2,7 +2,7 @@
 
 #erepublik #api #country #politics #economy
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -21,6 +21,7 @@ Country endpoints cover country-specific pages and data, including society stati
 | [politics.md](politics.md) | Country Politics Page | GET | `/en/country/politics/{countryName}` | No |
 | [military.md](military.md) | Country Military Page | GET | `/en/country/military/{countryName}` | No |
 | [administration.md](administration.md) | Country Administration Page | GET | `/en/country-administration/{countryName}/{page}` | No |
+| [law.md](law.md) | Law Detail Page | GET | `/en/main/law/{countryName}/{lawId}` | **Yes** (302 otherwise) |
 | [congress.md](congress.md) | Propose Donation (Congressional) | POST | `/en/{countryName}/new-donation` | Yes (Congress) |
 | [edge-cases.md](edge-cases.md) | Edge Cases and Empty States | -- | -- | -- |
 
@@ -155,8 +156,8 @@ Any additional information, gotchas, or observations.
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
-- [World & Travel API](../API_WORLD.md)
-- [Social API](../API_SOCIAL.md)
-- [Military API](../API_MILITARY.md)
-- [Economy API](../API_ECONOMY.md)
+- [API Table of Contents](../README.md)
+- [World & Travel API](../world/README.md)
+- [Social API](../social/README.md)
+- [Military API](../military/README.md)
+- [Economy API](../economy/README.md)

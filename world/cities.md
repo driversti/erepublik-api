@@ -227,6 +227,8 @@ curl 'https://www.erepublik.com/en/main/city-data/710/overview' \
   - `recoveryBonus` - Energy recovery bonus per 6 minutes
   - `description` - Human-readable status description
 
+> **Home/abroad detection (added 2026-07-17):** `isLocatedInResidence` (and `residentialBonuses.isInResidence`) is the game's own answer to "is this account home?" — prefer it over comparing `residenceCityId` against a current location yourself, since residence is per-**city** while travel is per-**region**. `validUntil` / `timeRemaining` count down the **energy pool** bonus only (30 min from departure); the **recovery** bonus is lost immediately on leaving, which is why the away-state `description` reads *"partially available"*. Mechanics + wiki quotes: `~/KnowledgeBase/Erepublik/Residence.md`. Field-level caveats: [travel.md](travel.md#interpreting-these-fields-added-2026-07-17).
+
 #### cityInfo Object
 - `id` - City ID
 - `name` - City display name

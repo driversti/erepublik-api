@@ -2,7 +2,7 @@
 
 #erepublik #api #economy
 
-[< Back to Table of Contents](../API_TOC.md) | [Authentication](../API_AUTH.md)
+[< Back to Table of Contents](../README.md) | [Authentication](../auth/README.md)
 
 ---
 
@@ -118,10 +118,10 @@ Any additional information, gotchas, or observations.
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
-- [Authentication](../API_AUTH.md)
-- [Military API](../API_MILITARY.md)
-- [Social API](../API_SOCIAL.md)
+- [API Table of Contents](../README.md)
+- [Authentication](../auth/README.md)
+- [Military API](../military/README.md)
+- [Social API](../social/README.md)
 - [[VIP_Shop]] -- VIP levels, daily gift schedule, VIP points from purchases, weekly inventory items
 - [[Loyalty_Program]] -- 5-level spending program (Bronze-Diamond), benefits, LP bonus on level-up
 - [[Gold]] -- Gold Store items and pricing, Gold Bonus (referral rewards) mechanics

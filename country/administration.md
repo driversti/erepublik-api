@@ -193,8 +193,12 @@ Under `<h2 class="section">Law proposals</h2>`. Contains a table listing recent 
 | `taxStyle NaturalEnemy` | Natural Enemy | Declare/remove natural enemy |
 | `taxStyle Airstrike` | Airstrike | Launch an airstrike against a non-bordering country |
 | `taxStyle DeclareWar` | Declare War | Declare war on a bordering country |
+| `taxStyle ResourceConcession` | Resource Concession | Lease a region's resource to/from another country in exchange for a % of daily industry GDP |
+| `taxStyle MutualProtectionPact` | Mutual Protection Pact | Propose an MPP with another country |
 
-> **Note:** Additional law types likely exist (e.g., MPP, Embargo, Tax Change, Impeachment) but have not been observed yet. The CSS class on the `<a>` tag follows the pattern `taxStyle {LawType}`.
+> **Note:** `ResourceConcession` and `MutualProtectionPact` were observed on `/en/country-administration/Poland/{page}` during a law crawl of eDay 6,748--6,819 (2026-07-23). Additional law types likely still exist (e.g., Embargo, Tax Change, Impeachment). The CSS class on the `<a>` tag follows the pattern `taxStyle {LawType}`.
+>
+> The law type class is the **only locale-independent way to classify a law** -- the [law detail page](law.md) can render in a foreign locale, so never classify by question wording. Carry this class into the detail fetch.
 
 **Status icons:**
 
@@ -249,7 +253,7 @@ The `countrySelector` variable uses `urlTab: "country-administration"` (note: hy
 | URL Pattern | Description |
 |-------------|-------------|
 | `/en/country-administration/{countryName}/{page}` | Administration page (paginated) |
-| `/en/main/law/{countryName}/{lawId}` | Law proposal details page |
+| `/en/main/law/{countryName}/{lawId}` | Law proposal details page -- **requires auth** (302 when logged out), see [law.md](law.md) |
 
 ## Notes
 
@@ -261,7 +265,8 @@ The `countrySelector` variable uses `urlTab: "country-administration"` (note: hy
 - Law IDs are **sequential integers** across all countries (e.g., `327910`, `327868`) -- they can be used with `/en/main/law/{countryName}/{lawId}`
 - The `class="first"` on `<td>` elements only appears on the first row -- it's for CSS top-border styling
 - The **Campaign of the Day** and **Deploy allied forces** features are only functional for the Country President (button is `disabled` for other viewers)
-- Law types observed so far: `Donate`, `NaturalEnemy`, `Airstrike`, `DeclareWar`. Additional types likely exist (MPP, Embargo, Tax changes, Impeachment)
+- Law types observed so far: `Donate`, `NaturalEnemy`, `Airstrike`, `DeclareWar`, `ResourceConcession`, `MutualProtectionPact`. Additional types likely exist (Embargo, Tax changes, Impeachment)
+- The listing is readable **anonymously**, but the per-law `Details` link is **not** -- `/en/main/law/{countryName}/{lawId}` 302s to `/en` without a session ([law.md](law.md))
 - The administration tab link in the country tabs uses the full URL with page number: `/en/country-administration/USA/1`
 - Additional CSS: `country.{buildId}.css` (instead of `war_list.css` used by military tab)
 
@@ -269,6 +274,7 @@ The `countrySelector` variable uses `urlTab: "country-administration"` (note: hy
 
 ## See Also
 
+- [Law Detail Page](law.md) -- the `/en/main/law/{countryName}/{lawId}` target of every `Details` link
 - [Country Society Page](society.md)
 - [Country Economy Page](economy.md)
 - [Country Politics Page](politics.md)

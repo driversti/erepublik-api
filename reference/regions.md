@@ -4,7 +4,7 @@ Complete list of all 574 regions in eRepublik with their IDs, permalinks, and or
 
 #erepublik #api #reference #regions
 
-[< Back to Reference](README.md) | [< Back to Table of Contents](../API_TOC.md)
+[< Back to Reference](README.md) | [< Back to Table of Contents](../README.md)
 
 ---
 
@@ -687,5 +687,5 @@ Quick reference showing how many regions originally belong to each country:
 ## Related
 
 - [Countries](countries.md)
-- [World & Travel API](../API_WORLD.md) -- travelData endpoint documentation
-- [Country API](../API_COUNTRY.md) -- country page endpoints
+- [World & Travel API](../world/README.md) -- travelData endpoint documentation
+- [Country API](../country/README.md) -- country page endpoints

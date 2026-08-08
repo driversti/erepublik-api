@@ -4,7 +4,7 @@ This module covers session verification and CAPTCHA endpoints. eRepublik uses va
 
 #erepublik #api #captcha #verification #security
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -468,5 +468,5 @@ Additional CAPTCHA-related endpoints to be documented:
 ## Related
 
 - [Authentication](../auth/README.md)
-- [API Table of Contents](../API_TOC.md)
+- [API Table of Contents](../README.md)
 - [Homepage](../homepage/README.md)

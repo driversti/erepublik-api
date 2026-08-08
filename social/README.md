@@ -4,7 +4,7 @@
 
 Social endpoints cover citizen profiles, friends, messages, notifications, and community interactions.
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -72,9 +72,9 @@ Any additional information, gotchas, or observations.
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
-- [Authentication](../API_AUTH.md)
-- [Country API](../API_COUNTRY.md)
-- [Notifications API](../API_NOTIFICATIONS.md)
-- [Military API](../API_MILITARY.md)
-- [Economy API](../API_ECONOMY.md)
+- [API Table of Contents](../README.md)
+- [Authentication](../auth/README.md)
+- [Country API](../country/README.md)
+- [Notifications API](../notifications/README.md)
+- [Military API](../military/README.md)
+- [Economy API](../economy/README.md)

@@ -4,7 +4,7 @@ Power Spin (Wheel of Fortune) is a gamification feature where players spend curr
 
 #erepublik #api #powerspin #wheeloffortune #gamification
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -830,6 +830,6 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
+- [API Table of Contents](../README.md)
 - [Authentication](../auth/README.md)
 - [Rewards](../rewards/README.md)

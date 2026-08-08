@@ -4,7 +4,7 @@ Complete list of all 74 countries in eRepublik with their IDs and permalinks.
 
 #erepublik #api #reference #countries
 
-[< Back to Reference](README.md) | [< Back to Table of Contents](../API_TOC.md)
+[< Back to Reference](README.md) | [< Back to Table of Contents](../README.md)
 
 ---
 

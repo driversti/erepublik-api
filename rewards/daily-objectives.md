@@ -4,7 +4,7 @@ Endpoints for checking daily objective progress and claiming tier rewards. Daily
 
 #erepublik #api #rewards #objectives
 
-[< Back to Rewards](README.md) | [< Back to Table of Contents](../API_TOC.md)
+[< Back to Rewards](README.md) | [< Back to Table of Contents](../README.md)
 
 ---
 

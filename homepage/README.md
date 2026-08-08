@@ -4,7 +4,7 @@ The homepage (`/en`) is the main authenticated dashboard that loads when a logge
 
 #erepublik #api #homepage #dashboard
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -743,7 +743,7 @@ match = re.search(r'\$j\.extend\(SERVER_DATA, \{\s*wallData:', html)
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
+- [API Table of Contents](../README.md)
 - [Authentication](../auth/README.md)
 - [Notifications](../notifications/README.md)
 - [CAPTCHA & Verification](../captcha/README.md)

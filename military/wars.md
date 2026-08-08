@@ -172,7 +172,7 @@ curl -X POST 'https://www.erepublik.com/en/military/rw-support?_nonce=1772438609
 - Requires Turnstile captcha -- cannot be fully automated without captcha solving
 - The `_nonce` appears to be a client-generated timestamp (milliseconds since epoch)
 - The region must be occupied by a foreign country for the RW option to be available
-- See also: [Country Military Page](../API_TOC.md) (`/en/country/military/{countryName}`) which lists active resistance wars and determination levels
+- See also: [Country Military Page](../country/military.md) (`/en/country/military/{countryName}`) which lists active resistance wars and determination levels
 
 ---
 

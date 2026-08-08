@@ -167,6 +167,18 @@ curl -X POST 'https://www.erepublik.com/en/main/travelData' \
 - `validUntil` - Unix timestamp when bonus expires
 - `timeRemaining` - Seconds remaining on bonus
 - `numHouses` - Number of houses owned
+- `isInResidence` - `1` = citizen is currently in their residence, `0` = away
+- `description` - The game's own verdict string, e.g. `"Residence bonuses available"` (home) vs `"Residence bonuses partially available. Energy Pool bonus expires in:"` (away)
+
+##### Interpreting these fields (added 2026-07-17)
+
+Game mechanics live in `~/KnowledgeBase/Erepublik/Residence.md`; this is only what the fields mean for a client.
+
+- **`validUntil` / `timeRemaining` track the ENERGY POOL bonus only.** Per the [Residence](https://wiki.erepublik.com/index.php/Residence) wiki page, the *recovery* bonus is lost the instant the citizen leaves ("the recoverable energy bonus is not available"), with no grace period; only the pool bonus survives **30 minutes from the moment of departure**. That is why the away-state `description` says **"partially"**. The sample above (`timeRemaining: 1777`) is ~23s into an apparent 1800s (30-min) budget.
+- **Home state:** `validUntil: 0`, `timeRemaining: 0` — these are *not* a countdown while in residence.
+- ⚠️ **`recoveryBonus` is NOT gated by location.** In the sample above it still reports `4` while `isInResidence: 0` — i.e. the numeric fields describe the citizen's *potential* bonuses, not what is currently in effect. A client that renders `recoveryBonus` while away will claim a bonus the citizen does not have. **Gate on `isInResidence` / `description`, not on the number being non-zero.** (Observation from this captured sample; not confirmed against a live account.)
+- ⚠️ **Prefer `isInResidence` over comparing IDs yourself.** Residence is established per **city** (`residence.cityId`) while travel is per **region** (`residence.regionId`); the wiki does not state whether a different city in the same region keeps the bonus. Let the server answer.
+- ⚠️ `energyBonus` values in captured samples are inconsistent (`50` in `cities.md`'s `residentialBonuses` vs `100` here and in the residence widget), and the two wiki pages disagree by exactly 2×. Do not size anything off the docs — read live.
 
 ### Notes
 

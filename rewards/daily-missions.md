@@ -4,7 +4,7 @@ Endpoints for retrieving daily mission data and claiming mission rewards. Daily 
 
 #erepublik #api #rewards #missions
 
-[< Back to Rewards](README.md) | [< Back to Table of Contents](../API_TOC.md)
+[< Back to Rewards](README.md) | [< Back to Table of Contents](../README.md)
 
 ---
 

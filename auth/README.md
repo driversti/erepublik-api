@@ -4,7 +4,7 @@ eRepublik uses cookie-based session authentication. After a successful login, th
 
 #erepublik #api #authentication
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -199,6 +199,6 @@ Set-Cookie: erpk=YOUR_SESSION_TOKEN; expires=Sun, 25 Jan 2026 16:45:56 GMT; Max-
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
+- [API Table of Contents](../README.md)
 - [CAPTCHA & Verification](../captcha/README.md)
 - [Homepage](../homepage/README.md)

@@ -4,7 +4,7 @@ Endpoints for tracking weekly challenge progress and collecting rewards. The wee
 
 #erepublik #api #rewards #weekly-challenge
 
-[< Back to Rewards](README.md) | [< Back to Table of Contents](../API_TOC.md)
+[< Back to Rewards](README.md) | [< Back to Table of Contents](../README.md)
 
 ---
 

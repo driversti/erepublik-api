@@ -4,7 +4,7 @@ Notification endpoints handle in-game alerts, reports, and notifications for pla
 
 #erepublik #api #notifications
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -140,6 +140,6 @@ curl -X GET 'https://www.erepublik.com/en/main/notificationsAjax/report/1' \
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
+- [API Table of Contents](../README.md)
 - [Authentication](../auth/README.md)
 - [Homepage](../homepage/README.md)

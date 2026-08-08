@@ -4,7 +4,7 @@ Rewards endpoints cover daily objectives, missions, achievement rewards, weekly 
 
 #erepublik #api #rewards #objectives #missions
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -71,6 +71,6 @@ Any additional information, gotchas, or observations.
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
+- [API Table of Contents](../README.md)
 - [Authentication](../auth/README.md)
 - [Power Spin](../powerspin/README.md)

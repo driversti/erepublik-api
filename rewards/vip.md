@@ -4,7 +4,7 @@ Endpoint for claiming daily VIP points from the VIP Shop.
 
 #erepublik #api #rewards #vip
 
-[< Back to Rewards](README.md) | [< Back to Table of Contents](../API_TOC.md)
+[< Back to Rewards](README.md) | [< Back to Table of Contents](../README.md)
 
 ---
 

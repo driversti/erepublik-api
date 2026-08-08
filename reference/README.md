@@ -1,10 +1,10 @@
 # Reference Data
 
-Static reference tables for countries and regions in eRepublik. This data was extracted from the [`/en/main/travelData`](../API_WORLD.md) endpoint response.
+Static reference tables for countries and regions in eRepublik. This data was extracted from the [`/en/main/travelData`](../world/README.md) endpoint response.
 
 #erepublik #api #reference #countries #regions
 
-[< Back to Table of Contents](../API_TOC.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -24,6 +24,6 @@ Static reference tables for countries and regions in eRepublik. This data was ex
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
-- [World & Travel API](../API_WORLD.md) -- travelData endpoint documentation
-- [Country API](../API_COUNTRY.md) -- country page endpoints
+- [API Table of Contents](../README.md)
+- [World & Travel API](../world/README.md) -- travelData endpoint documentation
+- [Country API](../country/README.md) -- country page endpoints

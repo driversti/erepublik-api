@@ -2,7 +2,7 @@
 
 #erepublik #api #military #combat
 
-[< Back to Table of Contents](../API_TOC.md) | [< Back to Military Overview](../API_MILITARY.md)
+[< Back to Table of Contents](../README.md)
 
 ---
 
@@ -118,7 +118,7 @@ Any additional information, gotchas, or observations.
 
 ## Related
 
-- [API Table of Contents](../API_TOC.md)
-- [Authentication](../API_AUTH.md)
-- [Social API](../API_SOCIAL.md)
-- [Economy API](../API_ECONOMY.md)
+- [API Table of Contents](../README.md)
+- [Authentication](../auth/README.md)
+- [Social API](../social/README.md)
+- [Economy API](../economy/README.md)

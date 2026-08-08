@@ -257,6 +257,30 @@ var tableDataJSON = [
 | Combat Orders | Combat order fees |
 | Treasury Donations | Direct citizen/org donations to treasury |
 | Cities Subsidy | City maintenance costs (**always negative**) |
+| Resource Concession Fee | Rent paid for [resources leased in](#6-resource-concessions) (**always negative**) -- absent when the country has no incoming concessions |
+
+**`Resource Concession Fee` -- what the number actually is:**
+
+Despite sitting in a revenue table, this is an **expense**: it is negative for every day a concession is in force. Its magnitude is the percentage stated in the [ResourceConcession law](law.md#observed-question-formats), applied to **that industry's GDP for the day** -- i.e. the same daily figures published in [`gdpChartData`](#3-gross-domestic-product-60-days----javascript-variable), so the two variables on this one page are enough to reconstruct and audit the charge.
+
+<details>
+<summary>Validation (Poland, eDay 6,761--6,820, 2026-07-23)</summary>
+
+Poland held three incoming concessions -- Deer from Brazil (Food), Rubber from Finland (Weapons), Limestone from Netherlands (House) -- at 5%, 5% and 4% respectively:
+
+```
+predicted[day] = 0.05*gdp.Food[day] + 0.05*gdp.Weapons[day] + 0.04*gdp.House[day]
+
+60-day actual    279,974,012 PLN
+60-day predicted 282,304,616 PLN
+difference            -0.83%
+```
+
+The residual is explained by concessions starting/expiring mid-window (the Finnish Rubber lease was one day from expiry) -- each day's set of active concessions has to be known exactly for a day-level match.
+
+</details>
+
+> **Note:** the column is a **single aggregate** across all incoming concessions -- it cannot be split per resource from `chartDataJSON` alone. Per-concession pricing requires the individual law pages.
 
 > **Important:** The column order is **NOT fixed** -- it varies between countries. For example:
 > - USA: `Work as Manager, Work, Value Added Tax, Medals, Import Tax, Combat Orders, Treasury Donations, Cities Subsidy`
@@ -364,39 +388,100 @@ Lists all 20 resource types with their production bonuses and which regions cont
 
 </details>
 
-Complete resource ID reference:
+> ### ⚠️ `span.bonus_value` is country state, not a resource constant
+>
+> **Corrected 2026-07-23.** The percentage in `span.bonus_value` (and the matching `td[title]`) is **what this country currently gets from that resource**, not the resource's intrinsic bonus. It is computed per page load from the country's holdings:
+>
+> | Situation | Rendered value | `td[title]` |
+> |-----------|---------------|-------------|
+> | Held in a region **with** a trade route (or received via **concession**) | **full** base bonus | `+X% to {Industry} production` |
+> | Held **only** in regions **without** a trade route | **half** base bonus | `+X% to {Industry} production` |
+> | Held in both | **full** base bonus | `+X% to {Industry} production` |
+> | Not held at all | `(+0%)` | **empty string** (`title=""`) |
+>
+> An earlier revision of this table recorded a single country's snapshot as if it were global -- which is why House resources read `+0%` (that country held none) and the Aircraft five read exactly half (all its aircraft regions were disconnected occupied territory). Verified 2026-07-23 by taking the max per resource across **58 countries**; every maximum matched the rarity table below, and each half/zero case matched the rule above.
+>
+> **Parsing rule:** to read a country's actual bonus, take `bonus_value` as-is. To identify the *resource*, use the icon ID -- never the percentage. An empty `title` is the cleanest "country does not hold this resource" test.
 
-| ID | Resource | Industry | Bonus | Icon Path |
-|----|----------|----------|-------|-----------|
-| 1 | Grain | Food | +25% | `/images/resources/1.png` |
-| 2 | Fish | Food | +10% | `/images/resources/2.png` |
-| 3 | Fruits | Food | +15% | `/images/resources/3.png` |
-| 4 | Cattle | Food | +20% | `/images/resources/4.png` |
-| 5 | Deer | Food | +30% | `/images/resources/5.png` |
-| 6 | Iron | Weapon | +10% | `/images/resources/6.png` |
-| 7 | Saltpeter | Weapon | +25% | `/images/resources/7.png` |
-| 8 | Aluminum | Weapon | +15% | `/images/resources/8.png` |
-| 9 | Oil | Weapon | +20% | `/images/resources/9.png` |
-| 10 | Rubber | Weapon | +30% | `/images/resources/10.png` |
-| 11 | Sand | House | +0% | `/images/resources/11.png` |
-| 12 | Clay | House | +0% | `/images/resources/12.png` |
-| 13 | Wood | House | +0% | `/images/resources/13.png` |
-| 14 | Limestone | House | +0% | `/images/resources/14.png` |
-| 15 | Granite | House | +0% | `/images/resources/15.png` |
-| 16 | Neodymium | Aircraft | +15% | `/images/resources/16.png` |
-| 17 | Magnesium | Aircraft | +5% | `/images/resources/17.png` |
-| 18 | Cobalt | Aircraft | +12.5% | `/images/resources/18.png` |
-| 19 | Titanium | Aircraft | +7.5% | `/images/resources/19.png` |
-| 20 | Wolfram | Aircraft | +10% | `/images/resources/20.png` |
+Complete resource ID reference (**base** bonus = full, trade-routed value; halve it for disconnected-only):
 
-> **Key distinction:** Resources in "Regions with a Trade Route" contribute to the country's production bonus. Resources in "Regions without a Trade Route" exist in disconnected territories and **do not contribute** to the bonus (see the [society page's](society.md) `route_warning` for the same regions).
+| ID | Resource | Industry | Rarity | Base Bonus | Icon Path |
+|----|----------|----------|--------|-----------|-----------|
+| 1 | Grain | Food | rare | +25% | `/images/resources/1.png` |
+| 2 | Fish | Food | very common | +10% | `/images/resources/2.png` |
+| 3 | Fruits | Food | common | +15% | `/images/resources/3.png` |
+| 4 | Cattle | Food | uncommon | +20% | `/images/resources/4.png` |
+| 5 | Deer | Food | very rare | +30% | `/images/resources/5.png` |
+| 6 | Iron | Weapon | very common | +10% | `/images/resources/6.png` |
+| 7 | Saltpeter | Weapon | rare | +25% | `/images/resources/7.png` |
+| 8 | Aluminum | Weapon | common | +15% | `/images/resources/8.png` |
+| 9 | Oil | Weapon | uncommon | +20% | `/images/resources/9.png` |
+| 10 | Rubber | Weapon | very rare | +30% | `/images/resources/10.png` |
+| 11 | Sand | House | very common | +10% | `/images/resources/11.png` |
+| 12 | Clay | House | uncommon | +20% | `/images/resources/12.png` |
+| 13 | Wood | House | common | +15% | `/images/resources/13.png` |
+| 14 | Limestone | House | rare | +25% | `/images/resources/14.png` |
+| 15 | Granite | House | very rare | +30% | `/images/resources/15.png` |
+| 16 | Neodymium | Aircraft | very rare | +30% | `/images/resources/16.png` |
+| 17 | Magnesium | Aircraft | very common | +10% | `/images/resources/17.png` |
+| 18 | Cobalt | Aircraft | rare | +25% | `/images/resources/18.png` |
+| 19 | Titanium | Aircraft | common | +15% | `/images/resources/19.png` |
+| 20 | Wolfram | Aircraft | uncommon | +20% | `/images/resources/20.png` |
+
+The base bonus is purely a function of rarity, identically across all four industries -- very common +10%, common +15%, uncommon +20%, rare +25%, very rare +30%. This matches [[Productivity#Resource Bonus Percentages]] and [[Raw_Materials]]; a country holding all 5 resources of an industry (all routed) reaches the 100% cap.
+
+<details>
+<summary>Evidence (max observed per resource, 58 countries, 2026-07-23)</summary>
+
+| Resource | Max observed | Country | Column |
+|----------|-------------|---------|--------|
+| Grain / Fish / Fruits / Cattle / Deer | +25 / +10 / +15 / +20 / +30% | USA | with trade route |
+| Iron / Saltpeter / Aluminum / Oil / Rubber | +10 / +25 / +15 / +20 / +30% | USA | with trade route |
+| Sand / Clay / Wood / Limestone / Granite | +10 / +20 / +15 / +25 / +30% | Venezuela | with trade route |
+| Neodymium | +30% | Romania | with trade route |
+| Magnesium | +10% | Bulgaria | with trade route |
+| Cobalt | +25% | Bulgaria | with trade route |
+| Titanium | +15% | Serbia | with trade route |
+| Wolfram | +20% | Bulgaria | with trade route |
+
+Half-value confirmations: China Grain `+12.5%` (Sichuan, no route), Poland Titanium `+7.5%` (Western Desert, no route), Poland Neodymium `+15%` (Western Desert, no route), Poland Magnesium `+5%` (Peninsular Malaysia + Western Desert, no route). Both-columns confirmation: Croatia Deer `+30%` (routed region wins).
+
+</details>
+
+> **Key distinction (corrected):** resources in "Regions with a Trade Route" contribute their **full** bonus. Resources only in "Regions without a Trade Route" still contribute, at **half** -- the earlier claim that they "do not contribute" was wrong (see the [society page's](society.md) `route_warning` for the same regions). Holding the resource in both kinds of region gives the full bonus, not a sum.
+
+**Concession-received resources** appear in the *first* column (with a trade route) with a `(Concession)` marker and a small source-country flag, and count at **full** bonus:
+
+<details>
+<summary>HTML example (Poland, Rubber leased from Finland)</summary>
+
+```html
+<tr>
+    <td title="+30% to Weapon production">
+        <img src="//www.erepublik.net/images/resources/10.png" alt="" />
+        <span>Rubber</span>
+        <span class="bonus_value">(+30%)</span>
+    </td>
+    <td><a href="//www.erepublik.com/en/main/region/Lapland">Lapland (<img
+        src="/images/flags_png/S/Finland.png" class="vmiddleFlag">Concession)</a></td>
+    <td><small>Not available</small></td>
+</tr>
+```
+
+</details>
+
+| Data | CSS Selector / test | Notes |
+|------|--------------------|-------|
+| Is concession | `td:nth-child(2) a` text contains `(Concession)` / contains `img.vmiddleFlag` | Region is foreign, bonus counts in full |
+| Source country | `td:nth-child(2) img.vmiddleFlag` `src` | Flag path `/images/flags_png/S/{Country}.png` -- the country name is **only** available from this filename |
+| Multiple regions | `td:nth-child(2) a`, `td:nth-child(3) a` | Comma-separated list of `<a>` elements when several regions hold the resource |
 
 ### 6. Resource Concessions
 
 Two tables showing concessions in and out:
 
 <details>
-<summary>HTML example</summary>
+<summary>HTML example -- empty state</summary>
 
 ```html
 <!-- Resources received via concession -->
@@ -412,7 +497,52 @@ Two tables showing concessions in and out:
 
 </details>
 
-> **Note:** The typo `conceededResources` (double 'e') is in the original HTML.
+<details>
+<summary>HTML example -- populated (Poland, 2026-07-23)</summary>
+
+```html
+<table class="political" id="resourcesInConcession">
+    <tbody>
+        <tr>
+            <th width="405" colspan="4">Resources in concession from other countries.</th>
+            <th width="195">&nbsp;</th>
+        </tr>
+        <tr class="active">
+            <td class="last" width="40">
+                <img src="//www.erepublik.net/images/flags_png/L/Finland.png" class="flag"/>
+            </td>
+            <td class="last">
+                <span class="fakeheight">
+                    <a href="//www.erepublik.com/en/country/economy/Finland"
+                       class="dotted" title="Finland">Finland</a>
+                </span>
+            </td>
+            <td class="last" width="45">
+                <img src="//www.erepublik.net/images/resources/10.png" alt="">
+            </td>
+            <td class="last"><span>Rubber (Lapland)</span></td>
+            <td class="last">Expires tomorrow</td>
+        </tr>
+        <!-- more rows... -->
+    </tbody>
+</table>
+```
+
+</details>
+
+| Data | CSS Selector | Example |
+|------|-------------|---------|
+| Row | `table#resourcesInConcession tr.active` | Header row has no `.active` |
+| Counterparty country | `td:nth-child(2) a` | `Finland`, href `/en/country/economy/Finland` |
+| Resource ID | `td:nth-child(3) img` `src` | `/images/resources/10.png` -> `10` = Rubber |
+| Resource + region | `td:nth-child(4) span` | `Rubber (Lapland)` -- region name in parentheses |
+| Expiry | `td:nth-child(5)` | `Expires in 17 days`, `Expires tomorrow` |
+
+> **Note:** The typo `conceededResources` (double 'e') is in the original HTML. Both tables share the same `class="political"` row layout.
+>
+> **The fee percentage is not on this page.** The `%`-of-GDP a concession costs appears only in the wording of the [ResourceConcession law](law.md#observed-question-formats) that created it, and in the aggregate `Resource Concession Fee` column of `chartDataJSON` (below). To price a specific concession you must fetch its law.
+>
+> A received concession also shows up in the [resources table](#5-country-resources-table) as a `(Concession)` entry in the "with a Trade Route" column, at **full** bonus.
 
 ### 7. Trade Embargoes
 
@@ -515,6 +645,8 @@ Industry icon URL pattern: `/images/icons/industry/{industryId}/default.png`
 - Tax revenue `chartDataJSON` columns are **dynamic** -- both the order and presence of standard columns varies between countries, and conquered region columns appear/disappear as territories change. Always parse column headers from the first row
 - The `tableDataJSON` includes a **Totals column** with 60-day aggregates -- useful for quick summaries without summing yourself
 - **Cities Subsidy** is always negative (it's an expense, not revenue)
+- **Resource Concession Fee** is also always negative -- it equals the concession law's stated % applied to that industry's daily GDP from `gdpChartData` (validated on Poland to within 0.8% over 60 days)
+- The resource table's `span.bonus_value` is **country state, not a resource constant** -- full bonus when routed or received via concession, **half** when the resource is only in disconnected regions, `(+0%)` with an empty `td[title]` when not held at all
 - `chartDataJSON` and `tableDataJSON` contain the exact same data in different orientations (chart vs table)
 - GDP day format differs from tax revenue: `"6,594"` vs `"Day 6,594"`
 - Tax rates and salary data must be parsed from HTML (not in JS variables)
@@ -530,4 +662,5 @@ Industry icon URL pattern: `/images/icons/industry/{industryId}/default.png`
 - [Country Politics Page](politics.md)
 - [Country Military Page](military.md) -- airstrike donation form comparison
 - [Country Administration Page](administration.md)
+- [Law Detail Page](law.md) -- ResourceConcession law wording carries the fee % behind `Resource Concession Fee`
 - [Congressional Donations](congress.md)
