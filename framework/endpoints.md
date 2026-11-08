@@ -813,7 +813,7 @@ These popups appear during seasonal events. All use GET, require auth, and retur
 | `/en/main/anniversary-popup` | erepublikAnniversary | eRepublik Anniversary |
 | `/en/main/anniversaryQuest` | — | Anniversary quest data |
 | `/en/main/anniversaryQuestHelp` | anniversaryQuestHelp | Anniversary quest help |
-| `/en/main/halloweenPopup` | halloweenPopup | Halloween (also: halloween2017–2020) |
+| `/en/main/halloweenPopup` | halloweenPopup | Halloween (also: halloween2017–2020) — [details](#halloween-challenge-popup) |
 | `/en/main/halloweenRewards` | halloweenRewards | Halloween rewards |
 | `/en/main/easterRewards` | easterRewards | Easter rewards |
 | `/en/main/christmas-gifts` | christmasGifts | Christmas gifts |
@@ -825,6 +825,94 @@ These popups appear during seasonal events. All use GET, require auth, and retur
 | `/en/main/cryptoEventPopup` | cryptoEventPopup | Crypto Event |
 | `/en/main/day6000Popup` | day6000Popup | Day 6000 Celebration |
 | `/en/main/dyeHard-eventShop` | — | Dye Hard event shop |
+
+---
+
+### Halloween Challenge Popup
+
+**Method:** GET
+**URL:** `/en/main/halloweenPopup`
+**Popup Name:** `halloweenPopup`
+**Auth Required:** Yes
+
+#### Description
+
+Returns the HTML fragment for the current Halloween Challenge announcement: event story, countdown, deployment loot rules, Power Spin bonuses, and item expiry. The content is rewritten for each edition. Details below are from the 2026 "Hexecutioner's Harvest" edition.
+
+#### Parameters
+
+None.
+
+#### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Sent by the browser; not tested without it |
+
+<details>
+<summary>Example Request (cURL)</summary>
+
+```bash
+curl 'https://www.erepublik.com/en/main/halloweenPopup' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+</details>
+
+<details>
+<summary>Example Response (HTTP 200, text/html, condensed)</summary>
+
+```html
+<section id="halloweenChallengePopup" class="halloweenPopup halloweenChallengePopup">
+  <a href="javascript:" title="Close window" class="close">Close</a>
+  <div class="title">Halloween Challenge</div>
+  <div class="countdown">
+    <span class="text">Time left</span>
+    <span class="number" data-until="160644">00:00:00:00</span>
+  </div>
+  <div class="content" id="popupContent">
+    <!-- p.defaultText and h2.defaultText blocks: story, "Deployment loot", "Power Spin Power-up", expiry -->
+  </div>
+</section>
+<script>
+  var eventPopupCountdownContainerId = '#halloweenChallengePopup';
+  var eventPopupScrollableContentId = '#halloweenChallengePopup > #popupContent';
+</script>
+<script src="//www.erepublik.net/js/eventPopup.1729767356.js"></script>
+<style>/* a.popupStyle link colours */</style>
+```
+
+</details>
+
+#### Response Elements
+
+| Selector / Variable | Description |
+|---------------------|-------------|
+| `.countdown .number[data-until]` | Seconds remaining, relative to the time of the response (not a Unix timestamp) |
+| `#popupContent strong` | Event windows and thresholds, as display text only |
+| `eventPopupCountdownContainerId` | Container in which `eventPopup.js` starts the countdown |
+| `eventPopupScrollableContentId` | Element that `eventPopup.js` makes scrollable (300px height) |
+
+#### 2026 Edition Rules
+
+| Mechanic | Window | Details |
+|----------|--------|---------|
+| Deployment loot | Day 6,916 00:00 – Day 6,929 23:59 | Deployments of at least 1500 energy can drop Dark Ghost Boosters, Pumpkins, and Shadow Boosters. More energy improves the chances. |
+| Power Spin rewards | Day 6,916 00:00 – Day 6,921 23:59 | Adds Dark Ghost Boosters and Shadow Boosters to the wheel |
+| Battlefield Hero spins | Day 6,916 00:00 – Day 6,921 23:59 | Battle Hero: 1 Free Spin; Sky Hero: 2; Campaign Hero: 8 |
+| Event booster expiry | Until Day 6,931 23:59 | Check the inventory for exact expiry of each item |
+
+Shadow Booster tooltip: doubles damage but does not affect Rank Points or True Patriot progress.
+
+#### Notes
+
+- Rendered client-side with `generalPopup.renderPopup('halloweenPopup')`
+- `eventPopup.js` auto-shows the popup when the page sets `eventPopupAutoShowName`. It stores the next-show time in `localStorage` under `eventPopup.<name>` and `eventGrowl.<name>`.
+- Clicking the "New Event!" growl delays both the growl and popup by 24 hours. Otherwise the popup repeats after 3 hours, or 24 hours when `erepublik.citizen.isActive()` is true.
+- Event rules are only available as display text, so parsing them means scraping HTML
+- Behaviour outside the event window is untested
 
 ---
 
