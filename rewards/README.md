@@ -14,8 +14,9 @@ Rewards endpoints cover daily objectives, missions, achievement rewards, weekly 
 |------|-----------|-------------|
 | [daily-objectives.md](daily-objectives.md) | `objective-status`, `objective-claim-reward` | Daily objective progress and tier reward claiming |
 | [daily-missions.md](daily-missions.md) | `daily-missions-data`, `mission-solve` | Daily mission list, progress, and reward claiming |
-| [weekly-challenges.md](weekly-challenges.md) | `weekly-challenge-data`, `weekly-challenge-collect-reward`, `weekly-challenge-collect-all` | Weekly challenge progress and reward collection |
+| [weekly-challenges.md](weekly-challenges.md) | `weekly-challenge-data`, `weekly-challenge-rewards`, `weekly-challenge-collect-reward`, `weekly-challenge-collect-all` | Weekly challenge progress and reward collection |
 | [vip.md](vip.md) | `vip-claim` | Daily VIP points claim |
+| [anniversary-quest.md](anniversary-quest.md) | `anniversaryQuestData` | Seasonal Anniversary Quest map, unlock queue and rewards |
 
 ---
 

@@ -339,6 +339,139 @@ Returned whether or not a reward was actually granted. The `rewards` array was *
 
 ---
 
+## Get Weekly Challenge Rewards List
+
+**Method:** GET
+**URL:** `/en/main/weekly-challenge-rewards`
+**Auth Required:** Yes
+
+### Description
+
+Returns the **HTML fragment** for the "Weekly Challenge Rewards" popup (popup name `weeklyChallengeRewardsList`, see [framework/endpoints.md](../framework/endpoints.md#weekly-challenge-rewards)). It lists every prestige-point milestone of the current challenge week together with its reward, so it is the only place to read the **full reward ladder with absolute point thresholds** -- [`weekly-challenge-data`](#get-weekly-challenge-data) only exposes tiers as percentages (`percent`) and labels.
+
+### Parameters
+
+None.
+
+### Headers
+
+| Header | Value | Required |
+|--------|-------|----------|
+| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
+| X-Requested-With | `XMLHttpRequest` | Recommended (sent by the game's popup loader) |
+
+<details>
+<summary>Example Request (cURL)</summary>
+
+```bash
+curl 'https://www.erepublik.com/en/main/weekly-challenge-rewards' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+</details>
+
+<details>
+<summary>Example Response (HTML, trimmed -- full body ~170 KB, 257 rows)</summary>
+
+```html
+<div class="fadeInRight" id="WeeklyRewardsList">
+    <a href="javascript:" class="close closeButton" title="Close">&#10006;</a>
+    <div class="popup_title">
+        <img src="//www.erepublik.net/images/modules/popups/weekly_challenge_rewards/prestige_booster.png" alt="">
+        <h2>Weekly Challenge Rewards</h2>
+    </div>
+    <div class="rewardsWrapper">
+        <div class="progressBar">
+            <span class="currentProgress" style="height: calc(70px * 0);"></span>
+        </div>
+        <div class="rewardRow points_0 pending">
+            <div class="rewardProgress">
+                <span class="points pending">5</span>
+                <img class="status" src="//www.erepublik.net/images/modules/popups/weekly_challenge_rewards/white_rhombus.png" alt="">
+            </div>
+            <div class="rewardWrapper pending">
+                <div class="rewardIcon">
+                    <img src="https://www.erepublik.net/images/icons/rewards/energy_booster.png?1698060173" alt="">
+                </div>
+                <b class="pending">+1 Energy recovery until the end of Day 6,943</b>
+            </div>
+        </div>
+        <!-- ... rows points_1 .. points_255 ... -->
+        <div class="rewardRow points_256 pending">
+            <div class="rewardProgress">
+                <span class="points pending">90000</span>
+                <img class="status" src="//www.erepublik.net/images/modules/popups/weekly_challenge_rewards/white_rhombus.png" alt="">
+            </div>
+            <div class="rewardWrapper pending">
+                <div class="rewardIcon">
+                    <img src="https://www.erepublik.net/images/icons/rewards/128px/amazing_coin.png?1698060173" alt="">
+                </div>
+                <b class="pending">+10 Amazing Coins</b>
+            </div>
+        </div>
+    </div>
+    <div class="clear"></div>
+</div>
+<script>
+    $j('.rewardsWrapper').mCustomScrollbar({ theme: 'gray-thick' });
+    setTimeout(function () {
+        $j('.rewardsWrapper').mCustomScrollbar('scrollTo', '.rewardRow.points_' + -1);
+    }, 500);
+</script>
+```
+
+</details>
+
+### Parsing
+
+| Selector | Meaning |
+|----------|---------|
+| `.rewardRow.points_{i}` | One milestone; `i` is a 0-based row index (**not** a point value) |
+| `.rewardRow` 3rd class | Row state. Only `pending` (not reached) observed so far |
+| `.rewardProgress .points` | Prestige-point threshold (plain integer, no thousands separator) |
+| `.rewardProgress img.status` | State icon (`white_rhombus.png` for pending) |
+| `.rewardIcon img[src]` | Reward type, by file name (see table below) |
+| `.rewardWrapper b` | Human-readable reward text |
+| `.currentProgress` `style` | `calc(70px * N)` -- progress-bar fill; rows are 70 px tall, so `N` appears to be the number of milestones reached |
+| `<script>` `scrollTo ... points_' + X` | Index of the last reached row; `-1` when none reached |
+
+Reward icon file names observed:
+
+| Icon | Reward text pattern |
+|------|---------------------|
+| `energy_booster.png` | `+1 Energy recovery until the end of Day {N}` |
+| `128px/amazing_coin.png` | `+10 Amazing Coins` / `+20 Amazing Coins` |
+| `q10_128x128.png` | `{1,5,10,15,20} Energy Bars` |
+| `fuel.png` | `+5 Fuel` |
+| `damage.png` | `+150% Damage Booster for 10 minutes` |
+| `air_damage.png` | `+50% Air Damage Booster for 5 minutes` |
+| `q21_128x128.png` | `1 Small Bombs` |
+
+### Reward Ladder (sample, week ending Day 6,943)
+
+257 milestones from **5** to **90,000** prestige points:
+
+| Points range | Spacing | Rewards |
+|--------------|---------|---------|
+| 5 -- 5,000 | irregular (5 -> 1,000 -> 250) | Mostly energy-recovery boosts and +20 Amazing Coins, plus +5 Fuel, damage / air-damage boosters, 1-5 Energy Bars, 1 Small Bomb |
+| 5,000 -- 20,000 | ~250 | Energy-recovery boosts, +10 Amazing Coins, 10 Energy Bars (to 15k) then 15 Energy Bars |
+| 20,000 -- 40,000 | 500 | Alternating 20 Energy Bars / +10 Amazing Coins, occasional +5 Fuel |
+| 40,000 -- 80,000 | 500 | Alternating +10 Amazing Coins / 5 Energy Bars |
+| 80,000 -- 90,000 | 1,000 | +10 Amazing Coins |
+
+Totals across the whole ladder: **1,200 Amazing Coins** (90 x 10 + 15 x 20), **862 Energy Bars**, 50 energy-recovery boosts, 35 Fuel (7 x 5), 4 damage + 3 air-damage boosters, 1 Small Bomb.
+
+### Notes
+
+- **Response is HTML, not JSON**, despite `X-Requested-With`. HTTP `200` on success.
+- Sampled on a weekly-reset Tuesday with 0 prestige points, so every row was `pending`. The class names for reached / collected rows are **not yet observed** -- likely they mirror the `completed` / `rewarded` statuses of [`weekly-challenge-data`](#get-weekly-challenge-data), but verify before relying on it.
+- Energy-recovery rewards expire at the end of the challenge week: `Day 6,943` = Monday 2026-11-23, the last game day before the next Tuesday 00:00 PST reset. The day number therefore changes weekly.
+- The ladder (and the quantities) is server-defined and may change between weeks; re-fetch rather than hardcode. Icon URLs carry cache-busting `?{timestamp}` suffixes.
+- No collect action here -- use [`weekly-challenge-collect-reward`](#collect-weekly-challenge-reward) or [`weekly-challenge-collect-all`](#collect-all-weekly-challenge-rewards).
+
+---
+
 ## Related
 
 - [Daily Objectives](daily-objectives.md)

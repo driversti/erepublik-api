@@ -632,6 +632,7 @@ Displays weekly challenge reward tiers and collection status.
 
 #### Notes
 
+- Full documentation (HTML structure, parsing, reward ladder): [rewards/weekly-challenges.md](../rewards/weekly-challenges.md#get-weekly-challenge-rewards-list)
 - See [rewards/weekly-challenges.md](../rewards/weekly-challenges.md) for the data API
 
 ---
@@ -811,7 +812,7 @@ These popups appear during seasonal events. All use GET, require auth, and retur
 | URL | Popup Name | Event |
 |-----|------------|-------|
 | `/en/main/anniversary-popup` | erepublikAnniversary | eRepublik Anniversary |
-| `/en/main/anniversaryQuest` | — | Anniversary quest data |
+| `/en/main/anniversaryQuest` | — | Anniversary quest page — data via [`anniversaryQuestData`](../rewards/anniversary-quest.md) |
 | `/en/main/anniversaryQuestHelp` | anniversaryQuestHelp | Anniversary quest help |
 | `/en/main/halloweenPopup` | halloweenPopup | Halloween (also: halloween2017–2020) — [details](#halloween-challenge-popup) |
 | `/en/main/halloweenRewards` | halloweenRewards | Halloween rewards |
