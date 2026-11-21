@@ -1,77 +1,24 @@
-# CLAUDE.md
+# eRepublik API docs
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+Single source of truth for every coding agent: `AGENTS.md` and `GEMINI.md` are symlinks to this file.
 
-## Purpose
+Documentation-only repository (no executable code, nothing to build, test or deploy) for the unofficial eRepublik API, reverse-engineered from the game's web client. Part of the Knowledge Base. Start at `README.md` (master index + endpoint quick reference).
 
-This is a **documentation repository** for the unofficial eRepublik API, discovered through reverse engineering. It is part of the Knowledge Base (Second Brain) and contains no executable code.
+## Layout
 
-## Structure
+Domain folders, each with a `README.md` overview plus use-case files:
+`auth/` login/sessions · `captcha/` session verification · `homepage/` dashboard data · `world/` travel, cities, map · `country/` society/economy/politics/military pages · `military/` campaigns, battles, deployment, websocket · `social/` profiles, friends, wall · `notifications/` · `economy/` work, market, companies, inventory · `rewards/` objectives, missions, VIP · `powerspin/` · `framework/` main JS bundle (popups, client objects) · `reference/` country/region ID tables.
+`samples/` holds captured game JS for reference and is git-ignored.
 
-Documentation is organized into domain folders, each with a `README.md` overview and use-case-specific files:
+## Adding or updating content
 
-- **README.md** - Master index with quick reference for all endpoints (start here)
-- **auth/** - Authentication (login, sessions, cookies)
-- **captcha/** - Session verification, anti-bot challenges
-- **homepage/** - Main dashboard and embedded data objects
-- **world/** - Travel, cities, world map, regions
-- **country/** - Society, economy, politics, military, administration pages
-- **military/** - Campaigns, battles, deployment, armory, battlefield, websocket
-- **social/** - Citizen profiles, friends, wall posts, search
-- **notifications/** - Alerts and reports
-- **economy/** - Work, marketplace, exchange, companies, inventory
-- **rewards/** - Daily objectives, missions, weekly challenges, VIP
-- **powerspin/** - Wheel of Fortune
-- **reference/** - Country & region ID lookup tables
+- Add a new endpoint to the matching module folder, following [docs/endpoint-template.md](docs/endpoint-template.md); then add it to that module's `README.md` and to the quick-reference tables in the root `README.md` (also update the module file counts there).
+- Markdown, GitHub-flavored; relative links between files; hashtags `#erepublik #api #<module>` near the top; wiki links like `[[eRepublik]]` for other KB notes.
+- cURL examples and JSON responses go in collapsible `<details><summary>` blocks.
+- Never paste real session cookies (`erpk`) or tokens into examples; use placeholders.
 
-## Documentation Conventions
+## Key facts
 
-- All files use Markdown with GitHub-flavored formatting
-- Hashtags for Knowledge Base linking: `#erepublik #api #<module>`
-- Each module's README.md includes a template for documenting new endpoints
-- Wiki-style links: `[[eRepublik]]` for cross-referencing other KB notes
-- cURL examples and JSON responses use collapsible `<details><summary>` blocks
-- Cross-references between files use relative paths
-
-## Endpoint Documentation Template
-
-When adding new endpoints, use this structure:
-
-```markdown
-## Endpoint Name
-
-**Method:** GET/POST
-**URL:** `/en/path/to/endpoint`
-**Auth Required:** Yes/No
-
-### Description
-### Parameters (table)
-### Headers (table)
-
-<details>
-<summary>Example Request (cURL)</summary>
-
-```bash
-curl ...
-```
-
-</details>
-
-<details>
-<summary>Example Response</summary>
-
-```json
-{ ... }
-```
-
-</details>
-
-### Notes
-```
-
-## Key Information
-
-- **Base URL:** `https://www.erepublik.com`
-- **Auth:** Cookie-based (`erpk` session token)
-- **Common Headers:** `Cookie`, `X-Requested-With: XMLHttpRequest`, `Content-Type`
-- **Note:** These are unofficial endpoints that may change without notice
+- Base URL `https://www.erepublik.com`; auth is cookie-based (`erpk` session token).
+- Common headers: `Cookie`, `X-Requested-With: XMLHttpRequest`, `Content-Type`.
+- These endpoints are unofficial and may change without notice; mark anything unverified as such.
