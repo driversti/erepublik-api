@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (6 of them from the old quick reference) | 14 |
-| Topic pages in v2 | 3 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 9 / 5 / 0 |
+| Endpoints documented in v2 (7 of them from the old quick reference) | 21 |
+| Topic pages in v2 | 4 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 12 / 9 / 0 |
 | Last updated | 2026-11-27 |
 
 ## Start here
@@ -40,7 +40,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Social | Profiles, friends, wall, search | [social](../social/README.md) (old) |
 | Notifications | Alerts and reports | [notifications](../notifications/README.md) (old) |
 | Shop | Packs, items, purchases | [shop](economy/shop.md) ✨ v2 |
-| Events | Endpoints and data that exist only during an event | [Black Friday](events/black-friday.md) ✨ v2 |
+| Events | Endpoints and data that exist only during an event | [An Amazing Journey](events/amazing-journey.md), [Black Friday](events/black-friday.md) ✨ v2 |
 | Economy: everything else | Work, training, markets, companies, inventory | [economy](../economy/README.md) (old) |
 | Rewards | Objectives, missions, weekly challenge, VIP | [rewards](../rewards/README.md) (old) |
 | Power Spin | Wheel of Fortune | [powerspin](../powerspin/README.md) (old) |
@@ -59,6 +59,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Collect daily rewards | [Daily objectives](../rewards/daily-objectives.md) (old) |
 | Travel | [Travel](../world/travel.md) (old) |
 | Buy in the shop | [Shop](economy/shop.md) |
+| Play the anniversary map | [An Amazing Journey](events/amazing-journey.md) |
 
 ## How the repository is organised
 
