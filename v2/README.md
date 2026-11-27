@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (15 of them from the old quick reference) | 34 |
-| Topic pages in v2 | 6 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 19 / 15 / 0 |
+| Endpoints documented in v2 (18 of them from the old quick reference) | 41 |
+| Topic pages in v2 | 7 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 25 / 16 / 0 |
 | Last updated | 2026-11-27 |
 
 ## Start here
@@ -35,6 +35,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Homepage | Dashboard data | [homepage](../homepage/README.md) (old) |
 | Campaigns (Wars screen) | Battle lists, filters, presets | [campaigns](military/campaigns.md) ✨ v2 |
 | Battlefield: page and entry | Battle state, side, travel, division | [page and entry](military/battlefield/page.md) ✨ v2 |
+| Battlefield: live data | Domination, battle console, campaign map | [live data](military/battlefield/live-data.md) ✨ v2 |
 | Battlefield: deployment | Automated fighting, fuel | [deployment](military/battlefield/deployment.md) ✨ v2 |
 | Military: everything else | Battles, wars, armory, WebSocket | [military](../military/README.md) (old) |
 | World and travel | Map, regions, cities | [world](../world/README.md) (old) |
