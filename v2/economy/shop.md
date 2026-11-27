@@ -11,7 +11,7 @@ The shop (`/en/main/special-items`) sells two different things:
 flowchart LR
     A[Shop page] --> B[Pack popup]
     B -->|real money| C[get-gold/gold]
-    B -->|Game Tokens| D[promo-packs check] --> E[Tokens popup]
+    B -->|Game Tokens| D[promo-packs check] --> E[Tokens popup] --> H[Confirm purchase]
     A --> F[Item list] --> G[Buy item]
 ```
 
@@ -23,7 +23,8 @@ flowchart LR
 | [Buy item](#buy-item) | POST | `/en/main/buyGoldItems`, `/en/main/vip-shop-buy` | 🔍 From code |
 | [Buy or claim a pack](#buy-or-claim-a-pack) | POST | `/en/get-gold/gold` | 🔍 From code |
 | [Check pending purchase](#check-pending-purchase) | POST | `/en/main/promo-packs` | 🔍 From code |
-| [Game Tokens popup](#game-tokens-popup) | POST | `/en/main/buy-withGameTokensPopup` | 🔍 From code |
+| [Game Tokens popup](#game-tokens-popup) | POST | `/en/main/buy-withGameTokensPopup` | ✅ Verified 2026-11-27 |
+| [Confirm token purchase](#confirm-token-purchase) | POST | `/en/main/buy-withGameTokens` | 🔍 From code |
 
 Headers and `_token`: see [Making requests](../guides/requests.md#common-headers).
 
@@ -65,6 +66,8 @@ curl 'https://www.erepublik.com/en/main/custom-pack?packType=goldPack_S' \
 ```
 
 The fragment contains a form `#goBuy` (action `/en/get-gold/gold`) and, for packs payable with tokens, a button `#buyWithGameTokens` with `data-pack-name`. Prices are shown in the account's local currency.
+
+A pack that is not available to you (for example a locked tier, or a gift already received) returns only the message `"You cannot buy this pack"` with status 200.
 
 ---
 
@@ -155,18 +158,51 @@ JSON response; `purchaseInProgress: true` makes the client show a double-purchas
 
 ## Game Tokens popup
 
-`POST /en/main/buy-withGameTokensPopup` · 🔍 From code
+`POST /en/main/buy-withGameTokensPopup` · Auth required · ✅ Verified 2026-11-27
 
-Returns the HTML confirmation popup for paying with Game Tokens.
+Returns the HTML confirmation popup for paying with Game Tokens. It does not buy anything.
 
 | Name | Description |
 |------|-------------|
 | `_token` | CSRF token |
 | `packName` | Pack type |
+| `friendId` | Gift recipient, `0` for yourself |
+| `buyForFriendCheck` | `on` or `off` |
+| `giftMessage`, `noGiftMessage` | Gift options (`noGiftMessage`: `0` or `1`) |
+
+```bash
+curl 'https://www.erepublik.com/en/main/buy-withGameTokensPopup' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&packName=bf2026ProgGold_XS&friendId=0&buyForFriendCheck=off&giftMessage=&noGiftMessage=0'
+```
+
+The popup states the token cost and your token balance, and warns that processing may take up to 5 minutes.
+
+| Case | Popup content |
+|------|---------------|
+| Pack can be bought with tokens | Button `#confirmBuyWithTokens` |
+| Pack cannot (seen on `bf2026Tokens_XS`) | "… cannot be bought", only a Close button |
+
+Its inline script holds `packPrice`, which the [confirmation](#confirm-token-purchase) sends back.
+
+---
+
+## Confirm token purchase
+
+`POST /en/main/buy-withGameTokens` · 🔍 From code
+
+> [!WARNING]
+> Spends Game Tokens. A pack can only be bought once.
+
+| Name | Description |
+|------|-------------|
+| `_token` | CSRF token |
+| `packName` | Pack type |
+| `packPrice` | Value from the popup script, e.g. `4.99` (currency unconfirmed) |
 | `friendId`, `buyForFriendCheck` | Gift recipient, `on`/`off` |
 | `giftMessage`, `noGiftMessage` | Gift options |
 
-> [!NOTE]
-> The request that confirms the token purchase comes from this popup and has not been captured.
+The response is HTML shown as the next popup; the client then marks the pack as pending.
 
-**Source:** inline script of the pack popup, `purchasePack.showBuyWithGameTokens`.
+**Source:** inline script of the [Game Tokens popup](#game-tokens-popup), 2026-11-27.

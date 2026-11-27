@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (6 of them from the old quick reference) | 11 |
+| Endpoints documented in v2 (6 of them from the old quick reference) | 12 |
 | Topic pages in v2 | 3 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 3 / 8 / 0 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 4 / 8 / 0 |
 | Last updated | 2026-11-27 |
 
 ## Start here
