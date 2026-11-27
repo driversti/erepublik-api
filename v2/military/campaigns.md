@@ -162,7 +162,7 @@ Shortened to one battle and one division:
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id`, `war_id` | number | Battle and [war](../../military/wars.md) IDs |
+| `id`, `war_id` | number | Battle and [war](wars.md) IDs |
 | `zone_id` | number | Round number (the client builds the `round{n}` filter tag from it) |
 | `type` | string | `tanks` in every observed battle, including those with an air division |
 | `war_type` | string | `direct`, `resistance` or `dictatorship` |
@@ -205,7 +205,7 @@ Shortened to one battle and one division:
 | `threshold` | number | Probably the wall percentage up to which it pays (❔ Unconfirmed) |
 | `sub_country`, `sub_mu` | number | `0` in the observed orders |
 
-Only active battles are listed: a finished battle disappears, so capture division `end` times while it is still there. See [Determining battle finish time](../../military/wars.md#determining-battle-finish-time).
+Only active battles are listed: a finished battle disappears, so capture division `end` times while it is still there. See [When did a battle end?](wars.md#when-did-a-battle-end).
 
 **Source:** real requests, 2026-11-27; `zone_id`, `full_scale` and `effects.heroRewards` from `erpk_angular_services.js` (version 1795779904), `ListCampaignsFilterService.addCampaignTags`.
 

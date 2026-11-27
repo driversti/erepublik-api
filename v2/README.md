@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (25 of them from the old quick reference) | 49 |
-| Topic pages in v2 | 8 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 26 / 23 / 0 |
+| Endpoints documented in v2 (27 of them from the old quick reference) | 52 |
+| Topic pages in v2 | 9 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 27 / 23 / 2 |
 | Last updated | 2026-11-27 |
 
 ## Start here
@@ -38,7 +38,8 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Battlefield: live data | Domination, battle console, campaign map | [live data](military/battlefield/live-data.md) ✨ v2 |
 | Battlefield: deployment | Automated fighting, fuel | [deployment](military/battlefield/deployment.md) ✨ v2 |
 | Battlefield: boosters, bombs, PvP | Boosters, bombs, battle effects, PvP | [boosters, bombs, PvP](military/battlefield/boosters-bombs-pvp.md) ✨ v2 |
-| Military: everything else | Battles, wars, armory, WebSocket | [military](../military/README.md) (old) |
+| Wars and resistance wars | War page, resistance funding, battle end time | [wars](military/wars.md) ✨ v2 |
+| Military: everything else | Armory, military units, news feed | [military](../military/README.md) (old) |
 | World and travel | Map, regions, cities | [world](../world/README.md) (old) |
 | Country | Society, economy, politics, laws | [country](../country/README.md) (old) |
 | Social | Profiles, friends, wall, search | [social](../social/README.md) (old) |
