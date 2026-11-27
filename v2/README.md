@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints migrated to v2 | 4 |
-| Topic pages in v2 | 1 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 0 / 4 / 0 |
+| Endpoints documented in v2 (6 of them from the old quick reference) | 11 |
+| Topic pages in v2 | 3 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 3 / 8 / 0 |
 | Last updated | 2026-11-27 |
 
 ## Start here
@@ -39,7 +39,9 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Country | Society, economy, politics, laws | [country](../country/README.md) (old) |
 | Social | Profiles, friends, wall, search | [social](../social/README.md) (old) |
 | Notifications | Alerts and reports | [notifications](../notifications/README.md) (old) |
-| Economy | Work, training, markets, companies, inventory | [economy](../economy/README.md) (old) |
+| Shop | Packs, items, purchases | [shop](economy/shop.md) ✨ v2 |
+| Events | Endpoints and data that exist only during an event | [Black Friday](events/black-friday.md) ✨ v2 |
+| Economy: everything else | Work, training, markets, companies, inventory | [economy](../economy/README.md) (old) |
 | Rewards | Objectives, missions, weekly challenge, VIP | [rewards](../rewards/README.md) (old) |
 | Power Spin | Wheel of Fortune | [powerspin](../powerspin/README.md) (old) |
 | Client framework | Popups, JavaScript objects | [framework](../framework/README.md) (old) |
@@ -56,6 +58,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Work | [Work](../economy/work.md) (old) |
 | Collect daily rewards | [Daily objectives](../rewards/daily-objectives.md) (old) |
 | Travel | [Travel](../world/travel.md) (old) |
+| Buy in the shop | [Shop](economy/shop.md) |
 
 ## How the repository is organised
 
@@ -65,6 +68,8 @@ v2/
   guides/              concepts shared by many endpoints
   military/
     battlefield/       one page per battlefield topic
+  economy/             work, markets, shop
+  events/              seasonal and one-day events
 ```
 
 - One folder per game area, matching the topics above.
