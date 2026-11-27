@@ -143,7 +143,7 @@ Divisions are `1`–`4` (ground, `type: "tanks"`) and `11` (air, `type: "aircraf
 | `battle_effects` | `valentinesDay`, `snowFight`, `heroRewardEffect` |
 | `fightersData`, `historyStats` | Filled during active rounds (empty in the observed responses) |
 
-Item structure and the booster list are still in the [old page](../../../military/battlefield.md#special-weapons); they move with the boosters topic.
+Item structure and the booster list: see [Boosters, bombs and PvP](boosters-bombs-pvp.md).
 
 Session-level fields also present: `culture`, `csrfToken`, `isLoggedIn`, `ERPK_ECONOMY_HOST`, `ERPK_MAIN_HOST`, `extras`.
 

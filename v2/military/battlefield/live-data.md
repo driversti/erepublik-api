@@ -158,7 +158,7 @@ The client ignores a response with a truthy `error`.
 
 ### Battle effects
 
-From earlier notes and the client; no active effect was observed.
+From earlier notes and the client; no active effect was observed. Activation: [Boosters, bombs and PvP](boosters-bombs-pvp.md#activate-battle-effect).
 
 | Key | Shape |
 |-----|-------|
