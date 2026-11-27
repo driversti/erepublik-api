@@ -189,7 +189,7 @@ curl -X POST 'https://www.erepublik.com/en/military/armory-data/overview' \
   "settings": {
     "maxEnrollPerCountry": 3,
     "universalPoints": {
-      "tanks": 4081310987,
+      "tanks": 0,
       "aircraft": 0
     }
   }
@@ -477,7 +477,7 @@ curl -X POST 'https://www.erepublik.com/en/military/armory-data/protectors' \
   "settings": {
     "maxEnrollPerCountry": 3,
     "universalPoints": {
-      "tanks": 4081310987,
+      "tanks": 0,
       "aircraft": 0
     }
   }

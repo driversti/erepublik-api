@@ -297,7 +297,7 @@ curl 'https://www.erepublik.com/en/main/switch-division' \
 
 `POST /en/military/get-skins` · Auth required · 🔍 From code
 
-Lists vehicles of the battle's type. Vehicle management is in [Armory](../../../military/armory.md).
+Lists vehicles of the battle's type. Vehicle management is in [Armory](../armory.md).
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
