@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (30 of them from the old quick reference) | 58 |
-| Topic pages in v2 | 10 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 32 / 24 / 2 |
+| Endpoints documented in v2 (30 of them from the old quick reference) | 68 |
+| Topic pages in v2 | 11 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 37 / 29 / 2 |
 | Last updated | 2026-11-27 |
 
 ## Start here
@@ -40,7 +40,8 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Battlefield: boosters, bombs, PvP | Boosters, bombs, battle effects, PvP | [boosters, bombs, PvP](military/battlefield/boosters-bombs-pvp.md) ✨ v2 |
 | Wars and resistance wars | War page, resistance funding, battle end time | [wars](military/wars.md) ✨ v2 |
 | Armory and protectors | Vehicles, enrollment, protector levels | [armory](military/armory.md) ✨ v2 |
-| Military: everything else | Military units, news feed | [military](../military/README.md) (old) |
+| Military units | Unit page, members, finances, management | [military units](military/military-units.md) ✨ v2 |
+| Military: everything else | News feed | [military](../military/README.md) (old) |
 | World and travel | Map, regions, cities | [world](../world/README.md) (old) |
 | Country | Society, economy, politics, laws | [country](../country/README.md) (old) |
 | Social | Profiles, friends, wall, search | [social](../social/README.md) (old) |
@@ -60,6 +61,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Deploy in a battle | [Deployment](military/battlefield/deployment.md) |
 | Browse battles (Wars) | [Campaigns](military/campaigns.md) |
 | Manage vehicles (Armory) | [Armory](military/armory.md) |
+| Run your military unit | [Military units](military/military-units.md) |
 | Train | [Training grounds](../economy/training.md) (old) |
 | Work | [Work](../economy/work.md) (old) |
 | Collect daily rewards | [Daily objectives](../rewards/daily-objectives.md) (old) |
