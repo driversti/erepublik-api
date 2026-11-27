@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (7 of them from the old quick reference) | 21 |
-| Topic pages in v2 | 4 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 12 / 9 / 0 |
+| Endpoints documented in v2 (15 of them from the old quick reference) | 34 |
+| Topic pages in v2 | 6 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 19 / 15 / 0 |
 | Last updated | 2026-11-27 |
 
 ## Start here
@@ -33,8 +33,10 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Login and sessions | Login flow, cookies | [auth](../auth/README.md) (old) |
 | Verification | CAPTCHA and session unlock | [captcha](../captcha/README.md) (old) |
 | Homepage | Dashboard data | [homepage](../homepage/README.md) (old) |
+| Campaigns (Wars screen) | Battle lists, filters, presets | [campaigns](military/campaigns.md) ✨ v2 |
+| Battlefield: page and entry | Battle state, side, travel, division | [page and entry](military/battlefield/page.md) ✨ v2 |
 | Battlefield: deployment | Automated fighting, fuel | [deployment](military/battlefield/deployment.md) ✨ v2 |
-| Military: everything else | Campaigns, battles, wars, armory, WebSocket | [military](../military/README.md) (old) |
+| Military: everything else | Battles, wars, armory, WebSocket | [military](../military/README.md) (old) |
 | World and travel | Map, regions, cities | [world](../world/README.md) (old) |
 | Country | Society, economy, politics, laws | [country](../country/README.md) (old) |
 | Social | Profiles, friends, wall, search | [social](../social/README.md) (old) |
@@ -52,7 +54,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | In the game you want to… | Go to |
 |--------------------------|-------|
 | Deploy in a battle | [Deployment](military/battlefield/deployment.md) |
-| Browse battles (Wars) | [Campaigns](../military/campaigns.md) (old) |
+| Browse battles (Wars) | [Campaigns](military/campaigns.md) |
 | Manage vehicles (Armory) | [Armory](../military/armory.md) (old) |
 | Train | [Training grounds](../economy/training.md) (old) |
 | Work | [Work](../economy/work.md) (old) |
@@ -106,7 +108,7 @@ Open the folder in any editor with a Markdown preview. Collapsed examples, diagr
 
 ## Contributing
 
-Found a new endpoint or a mistake? Open a pull request or an issue.
+Found a new endpoint or a mistake? Open a pull request or an issue. New pages follow the [page template](CONTRIBUTING.md).
 
 ### Writing rules
 
