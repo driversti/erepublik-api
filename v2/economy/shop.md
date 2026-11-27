@@ -10,8 +10,9 @@ The shop (`/en/main/special-items`) sells two different things:
 ```mermaid
 flowchart LR
     A[Shop page] --> B[Pack popup]
-    B -->|real money| C[get-gold/gold]
-    B -->|Game Tokens| D[promo-packs check] --> E[Tokens popup] --> H[Confirm purchase]
+    B --> D[promo-packs check]
+    D -->|real money| C[get-gold/gold] --> I[External payment] --> J[buy-check-status]
+    D -->|Game Tokens| E[Tokens popup] --> H[Confirm purchase]
     A --> F[Item list] --> G[Buy item]
 ```
 
@@ -21,10 +22,12 @@ flowchart LR
 | [Pack popup](#pack-popup) | GET | `/en/main/custom-pack` | ✅ Verified 2026-11-27 |
 | [List items](#list-items) | GET | `/en/main/shopItemsJson` | ✅ Verified 2026-11-27 |
 | [Buy item](#buy-item) | POST | `/en/main/buyGoldItems`, `/en/main/vip-shop-buy` | 🔍 From code |
-| [Buy or claim a pack](#buy-or-claim-a-pack) | POST | `/en/get-gold/gold` | 🔍 From code |
-| [Check pending purchase](#check-pending-purchase) | POST | `/en/main/promo-packs` | 🔍 From code |
+| [Buy or claim a pack](#buy-or-claim-a-pack) | POST | `/en/get-gold/gold` | ✅ Verified 2026-11-27 (payment) |
+| [Payment window](#payment-window) | GET | `/en/main/paymenthub-buy` | ✅ Observed 2026-11-27 |
+| [Payment status](#payment-status) | GET | `/en/main/buy-check-status/{transactionId}` | ✅ Verified 2026-11-27 |
+| [Check pending purchase](#check-pending-purchase) | POST | `/en/main/promo-packs` | ✅ Verified 2026-11-27 |
 | [Game Tokens popup](#game-tokens-popup) | POST | `/en/main/buy-withGameTokensPopup` | ✅ Verified 2026-11-27 |
-| [Confirm token purchase](#confirm-token-purchase) | POST | `/en/main/buy-withGameTokens` | 🔍 From code |
+| [Confirm token purchase](#confirm-token-purchase) | POST | `/en/main/buy-withGameTokens` | ✅ Verified 2026-11-27 |
 
 Headers and `_token`: see [Making requests](../guides/requests.md#common-headers).
 
@@ -116,7 +119,7 @@ The client reads `error`, `message`, and optionally `health`, `gold`, `loyaltyPo
 
 ## Buy or claim a pack
 
-`POST /en/get-gold/gold` · 🔍 From code
+`POST /en/get-gold/gold` · Auth required · ✅ Verified 2026-11-27 (`paymenthub`); `free` 🔍 From code
 
 > [!WARNING]
 > Starts a **real-money** payment, or claims a free pack.
@@ -131,17 +134,67 @@ The client reads `error`, `message`, and optionally `health`, `gold`, `loyaltyPo
 | `buy_for_a_friend_check` | `on` or `off` |
 | `gift_message`, `no_message_gift` | Gift options |
 
-A `free` claim sends only `_token`, `buy_what` and `payment_method`; the client then reloads the page. For `paymenthub` the response is HTML that continues the payment. The popup requires accepting the Terms of Service first.
+A `free` claim sends only `_token`, `buy_what` and `payment_method`; the client then reloads the page. The popup requires accepting the Terms of Service before a payment.
 
-**Source:** inline script of the [pack popup](#pack-popup), 2026-11-27.
+```bash
+curl -L 'https://www.erepublik.com/en/get-gold/gold' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&buy_what=bf2026Tokens_XS&payment_method=paymenthub&force_pack=0&buy_for_a_friend_check=off&gift_message=&no_message_gift=false&to_citizen_id=0'
+```
+
+For `paymenthub` the final response is the [payment window](#payment-window).
+
+**Source:** live request and inline script of the [pack popup](#pack-popup), 2026-11-27.
+
+---
+
+## Payment window
+
+`GET /en/main/paymenthub-buy?id={transactionId}` · Auth required · ✅ Observed 2026-11-27
+
+HTML fragment shown while the payment is open. The browser's network log shows this request right after [Buy or claim a pack](#buy-or-claim-a-pack), whose own caller receives the fragment, so the `POST` evidently redirects here (the redirect status was not captured).
+
+The fragment contains a form `#paymenthub-form` that opens the external payment provider in a new window (not documented here), and a script holding the numeric `transactionId`. The script polls [Payment status](#payment-status) every second. When processed, it shows a thank-you message and after 3 seconds opens `redirectURL`, or reloads the page if there is none.
+
+---
+
+## Payment status
+
+`GET /en/main/buy-check-status/{transactionId}` · Auth required · ✅ Verified 2026-11-27
+
+```bash
+curl 'https://www.erepublik.com/en/main/buy-check-status/1234567' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+<details>
+<summary>Responses: waiting and finished</summary>
+
+```json
+{"status": 1, "isProcessed": false, "description": "Started", "redirectURL": null}
+```
+
+```json
+{"status": 4, "isProcessed": true, "description": "Finished", "redirectURL": "/en/main/special-items?thankYou=YmYyMDI2VG9rZW5zX1hT"}
+```
+
+</details>
+
+| Field | Meaning |
+|-------|---------|
+| `status`, `description` | Only `1` Started and `4` Finished were observed |
+| `isProcessed` | The client stops polling when `true` |
+| `redirectURL` | `thankYou` is the Base64 pack type (`bf2026Tokens_XS` above) |
 
 ---
 
 ## Check pending purchase
 
-`POST /en/main/promo-packs` · 🔍 From code
+`POST /en/main/promo-packs` · Auth required · ✅ Verified 2026-11-27
 
-Sent before a Game Tokens purchase.
+Sent before both a real-money and a Game Tokens purchase.
 
 | Name | Description |
 |------|-------------|
@@ -150,9 +203,13 @@ Sent before a Game Tokens purchase.
 | `force_pack` | From the popup form |
 | `to_citizen_id` | Gift recipient or `0` |
 
-JSON response; `purchaseInProgress: true` makes the client show a double-purchase warning.
+```json
+{"purchaseInProgress": false}
+```
 
-**Source:** inline script of the pack popup, `purchasePack.isPackAvailable`.
+`purchaseInProgress: true` makes the client show a double-purchase warning (🔍 From code). The warning says a second purchase of the same pack is converted into Game Tokens.
+
+**Source:** live request and inline script of the pack popup, `purchasePack.isPackAvailable`, 2026-11-27.
 
 ---
 
@@ -190,7 +247,7 @@ Its inline script holds `packPrice`, which the [confirmation](#confirm-token-pur
 
 ## Confirm token purchase
 
-`POST /en/main/buy-withGameTokens` · 🔍 From code
+`POST /en/main/buy-withGameTokens` · Auth required · ✅ Verified 2026-11-27
 
 > [!WARNING]
 > Spends Game Tokens. A pack can only be bought once.
@@ -203,6 +260,30 @@ Its inline script holds `packPrice`, which the [confirmation](#confirm-token-pur
 | `friendId`, `buyForFriendCheck` | Gift recipient, `on`/`off` |
 | `giftMessage`, `noGiftMessage` | Gift options |
 
-The response is HTML shown as the next popup; the client then marks the pack as pending.
+```bash
+curl 'https://www.erepublik.com/en/main/buy-withGameTokens' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&packName=bf2026ProgEB_XS&packPrice=4.99&friendId=0&buyForFriendCheck=off&giftMessage=&noGiftMessage=0'
+```
 
-**Source:** inline script of the [Game Tokens popup](#game-tokens-popup), 2026-11-27.
+The response is HTML shown as the next popup. On success the root element has classes `buyResult buySuccess`:
+
+<details>
+<summary>Success response (shortened, balance replaced with 0)</summary>
+
+```html
+<div class="global_pack ... gameTokensPopup bf2026ProgEB buyResult buySuccess">
+  <p class="gameTokensInfo success">You successfully used <b>49 Game Tokens</b> for the purchase of a <b>Black Energy XS</b>.</p>
+  <p class="gameTokensInfo"><em>You currently have <b>0</b> Game Tokens in your inventory.</em></p>
+  <a id="closeBuyWithTokens">Great</a>
+</div>
+```
+
+</details>
+
+A `buyError` class exists in the styles; no error response was observed.
+
+Delivery is asynchronous (the popup warns of up to 5 minutes). Right after the purchase the [shop page](#shop-page) shows the pack with classes `already_bought pending` and the label "Processing". In the observed case it was delivered within about a minute: the next tier had replaced it on the shop page.
+
+**Source:** live request and inline script of the [Game Tokens popup](#game-tokens-popup), 2026-11-27.

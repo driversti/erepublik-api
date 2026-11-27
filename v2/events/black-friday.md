@@ -52,8 +52,28 @@ Section `section_black_friday`. Contents from the [pack popup](../economy/shop.m
 | `bf2026Gift` | Black Friday Gift | Free (`freePack`); already received on the observed account, so the popup answers "You cannot buy this pack" |
 
 - LP means Loyalty Points. Bonus Gold and LP are not granted when paying with Game Tokens, and Black Friday LP does not count towards Loyalty Status.
-- The `…Prog…` packs and Black Tokens are labelled **Chain Deal** (`progressive_pack`). Only the `XS` tier was listed. Requesting `…Gold_S`, `…Gold_M`, `…EB_S` or `…BombGnd_S` answers "You cannot buy this pack"; later tiers presumably unlock after a purchase (❔ Unconfirmed).
+- The `…Prog…` packs and Black Tokens are labelled **Chain Deal** (`progressive_pack`). Initially only the `XS` tiers were listed, and requesting a locked tier answers "You cannot buy this pack".
 - Regular packs gave their usual LP that day (for example 10 on `goldPack_XS`), against 100 on every event pack.
+
+## Chain Deal progression
+
+✅ Verified 2026-11-27: buying a tier unlocks the next tier of **that chain only**. The new pack replaces the bought one on the shop page, and the old pack type then answers "You cannot buy this pack".
+
+| Bought | Paid with | Unlocked |
+|--------|-----------|----------|
+| `bf2026Tokens_XS` | 20.99 PLN | `bf2026Tokens_S` |
+| `bf2026ProgEB_XS` | 49 Game Tokens | `bf2026ProgEB_S` |
+
+Second tier contents, from the [pack popup](../economy/shop.md#pack-popup):
+
+| Pack type | Name | Price | Game Tokens | Contents |
+|-----------|------|------:|------------:|----------|
+| `bf2026Tokens_S` | Black Tokens S | 42.99 PLN | Not offered | Game Tokens 99, Gold 30, Double Energy Bars 4, bonus Gold 3, LP 200 |
+| `bf2026ProgEB_S` | Black Energy S | 42.99 PLN | 99 | Double Energy Bars 184, Triple Energy Bars 40, VIP 999, LP 200 |
+
+Triple Energy Bars from the Black Energy packs expire at the end of game day 6,962.
+
+The purchase requests themselves are the normal ones: [real money](../economy/shop.md#buy-or-claim-a-pack), [Game Tokens](../economy/shop.md#confirm-token-purchase).
 
 ## Event items
 
@@ -103,7 +123,7 @@ Triple Energy Bar packs 1–3 contain 10, 50 and 100 bars. Double Energy Bar pac
 
 ## Not captured yet
 
-- Higher Chain Deal tiers, the gift contents and any purchase response (needs a purchase).
+- Chain Deal tiers above `S` and the gift contents.
 - VIP Shop items showed `discount` badges that day; whether they belong to the sale is unknown.
 
 **Source:** live read-only requests, 2026-11-27; `erpk_angular_controllers.js` (1795779904), `erepublik.js` (1795779896).
