@@ -71,13 +71,13 @@ curl 'https://www.erepublik.com/en/economy/inventory-json' \
             {
               "type": "quantity",
               "text": "Quantity",
-              "value": "72,916"
+              "value": "0"
             }
           ]
         },
         "description": "eRepublik's universal currency",
-        "amount": 72916,
-        "amountDisplay": "\u200672.9k\u2060"
+        "amount": 0,
+        "amountDisplay": "0"
       },
       {
         "id": "currency",
@@ -92,8 +92,8 @@ curl 'https://www.erepublik.com/en/economy/inventory-json' \
           "currency": true
         },
         "description": "Your country's currency",
-        "amount": 6274006,
-        "amountDisplay": "\u20066.27M\u2060"
+        "amount": 0,
+        "amountDisplay": "0"
       },
       {
         "id": "1_3",
@@ -397,7 +397,7 @@ curl 'https://www.erepublik.com/en/economy/inventory-json' \
 
 - **Amount Display:**
   - `amount`: Raw numeric value
-  - `amountDisplay`: Formatted display string (e.g., "72.9k", "2.33M")
+  - `amountDisplay`: Formatted display string (e.g., "2.33M")
   - Display uses K (thousands), M (millions) abbreviations
 
 - **Currency IDs:**

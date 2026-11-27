@@ -119,7 +119,7 @@ var buy_currency_data = {
 |-------|----|---------------|-------------|
 | Buy Currency | `buy_currency` | `62` | Currency ID being bought (62 = GOLD) |
 | Sell Currency | `sell_currency` | `1` | Currency ID being sold (1 = LTL) |
-| CSRF Token | `_token` | `99e749d8...` | Required for all POST actions |
+| CSRF Token | `_token` | `YOUR_CSRF_TOKEN` | Required for all POST actions |
 
 ### Offers Table Structure
 
@@ -272,8 +272,8 @@ curl -X POST 'https://www.erepublik.com/en/economy/exchange/purchase/' \
 {
   "error": false,
   "message": "Exchange successful!",
-  "gold": { "value": "123.45" },
-  "ecash": { "value": "67890.12" },
+  "gold": { "value": "0" },
+  "ecash": { "value": "0" },
   "buy_mode": "<table>...updated offers table...</table>",
   "essentials": "<input .../>",
   "hideOffer": false
@@ -364,8 +364,8 @@ curl -X POST 'https://www.erepublik.com/en/economy/exchange/create/' \
 {
   "error": false,
   "message": "Offer created successfully!",
-  "gold": { "value": "123.45" },
-  "ecash": { "value": "67790.12" },
+  "gold": { "value": "0" },
+  "ecash": { "value": "0" },
   "edit_mode": "<div>...my offers HTML...</div>",
   "buy_mode": "<table>...offers table...</table>",
   "essentials": "<input .../>"
@@ -434,8 +434,8 @@ curl -X POST 'https://www.erepublik.com/en/economy/exchange/update/' \
   "error": false,
   "message": "Offer updated!",
   "offer_id": 6806828,
-  "gold": { "value": "123.45" },
-  "ecash": { "value": "67890.12" },
+  "gold": { "value": "0" },
+  "ecash": { "value": "0" },
   "edit_mode": "<div>...updated my offers HTML...</div>",
   "buy_mode": "<table>...offers table...</table>",
   "essentials": "<input .../>"
@@ -500,8 +500,8 @@ curl -X POST 'https://www.erepublik.com/en/economy/exchange/delete/' \
 {
   "error": false,
   "message": "Offer removed!",
-  "gold": { "value": "124.45" },
-  "ecash": { "value": "67890.12" },
+  "gold": { "value": "0" },
+  "ecash": { "value": "0" },
   "buy_mode": "<table>...updated offers table...</table>",
   "edit_mode": "<div>...my offers HTML...</div>",
   "essentials": "<input .../>"

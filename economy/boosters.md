@@ -184,7 +184,7 @@ curl -X POST 'https://www.erepublik.com/en/economy/activateHouse' \
   "status": true,
   "message": "Successfully activated house",
   "activationTax": 628.9,
-  "currency": 6273068,
+  "currency": 0,
   "error": false
 }
 ```
@@ -211,7 +211,7 @@ curl -X POST 'https://www.erepublik.com/en/economy/activateHouse' \
 
 - **Currency Balance:**
   - `currency`: Updated currency balance after activation tax is deducted (in hundredths)
-  - Example: `6273068` = 62,730.68 LTL
+  - Example: `0` = 0.00 LTL
   - Insufficient currency will result in an error
 
 - **Activation Rules:**

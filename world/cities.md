@@ -647,7 +647,7 @@ curl 'https://www.erepublik.com/en/main/city-data/710/properties' \
           "confirmationMessage": "The city of Klaipeda charges 0 LTL for this action. Continue?"
         }
       ],
-      "currency": 7120147,
+      "currency": 0,
       "widgetUrl": "/en/main/city-data/710/properties/houses",
       "widgetId": "houses"
     },

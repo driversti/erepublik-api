@@ -100,7 +100,7 @@ curl -X POST 'https://www.erepublik.com/en/economy/gameTokensMarketAjax' \
     }
   ],
   "citizenData": {
-    "availableTokens": 249,
+    "availableTokens": 0,
     "myOffers": [],
     "offersLimit": 3
   },

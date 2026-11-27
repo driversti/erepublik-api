@@ -118,7 +118,7 @@ curl 'https://www.erepublik.com/en/main/training-grounds-json' \
     },
     "health_warn": "Food will be consumed, make sure you have enough food in your Storage",
     "health_warn_limit": "Energy limit exceeded, you will be able to train only if you have Energy Bars",
-    "gold": 72916.5823,
+    "gold": 0,
     "gold_warn": "Not enough Gold to train",
     "recoverable_health_in_food": 14588942,
     "energy": 7935200

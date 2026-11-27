@@ -384,7 +384,7 @@ var erepublik = {
 
 ```javascript
 SERVER_DATA = {
-  "csrfToken": "201298b5a407cd9ab1c396f08b9dadc2",
+  "csrfToken": "YOUR_CSRF_TOKEN",
   "isLoggedIn": false,
   "fbAppId": 300511377223,
   "extras": "winter treats",
@@ -418,7 +418,7 @@ Environment = {
   "isSymfony": false,
   "logEnabled": false,
   "hasSessionCaptcha": false,
-  "sessionId": "e4113d9387cc072d8550f001f460f1a0"
+  "sessionId": "YOUR_SESSION_ID"
 };
 ```
 

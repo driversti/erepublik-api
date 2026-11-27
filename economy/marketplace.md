@@ -607,8 +607,8 @@ curl -X POST 'https://www.erepublik.com/en/economy/marketplaceActions' \
     "can_buy": true,
     "pages": 1
   },
-  "currency": 6274006,
-  "gold": 72916
+  "currency": 0,
+  "gold": 0
 }
 ```
 
@@ -626,13 +626,13 @@ curl -X POST 'https://www.erepublik.com/en/economy/marketplaceActions' \
   - `error`: `false` on success, `true` on failure
   - `message`: Success message with purchase details (quantity, total cost, currency)
   - `offerUpdate`: Refreshed marketplace offers list (same format as `marketplaceAjax` endpoint)
-  - `currency`: Updated citizen's local currency balance (actual value with decimals, e.g. `46261.07` = 46,261.07 PLN)
+  - `currency`: Updated citizen's local currency balance (actual value with decimals, e.g. `0.00` = 0.00 PLN)
   - `gold`: Updated citizen's Gold balance (actual value with decimals, e.g. `0.01` = 0.01 Gold)
 
 - **Currency Handling:**
   - Purchases are made in the market country's local currency
   - If citizen lacks sufficient currency, the transaction fails with an error
-  - Currency and Gold balances are returned as actual values with decimals (e.g., `46261.07` = 46,261.07 PLN). Verified 2026-02-28 -- NOT in hundredths.
+  - Currency and Gold balances are returned as actual values with decimals (e.g., `0.00` = 0.00 PLN). Verified 2026-02-28 -- NOT in hundredths.
 
 - **Offer Updates:**
   - The `offerUpdate.offers` array reflects the updated marketplace after purchase

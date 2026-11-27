@@ -106,7 +106,7 @@ Platform configuration and real-time connection settings:
   "pomelo": {
     "gate": "gate.erepublik.com",
     "port": 3050,
-    "authToken": "9c1471f8235385cc96cc4d525b91e70d"
+    "authToken": "YOUR_AUTH_TOKEN"
   }
 }
 ```
@@ -170,8 +170,8 @@ The homepage version has the same structure.
   "energyFromFoodRemaining": 0,
   "energyPerInterval": 64,
   "hasFoodInInventory": true,
-  "gold": 75689,
-  "currencyAmount": 7120147,
+  "gold": 0,
+  "currencyAmount": 0,
   "userLevel": 1725,
   "hasCoreLoopAccess": false,
   "canWorkTrainAgainIn": 69744,
@@ -393,7 +393,7 @@ Session environment flags:
   "isSymfony": false,
   "logEnabled": false,
   "hasSessionCaptcha": false,
-  "sessionId": "9c1471f8235385cc96cc4d525b91e70d"
+  "sessionId": "YOUR_SESSION_ID"
 }
 ```
 
@@ -609,7 +609,7 @@ const empires = {"35":1};
 <summary>Example Data</summary>
 
 ```javascript
-var csrfToken = '99e749d8bab079654efe0b67c298b9a2';
+var csrfToken = 'YOUR_CSRF_TOKEN';
 var culture = 'en';
 var domainname = 'erepublik.com';
 

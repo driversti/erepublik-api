@@ -365,7 +365,7 @@ var energyData = {
 <summary>Scalar variables</summary>
 
 ```javascript
-var csrfToken        = '99e749d8bab079654efe0b67c298b9a2';
+var csrfToken        = 'YOUR_CSRF_TOKEN';
 var food_remaining   = 0;
 var has_captcha      = 0;
 var has_pin          = 1;
