@@ -761,9 +761,9 @@ curl -X POST 'https://www.erepublik.com/en/main/wheeloffortune-spin' \
   "cost": 2000,
   "estCost": 1900,
   "account": {
-    "initial": 6278874,
+    "initial": 0,
     "spent": 1900,
-    "remaining": 6276974
+    "remaining": 0
   },
   "jackpot": 0,
   "free_spin": 0,

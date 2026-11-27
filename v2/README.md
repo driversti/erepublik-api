@@ -13,9 +13,9 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (30 of them from the old quick reference) | 68 |
-| Topic pages in v2 | 11 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 37 / 29 / 2 |
+| Endpoints documented in v2 (45 of them from the old quick reference) | 87 |
+| Topic pages in v2 | 18 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 46 / 37 / 4 |
 | Last updated | 2026-11-27 |
 
 ## Start here
@@ -32,7 +32,13 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 |-------|----------------|------|
 | Login and sessions | Login flow, cookies | [auth](../auth/README.md) (old) |
 | Verification | CAPTCHA and session unlock | [captcha](../captcha/README.md) (old) |
-| Homepage | Dashboard data | [homepage](../homepage/README.md) (old) |
+| Dashboard | Home page data, news | [dashboard](home/dashboard.md) ✨ v2 |
+| Daily objectives | Activity chests | [daily objectives](home/daily-objectives.md) ✨ v2 |
+| Daily missions | Mission list and claim | [daily missions](home/daily-missions.md) ✨ v2 |
+| Weekly challenge | Prestige reward ladder | [weekly challenge](home/weekly-challenge.md) ✨ v2 |
+| Energy and food | Refill energy | [energy](home/energy.md) ✨ v2 |
+| Power Spin | Wheel of Fortune | [power spin](home/power-spin.md) ✨ v2 |
+| Badges and auto-posts | Referral banners, award posts | [badges](home/badges.md) ✨ v2 |
 | Campaigns (Wars screen) | Battle lists, filters, presets | [campaigns](military/campaigns.md) ✨ v2 |
 | Battlefield: page and entry | Battle state, side, travel, division | [page and entry](military/battlefield/page.md) ✨ v2 |
 | Battlefield: live data | Domination, battle console, campaign map | [live data](military/battlefield/live-data.md) ✨ v2 |
@@ -49,8 +55,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Shop | Packs, items, purchases | [shop](economy/shop.md) ✨ v2 |
 | Events | Endpoints and data that exist only during an event | [An Amazing Journey](events/amazing-journey.md), [Black Friday](events/black-friday.md) ✨ v2 |
 | Economy: everything else | Work, training, markets, companies, inventory | [economy](../economy/README.md) (old) |
-| Rewards | Objectives, missions, weekly challenge, VIP | [rewards](../rewards/README.md) (old) |
-| Power Spin | Wheel of Fortune | [powerspin](../powerspin/README.md) (old) |
+| Rewards: everything else | VIP | [rewards](../rewards/README.md) (old) |
 | Client framework | Popups, JavaScript objects | [framework](../framework/README.md) (old) |
 | ID tables | Countries and regions | [reference](../reference/README.md) (old) |
 
@@ -64,7 +69,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Run your military unit | [Military units](military/military-units.md) |
 | Train | [Training grounds](../economy/training.md) (old) |
 | Work | [Work](../economy/work.md) (old) |
-| Collect daily rewards | [Daily objectives](../rewards/daily-objectives.md) (old) |
+| Collect daily rewards | [Daily objectives](home/daily-objectives.md), [daily missions](home/daily-missions.md) |
 | Travel | [Travel](../world/travel.md) (old) |
 | Buy in the shop | [Shop](economy/shop.md) |
 | Play the anniversary map | [An Amazing Journey](events/amazing-journey.md) |
@@ -75,6 +80,7 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 v2/
   README.md            you are here
   guides/              concepts shared by many endpoints
+  home/                dashboard and daily routine
   military/
     battlefield/       one page per battlefield topic
   economy/             work, markets, shop
