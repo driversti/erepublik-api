@@ -41,7 +41,7 @@ An HTML page of about 107–131 KB. The variables to read from its inline script
 
 Script positions and counts change (about 37 blocks in earlier notes, 15 inline blocks on 2026-11-27), so search by variable name. `SERVER_DATA` also had `isLoggedIn`, `fbAppId`, `fbApiVersion`, `fbPixelId`, `gaPropertyId`, `extras`, `serverTime` and `webDeployEnabled`.
 
-**Source:** real request, 2026-11-27 (variable and key names); details and examples below — earlier notes.
+**Source:** real request, 2026-11-27 (variable and key names); details and examples below — earlier notes. Account-specific values in the examples are replaced with dummies.
 
 ---
 
@@ -113,7 +113,7 @@ Platform configuration and real-time connection settings:
 | `pomelo` | object | WebSocket connection config for real-time updates |
 | `pomelo.gate` | string | WebSocket gateway host |
 | `pomelo.port` | number | WebSocket port (`3050`) |
-| `pomelo.authToken` | string | Auth token for WebSocket (= `erpk` session token) |
+| `pomelo.authToken` | string | Secret token for the WebSocket; earlier notes say it equals the `erpk` cookie (❔ Unconfirmed) |
 
 ---
 
@@ -132,50 +132,52 @@ The homepage version has the same structure.
   "isOrganization": 0,
   "isAdult": true,
   "isNewCitizen": false,
-  "country": 72,
-  "citizenshipCountryId": 72,
+  "country": 1,
+  "citizenshipCountryId": 1,
   "name": "PlayerName",
   "avatar": "https://cdnt.erepublik.net/.../avatar.png?...",
-  "currency": "LTL",
-  "citizenshipCurrencyName": "LTL",
+  "currency": "CUR",
+  "citizenshipCurrencyName": "CUR",
   "isEmpire": false,
   "isDictatorship": 0,
-  "countryLocationId": 72,
-  "regionLocationId": 663,
-  "countryLocationName": "Lithuania",
-  "countryLocationPermalink": "Lithuania",
-  "residence": { "hasResidence": 1, "cityId": 710, "regionId": 663, "countryId": 72, "bonuses": { "..." } },
-  "division": 4,
-  "muId": 893,
-  "muCountryId": 72,
-  "regimentId": 1390,
-  "party": { "id": 3773, "party_id": 3773, "is_party_president": 0, "name": "...", "..." },
-  "energy": 64,
-  "energyToRecover": 10220,
+  "countryLocationId": 1,
+  "regionLocationId": 1,
+  "countryLocationName": "COUNTRY_NAME",
+  "countryLocationPermalink": "COUNTRY_PERMALINK",
+  "residence": { "hasResidence": 1, "cityId": 1, "regionId": 1, "countryId": 1, "bonuses": { "..." } },
+  "division": 1,
+  "muId": 1,
+  "muCountryId": 1,
+  "regimentId": 1,
+  "party": { "id": 1, "party_id": 1, "is_party_president": 0, "name": "...", "..." },
+  "energy": 100,
+  "energyToRecover": 900,
   "energyFromFoodRemaining": 0,
-  "energyPerInterval": 64,
+  "energyPerInterval": 10,
   "hasFoodInInventory": true,
   "gold": 0,
   "currencyAmount": 0,
-  "userLevel": 1725,
+  "userLevel": 1,
   "hasCoreLoopAccess": false,
-  "canWorkTrainAgainIn": 69744,
-  "currentExperiencePoints": 8503502,
-  "dailyOrders": [ { "battleId": 869119, "sideCountryId": 72, "..." } ],
+  "canWorkTrainAgainIn": 3600,
+  "currentExperiencePoints": 0,
+  "dailyOrders": [ { "battleId": 100000, "sideCountryId": 1, "..." } ],
   "dailiesToCollect": 0,
   "canChangeMPPPriorities": false,
   "canChangeTerrainPriorities": false,
   "canSwitchDivisions": true,
-  "terrainSkills": { "1": { "terrain_id": 1, "skill_points": 40000 }, "...14 entries..." },
-  "isTopCustomer": true,
-  "loyaltyPoints": 2620,
-  "boxKeys": { "cupid_key": 223 }
+  "terrainSkills": { "1": { "terrain_id": 1, "skill_points": 0 }, "...14 entries..." },
+  "isTopCustomer": false,
+  "loyaltyPoints": 0,
+  "boxKeys": { "cupid_key": 0 }
 }
 ```
 
 </details>
 
-> **Note:** The `division` field may differ from the battlefield page -- on the homepage it shows the citizen's natural division (`4`), while on the battlefield it may show the currently viewed division (e.g., `11` for aircraft).
+> **Note:** The `division` field may differ from the battlefield page -- on the homepage it shows the citizen's natural division (`1` in this example), while on the battlefield it may show the currently viewed division (e.g., `11` for aircraft).
+
+The `residence` object belongs to the screens described in [Cities and residence](../world/cities.md#my-residence).
 
 ---
 
@@ -242,7 +244,7 @@ Localized UI strings (10 sections):
     "gold": "Gold",
     "goldAmount": "%%1%% Gold",
     "currency": "Currency",
-    "currencyAmount": "%%1%% LTL",
+    "currencyAmount": "%%1%% CUR",
     "great": "Great"
   },
   "dailyMissions": {
@@ -394,7 +396,7 @@ Session environment flags:
 | `isSymfony` | boolean | Whether using Symfony routing |
 | `logEnabled` | boolean | Whether client-side logging is enabled |
 | `hasSessionCaptcha` | boolean | Whether session CAPTCHA verification is pending |
-| `sessionId` | string | Session ID (= `erpk` cookie value) |
+| `sessionId` | string | Session ID (earlier notes: equals the `erpk` cookie; unconfirmed) |
 
 ---
 
@@ -407,10 +409,10 @@ Energy recovery status (also merged into `erepublik.citizen` via `$j.extend`):
 
 ```json
 {
-  "energy": 64,
-  "energyPoolLimit": 10220,
+  "energy": 100,
+  "energyPoolLimit": 1000,
   "recoverableEnergy": 0,
-  "energyPerInterval": 64,
+  "energyPerInterval": 10,
   "energyStatus": "recovering"
 }
 ```
@@ -438,14 +440,14 @@ Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA,
 {
   "citizenFeeds": {
     "country": {
-      "name": "Lithuania",
+      "name": "COUNTRY_NAME",
       "showName": false,
-      "avatar": "//www.erepublik.net/images/flags_png/S/Lithuania.png",
+      "avatar": "//www.erepublik.net/images/flags_png/S/COUNTRY_PERMALINK.png",
       "showAvatar": true,
       "feedRoute": "country-post",
       "commentRoute": "country-comment",
       "viewPostParameter": "countryPost",
-      "unreadCount": 15,
+      "unreadCount": 0,
       "isDefault": false,
       "firstPostId": null,
       "canPost": true,
@@ -461,17 +463,17 @@ Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA,
     "id": 1234567,
     "name": "PlayerName",
     "sex": "",
-    "created_at": "2011-04-12 13:22:14",
+    "created_at": "2000-01-01 00:00:00",
     "is_organization": 0,
     "is_alive": 1,
     "is_validated": 1,
     "has_avatar": 1,
     "parent_id": 0,
-    "is_payer": 1,
+    "is_payer": 0,
     "has_jid": 1,
-    "avatar_version": "fa70b874e2f337186b979af9404828eb",
+    "avatar_version": "00000000000000000000000000000000",
     "avatar_file": "png",
-    "level": 1725,
+    "level": 1,
     "avatar": "https://cdnt.erepublik.net/.../avatar.png?...",
     "profile_url": "//www.erepublik.com/en/citizen/profile/1234567"
   },
@@ -490,10 +492,10 @@ Social feed configuration for the homepage wall. Set via `$j.extend(SERVER_DATA,
       "required": 25
     },
     "battle": {
-      "id": 869119,
-      "sideId": 72,
-      "url": "//www.erepublik.com/en/military/battlefield-choose-side/869119/72",
-      "text": "Fight for <img ...> <b>Lithuania</b> in <br><em>Jiangsu</em>"
+      "id": 100000,
+      "sideId": 1,
+      "url": "//www.erepublik.com/en/military/battlefield-choose-side/100000/1",
+      "text": "Fight for <img ...> <b>COUNTRY_NAME</b> in <br><em>REGION_NAME</em>"
     },
     "hasMore": false
   }
@@ -601,7 +603,7 @@ var domainname = 'erepublik.com';
 // Energy & food
 var energyData = { /* see energyData section */ };
 var food_remaining = 0;  // or parseInt("0", 10)
-var linkForBuy = '/en/economy/marketplace#72/1';
+var linkForBuy = '/en/economy/marketplace#1/1';
 var textForBuy = "Buy food";
 var smallestFood = {"q":1,"use":2};
 
@@ -720,7 +722,7 @@ match = re.search(r'\$j\.extend\(SERVER_DATA, \{\s*wallData:', html)
 - **`SERVER_DATA` is extended multiple times**: At least 2 `$j.extend(SERVER_DATA, ...)` calls -- one for `csrfToken` refresh, one for `wallData`.
 - **Event popups are seasonal**: `eventPopupAutoShowName` changes based on active events (e.g., `winterOlympicsPopup`, `valentinesDayPopup`). Multiple event popups can coexist.
 - **`dictatorships` and `empires` maps**: These `const` declarations provide a real-time snapshot of which countries are dictatorships or empires. Useful for bot logic that needs to check political status without additional API calls.
-- **Pomelo WebSocket**: `erepublik.settings.pomelo` contains the same WebSocket configuration as the battlefield page -- `gate.erepublik.com:3050` with the session token as auth. Can be used for real-time notifications on the homepage.
+- **Pomelo WebSocket**: `erepublik.settings.pomelo` contains the same WebSocket configuration as the battlefield page -- `gate.erepublik.com:3050` with a secret `authToken` (see [WebSocket](../basics/websocket.md#open-questions)). Can be used for real-time notifications on the homepage.
 - **XMPP/PvP chat**: `ErpkPvp.bosh_service` and `muc_host` are typically `"unassigned"` -- the PvP chat system appears inactive or deprecated.
 - **`citizenInfo` vs `citizen`**: `wallData.citizenInfo` contains account metadata (`created_at`, `is_alive`, `is_validated`, `is_payer`) not available in `erepublik.citizen`, while `erepublik.citizen` has gameplay data (energy, gold, division, daily orders) not in `citizenInfo`.
 
@@ -735,12 +737,12 @@ The news widget. Returns a JSON array of five articles.
 | Name | In | Type | Required | Description |
 |------|----|------|----------|-------------|
 | `category` | path | number | Yes | `100` all (default), `1` First steps, `2` Battle orders, `3` Warfare analysis, `4` Political debates, `5` Financial business, `6` Social interactions, `99` Newspaper subscriptions |
-| `country` | path | number | Yes | [Country ID](../../reference/README.md) |
+| `country` | path | number | Yes | [Country ID](../basics/id-tables.md) |
 | `sort` | path | string | Yes | `rated` (default) or `latest` |
 | `page` | path | number | Yes | From `1` |
 
 ```bash
-curl 'https://www.erepublik.com/en/main/home-news/100/72/rated/1' \
+curl 'https://www.erepublik.com/en/main/home-news/100/1/rated/1' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest'
 ```
@@ -751,7 +753,7 @@ Shortened to one article:
 
 ```json
 [
-  { "id": 1, "articleId": 1, "articleTitle": "Title", "text": "Title", "countryId": 72, "categoryId": 6,
+  { "id": 1, "articleId": 1, "articleTitle": "Title", "text": "Title", "countryId": 1, "categoryId": 6,
     "citizenId": 1234567, "citizenName": "PlayerName",
     "newspaperId": 100, "newspaperName": "Newspaper", "newspaper": "Newspaper",
     "newspaperAvatar": "//cdnt.erepublik.net/…", "newspaperAvatarVersion": null, "newspaperAvatarFile": null,
@@ -773,4 +775,4 @@ The client loads the next page while the array holds at least five items, and ca
 |-------|---------------|------------------|--------------|
 | `erepublik` keys | 6 | 12, adding `subtleCrypto`, `directives`, `debug`, `functions`, `info`, `mission` (some may be added by scripts) | Both |
 | `erepublik.settings` | 11 keys | Also `achievementPopup` | Both |
-| Example values | Captured earlier (day 6659) | Not re-read field by field | Earlier notes |
+| Example values | Captured earlier (day 6659) | Not re-read field by field | Earlier notes, with dummy account values |

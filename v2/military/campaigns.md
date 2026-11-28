@@ -219,7 +219,7 @@ The same structure as [List battles](#list-battles), limited to one country. The
 
 | Name | In | Type | Required | Description |
 |------|----|------|----------|-------------|
-| `countryId` | path | number | Yes | [Country ID](../../reference/README.md), e.g. `29` United Kingdom, `1` Romania, `10` Italy, `13` Hungary, `72` Lithuania |
+| `countryId` | path | number | Yes | [Country ID](../basics/id-tables.md), e.g. `29` United Kingdom, `1` Romania, `10` Italy, `13` Hungary, `72` Lithuania |
 
 ```bash
 curl 'https://www.erepublik.com/en/military/campaignsJson/countryId/29'

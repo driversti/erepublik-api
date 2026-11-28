@@ -361,12 +361,12 @@ A response with `error: true` is a failure. The client also reads:
 | Field | Meaning |
 |-------|---------|
 | `message` | Text shown to the player |
-| `errorType: "captcha"` | A [verification challenge](../../../captcha/README.md) is required |
+| `errorType: "captcha"` | A [verification challenge](../../basics/captcha.md) is required |
 | `captcha` or `data.captcha` | Challenge details (`message`, `canVerifyLater`) |
 
 ### While deployed
 
-- Progress arrives over [WebSocket](../../../military/websocket.md): `onDeployProgress` (`progress`, `damage`) and `onDeployFinished` (`deploymentId`, `data` with totals, rank, XP and prestige gains).
+- Progress arrives over [WebSocket](../../basics/websocket.md): `onDeployProgress` (`progress`, `damage`) and `onDeployFinished` (`deploymentId`, `data` with totals, rank, XP and prestige gains).
 - Only one deployment can be active at a time (`SERVER_DATA.deployment`).
 - Earlier notes (❔ Unconfirmed): while deployed you cannot travel, eat, fight manually or use bombs, but you can activate boosters; level-up energy is added to the deployment; `deploy_size` boosters (+100%, +200%, +500%) increase its size.
 - Damage, kills and duration shown before starting are estimates calculated in the browser.

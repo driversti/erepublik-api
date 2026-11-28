@@ -142,7 +142,7 @@ Called by `energy.js` from `#DailyConsumtionTrigger`. That element is not on the
 | `_token` | string | Yes | CSRF token |
 | `buttonColor` | string | Yes | `blue` for food, `orange` for a treat / Energy Bar |
 
-The client reads `captcha` (opens [session verification](../../captcha/README.md)), `health`, `food_remaining`, `show_reset`, `food_time_reset`, `has_food_in_inventory`, `lowest_quality_food` (`q`, `use`), `hasSpecialFoodItem` and `specialFoodValue`.
+The client reads `captcha` (opens [session verification](../basics/captcha.md)), `health`, `food_remaining`, `show_reset`, `food_time_reset`, `has_food_in_inventory`, `lowest_quality_food` (`q`, `use`), `hasSpecialFoodItem` and `specialFoodValue`.
 
 **Source:** `energy.js` (version 1719825491).
 

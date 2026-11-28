@@ -268,7 +268,7 @@ Shortened to one vehicle:
 | `vehicles[].status`, `intStatus` | string, number | See below |
 | `vehicles[].isDefault` | boolean | Default vehicle |
 | `vehicles[].blueprints` | object \| null | `current`, `required` while locked |
-| `vehicles[].countryId` | number \| null | [Country](../../reference/README.md) it is enrolled in |
+| `vehicles[].countryId` | number \| null | [Country](../basics/id-tables.md) it is enrolled in |
 | `vehicles[].countryData` | object \| null | Your protector level there |
 | `vehicles[].countryData.level`, `maxLevel` | number | Current and maximum level |
 | `vehicles[].countryData.xp` | number \| null | Points collected in this level; `null` at the maximum |

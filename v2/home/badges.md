@@ -63,7 +63,7 @@ For the award popup:
 { "message": false, "error_message": "Something went wrong" }
 ```
 
-The achievement popup treats a response with `wallData` as success and shows `message` otherwise. Posts made this way have `meta.isAutomaticMedalPost: true` ([wall posts](../../social/wall.md)).
+The achievement popup treats a response with `wallData` as success and shows `message` otherwise. Posts made this way have `meta.isAutomaticMedalPost: true` ([wall posts](../social/wall.md)).
 
 ### Award popup flow
 

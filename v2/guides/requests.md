@@ -18,7 +18,7 @@ Authentication is cookie-based: send the session token as `erpk`.
 Cookie: erpk=YOUR_SESSION_TOKEN
 ```
 
-How to log in: [Authentication](../../auth/README.md). A request may also need a Cloudflare `cf_clearance` cookie and a browser `User-Agent`.
+How to log in: [Authentication](../basics/login.md). A request may also need a Cloudflare `cf_clearance` cookie and a browser `User-Agent`.
 
 Never publish a real cookie or token.
 

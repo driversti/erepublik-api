@@ -995,7 +995,7 @@ Full citizen state including identity, economy, party, residence, daily orders, 
     "14": { "terrain_id": 14, "skill_points": 0 }
   },
   "isTopCustomer": true,
-  "loyaltyPoints": 2620,
+  "loyaltyPoints": 0,
   "boxKeys": { "cupid_key": 223 }
 }
 ```

@@ -6,22 +6,22 @@ Unofficial, community documentation of the HTTP and WebSocket API behind [eRepub
 > These endpoints are undocumented by the game's authors, reverse-engineered from the web client, and may change or disappear at any time. Many actions spend real in-game resources. Use at your own risk and respect the game's rules.
 
 > [!NOTE]
-> This is **version 2**, being migrated page by page. Anything marked "old" below links to the previous documentation.
+> This is **version 2**. Every topic has a v2 page; the previous documentation stays in the repository root until v2 replaces it.
 
 ## At a glance
 
 | Metric | Value |
 |--------|-------|
 | Endpoints in the old quick reference | 102 |
-| Endpoints documented in v2 (45 of them from the old quick reference) | 87 |
-| Topic pages in v2 | 18 |
-| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 46 / 37 / 4 |
+| Endpoints documented in v2 (101 of them from the old quick reference) | 354 |
+| Topic pages in v2 | 60 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 180 / 161 / 13 |
 | Last updated | 2026-11-27 |
 
 ## Start here
 
 1. [Making requests](guides/requests.md): cookie, CSRF token, headers, status labels.
-2. [Authentication](../auth/README.md) (old).
+2. [Authentication](basics/login.md).
 3. Pick a topic below.
 
 Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at 00:00 and a weekly reset on Tuesday at 00:00. The game day counts days since 2007-11-21. The rate limit is about 3000 requests per hour per account.
@@ -30,8 +30,8 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 
 | Topic | What is inside | Page |
 |-------|----------------|------|
-| Login and sessions | Login flow, cookies | [auth](../auth/README.md) (old) |
-| Verification | CAPTCHA and session unlock | [captcha](../captcha/README.md) (old) |
+| Login and sessions | Login, logout, cookies | [login](basics/login.md) ✨ v2 |
+| Verification | Session CAPTCHA | [captcha](basics/captcha.md) ✨ v2 |
 | Dashboard | Home page data, news | [dashboard](home/dashboard.md) ✨ v2 |
 | Daily objectives | Activity chests | [daily objectives](home/daily-objectives.md) ✨ v2 |
 | Daily missions | Mission list and claim | [daily missions](home/daily-missions.md) ✨ v2 |
@@ -47,17 +47,41 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Wars and resistance wars | War page, resistance funding, battle end time | [wars](military/wars.md) ✨ v2 |
 | Armory and protectors | Vehicles, enrollment, protector levels | [armory](military/armory.md) ✨ v2 |
 | Military units | Unit page, members, finances, management | [military units](military/military-units.md) ✨ v2 |
-| Military: everything else | News feed | [military](../military/README.md) (old) |
-| World and travel | Map, regions, cities | [world](../world/README.md) (old) |
-| Country | Society, economy, politics, laws | [country](../country/README.md) (old) |
-| Social | Profiles, friends, wall, search | [social](../social/README.md) (old) |
-| Notifications | Alerts and reports | [notifications](../notifications/README.md) (old) |
+| Travel | Travel popup, prices, moving | [travel](world/travel.md) ✨ v2 |
+| Map and regions | World map data, side panels, region page | [map](world/map.md) ✨ v2 |
+| Cities and residence | City panels, search, residence | [cities](world/cities.md) ✨ v2 |
+| Country: society and economy | Citizens, regions, treasury, taxes | [society](country/society.md), [economy](country/economy.md) ✨ v2 |
+| Country: politics and military | Government, wars, pacts | [politics](country/politics.md), [military](country/military.md) ✨ v2 |
+| Government and laws | Administration, citizenship requests, law voting | [administration](country/administration.md), [laws](country/laws.md) ✨ v2 |
+| Elections and parties | Results, candidates, voting | [elections](country/elections.md), [parties](country/parties.md) ✨ v2 |
+| Alliances | Members, alliance actions | [alliances](country/alliances.md) ✨ v2 |
+| Citizen profiles | Profile data, hovercard | [profiles](social/profiles.md) ✨ v2 |
+| Friends and blocking | Friend lists, requests, blocklist | [friends](social/friends.md) ✨ v2 |
+| Wall and feeds | Posts, comments, reactions | [wall](social/wall.md) ✨ v2 |
+| Private messages | Inbox, compose | [messages](social/messages.md) ✨ v2 |
+| Notifications | Alerts, reports, pop-ups | [notifications](social/notifications.md) ✨ v2 |
+| Search | Search page, citizen search | [search](social/search.md) ✨ v2 |
+| Organizations | Organization profiles, money donations | [organizations](social/organizations.md) ✨ v2 |
+| Newspapers and articles | Reading, voting, comments, writing, subscriptions | [articles](media/articles.md), [newspapers](media/newspapers.md) ✨ v2 |
+| News | News lists and RSS | [news](media/news.md) ✨ v2 |
+| Leaderboards | Weekly boards: citizens, units, countries | [leaderboards](rankings/leaderboards.md) ✨ v2 |
+| Rankings and updates | Ranking pages, Latest Updates | [rankings](rankings/rankings.md) ✨ v2 |
 | Shop | Packs, items, purchases | [shop](economy/shop.md) ✨ v2 |
-| Events | Endpoints and data that exist only during an event | [An Amazing Journey](events/amazing-journey.md), [Black Friday](events/black-friday.md) ✨ v2 |
-| Economy: everything else | Work, training, markets, companies, inventory | [economy](../economy/README.md) (old) |
-| Rewards: everything else | VIP | [rewards](../rewards/README.md) (old) |
-| Client framework | Popups, JavaScript objects | [framework](../framework/README.md) (old) |
-| ID tables | Countries and regions | [reference](../reference/README.md) (old) |
+| Events | Endpoints and data of seasonal events | [An Amazing Journey](events/amazing-journey.md), [Black Friday](events/black-friday.md), [Tournaments](events/tournaments.md), [dormant event code](events/dormant-code.md) ✨ v2 |
+| Other shop screens | Gold Store, Supply Shop, gifting, promo popups | [shop screens](economy/shop-screens.md) ✨ v2 |
+| VIP and loyalty | VIP points, Loyalty Program, Gold Bonus | [VIP](economy/vip.md) ✨ v2 |
+| Work | Job, Work as Manager, overtime | [work](economy/work.md) ✨ v2 |
+| Training | Training grounds, upgrades | [training](economy/training.md) ✨ v2 |
+| Job market | Offers, apply, resign | [job market](economy/job-market.md) ✨ v2 |
+| Employees | Job offer, salaries, staff | [employees](economy/employees.md) ✨ v2 |
+| Companies | Companies, holdings, building | [companies](economy/companies.md) ✨ v2 |
+| Inventory | Storage, boosters, houses, assembly | [inventory](economy/inventory.md) ✨ v2 |
+| Marketplace | Goods, own offers, price snapshot | [marketplace](economy/marketplace.md) ✨ v2 |
+| Monetary market | Gold and currency exchange | [monetary market](economy/monetary-market.md) ✨ v2 |
+| Game Tokens market | Token offers | [Game Tokens market](economy/game-tokens-market.md) ✨ v2 |
+| Client framework | Popups, JavaScript objects, site-wide requests | [framework](basics/framework.md) ✨ v2 |
+| Real-time WebSocket | Battle and deployment events | [websocket](basics/websocket.md) ✨ v2 |
+| ID tables | Countries and regions | [ID tables](basics/id-tables.md) ✨ v2 |
 
 ## Looking for a game screen?
 
@@ -67,10 +91,12 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 | Browse battles (Wars) | [Campaigns](military/campaigns.md) |
 | Manage vehicles (Armory) | [Armory](military/armory.md) |
 | Run your military unit | [Military units](military/military-units.md) |
-| Train | [Training grounds](../economy/training.md) (old) |
-| Work | [Work](../economy/work.md) (old) |
+| Train | [Training](economy/training.md) |
+| Work | [Work](economy/work.md) |
 | Collect daily rewards | [Daily objectives](home/daily-objectives.md), [daily missions](home/daily-missions.md) |
-| Travel | [Travel](../world/travel.md) (old) |
+| Travel | [Travel](world/travel.md) |
+| Vote | [Elections](country/elections.md#vote) |
+| Donate to a country | [Country economy](country/economy.md#donate-to-the-country) |
 | Buy in the shop | [Shop](economy/shop.md) |
 | Play the anniversary map | [An Amazing Journey](events/amazing-journey.md) |
 
@@ -78,13 +104,19 @@ Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at
 
 ```
 v2/
-  README.md            you are here
-  guides/              concepts shared by many endpoints
-  home/                dashboard and daily routine
+  README.md             you are here
+  guides/               concepts shared by many endpoints
+  basics/               login, CAPTCHA, client framework, WebSocket, IDs
+  home/                 dashboard and daily routine
   military/
-    battlefield/       one page per battlefield topic
-  economy/             work, markets, shop
-  events/              seasonal and one-day events
+    battlefield/        one page per battlefield topic
+  economy/              work, companies, markets, shop
+  world/                travel, map, cities
+  country/              society, government, elections, alliances
+  social/               profiles, wall, messages, organizations
+  media/                articles, newspapers, news
+  rankings/             leaderboards and ranking pages
+  events/               seasonal events and tournaments
 ```
 
 - One folder per game area, matching the topics above.

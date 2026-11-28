@@ -12,7 +12,7 @@ flowchart LR
     C -->|war stats charts| H[Round charts]
 ```
 
-The 30-second timer also reloads the open console tab (current battle zone, fighter statistics or combat orders). When you stay idle, the client shows a sleep popup and stops both timers. Pushed events arrive over the [WebSocket](../../../military/websocket.md).
+The 30-second timer also reloads the open console tab (current battle zone, fighter statistics or combat orders). When you stay idle, the client shows a sleep popup and stops both timers. Pushed events arrive over the [WebSocket](../../basics/websocket.md).
 
 | Action | Method | Path | Status |
 |--------|--------|------|--------|
@@ -23,7 +23,7 @@ The 30-second timer also reloads the open console tab (current battle zone, figh
 | [Combat orders](#combat-orders) | POST | `/en/military/battle-console` (`combatOrders`) | ✅ Verified 2026-11-27 |
 | [Round charts](#round-charts) | POST | `/en/main/battle-console` (`charts`) | ✅ Verified 2026-11-27 |
 | [Campaign map](#campaign-map) | GET | `/en/military/battle-map-status/{battleId}` | ✅ Verified 2026-11-27 |
-| [Battle objectives](#battle-objectives) | GET | `/en/main/fight-listObjectives` | ✅ Verified 2026-11-27 (error response only) |
+| [Battle objectives](#battle-objectives) | GET | `/en/main/fight-listObjectives` | 🔍 From code |
 | [Terrain skills popup](#terrain-skills-popup) | GET | `/en/main/strength-popup` | ✅ Verified 2026-11-27 |
 | [Save terrain skills](#save-terrain-skills) | POST | `/en/main/strength-save` | 🔍 From code |
 
@@ -577,7 +577,9 @@ The map geometry is static: `/images/modules/maps/tiles/default.geo.json`, or `m
 
 ## Battle objectives
 
-`GET /en/main/fight-listObjectives` · Auth required · ✅ Verified 2026-11-27 (error response only)
+`GET /en/main/fight-listObjectives` · Auth required · 🔍 From code
+
+A real request on 2026-11-27 returned only an error, so the success response comes from the client code.
 
 Destructible objectives that regiments can deploy, listed in the "manage objectives" popup.
 
@@ -606,7 +608,7 @@ On success, from the client: `request_time` and `message`, a list of objectives.
 | `regiment_id` | Regiment that deployed it |
 | `battle_id`, `side_country_id` | Used for the [choose side link](page.md#choose-side-link) |
 
-**Source:** real request, 2026-11-27; `erpk_angular_controllers.js` (version 1795779904), `ObjectivesController`.
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `ObjectivesController` (success fields); real request, 2026-11-27 (error response).
 
 ---
 

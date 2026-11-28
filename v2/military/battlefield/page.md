@@ -48,7 +48,7 @@ Earlier notes sent a full browser cookie set (`erpk_mid`, `erpk_plang`, `erpk_au
 You can open a battle you are not allowed to fight in yet: the response is `200` with `spectatorOnly` and the [travel data](#travel-data). An unknown battle ID returns `404`.
 
 > [!CAUTION]
-> The page contains your CSRF token and the [WebSocket](../../../military/websocket.md) token. Do not share saved copies.
+> The page contains your CSRF token and the [WebSocket](../../basics/websocket.md) token. Do not share saved copies.
 
 ### Extracting the battle state
 
@@ -229,7 +229,7 @@ The client uses it as a plain link: military unit regiment orders, and `battleLi
 > [!WARNING]
 > Moves your citizen and may spend currency or a travel ticket.
 
-Confirms the battle setup panel: side, zone and, if needed, travel.
+Confirms the battle setup panel: side, zone and, if needed, travel. Moving outside a battle is described in [Travel](../../world/travel.md).
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|

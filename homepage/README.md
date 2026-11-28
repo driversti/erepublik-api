@@ -183,7 +183,7 @@ The homepage version has the same structure.
   "canSwitchDivisions": true,
   "terrainSkills": { "1": { "terrain_id": 1, "skill_points": 40000 }, "...14 entries..." },
   "isTopCustomer": true,
-  "loyaltyPoints": 2620,
+  "loyaltyPoints": 0,
   "boxKeys": { "cupid_key": 223 }
 }
 ```

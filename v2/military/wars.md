@@ -70,6 +70,8 @@ At most one of these tables is present; many active wars have neither.
 
 Result texts observed: `Secured by {Country}`, `Conquered by {Country}`, `Liberated by {Country}`.
 
+`a.region` points to the [region page](../world/map.md#region-page).
+
 <details>
 <summary>Example rows (active, resistance, finished)</summary>
 
@@ -106,8 +108,8 @@ An unknown `warId` returns HTTP `404` with an HTML page.
 ### Where war IDs come from
 
 - `war_id` in the [battle list](campaigns.md#list-battles).
-- Links on the [country military page](../../country/military.md), which also lists a country's active resistance wars.
-- Links in the [military news RSS feed](../../military/wars.md#military-news-rss-feed) (old).
+- Links on the [country military page](../country/military.md), which also lists a country's active resistance wars.
+- Links in the [military news RSS feed](../media/news.md#military-news-rss).
 
 **Source:** real requests, 2026-11-27 (direct, resistance, civil and ended wars).
 

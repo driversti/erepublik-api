@@ -23,7 +23,7 @@ flowchart LR
 | [List items](#list-items) | GET | `/en/main/shopItemsJson` | ✅ Verified 2026-11-27 |
 | [Buy item](#buy-item) | POST | `/en/main/buyGoldItems`, `/en/main/vip-shop-buy` | 🔍 From code |
 | [Buy or claim a pack](#buy-or-claim-a-pack) | POST | `/en/get-gold/gold` | ✅ Verified 2026-11-27 (payment) |
-| [Payment window](#payment-window) | GET | `/en/main/paymenthub-buy` | ✅ Observed 2026-11-27 |
+| [Payment window](#payment-window) | GET | `/en/main/paymenthub-buy` | ✅ Verified 2026-11-27 |
 | [Payment status](#payment-status) | GET | `/en/main/buy-check-status/{transactionId}` | ✅ Verified 2026-11-27 |
 | [Check pending purchase](#check-pending-purchase) | POST | `/en/main/promo-packs` | ✅ Verified 2026-11-27 |
 | [Game Tokens popup](#game-tokens-popup) | POST | `/en/main/buy-withGameTokensPopup` | ✅ Verified 2026-11-27 |
@@ -151,9 +151,9 @@ For `paymenthub` the final response is the [payment window](#payment-window).
 
 ## Payment window
 
-`GET /en/main/paymenthub-buy?id={transactionId}` · Auth required · ✅ Observed 2026-11-27
+`GET /en/main/paymenthub-buy?id={transactionId}` · Auth required · ✅ Verified 2026-11-27
 
-HTML fragment shown while the payment is open. The browser's network log shows this request right after [Buy or claim a pack](#buy-or-claim-a-pack), whose own caller receives the fragment, so the `POST` evidently redirects here (the redirect status was not captured).
+HTML fragment shown while the payment is open. The browser's network log shows this request right after [Buy or claim a pack](#buy-or-claim-a-pack), whose own caller receives the fragment, so the `POST` evidently redirects here (the redirect status was not captured). The request was seen in the network log and was not sent on its own.
 
 The fragment contains a form `#paymenthub-form` that opens the external payment provider in a new window (not documented here), and a script holding the numeric `transactionId`. The script polls [Payment status](#payment-status) every second. When processed, it shows a thank-you message and after 3 seconds opens `redirectURL`, or reloads the page if there is none.
 

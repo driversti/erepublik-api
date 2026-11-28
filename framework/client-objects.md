@@ -70,7 +70,7 @@ if (erepublik.citizen.residence.hasResidence) {
 - For real-time energy, see `SERVER_DATA.health` on the battlefield page
 - The `isEmpire` and `isDictatorship` properties reflect the **current** government type
 - `terrainSkills` maps terrain IDs to skill level values
-- **Auth check:** `gold`, `currencyAmount`, `energy`, `energyPoolLimit`, `recoverableEnergy`, `userLevel` are **owner-only** — reading real values proves an *authenticated* session, not merely a present `erpk` cookie. Verified live 2026-07-14 on `/en` (acct LovelyPony 9742070: energy 1188/1200, gold 2108, currencyAmount 65869 PLN, userLevel 24).
+- **Auth check:** `gold`, `currencyAmount`, `energy`, `energyPoolLimit`, `recoverableEnergy`, `userLevel` are **owner-only** — reading real values proves an *authenticated* session, not merely a present `erpk` cookie. Verified live 2026-07-14 on `/en` (acct PLACEHOLDER 1234567: energy 1188/1200, gold 0, currencyAmount 0 PLN, userLevel 24).
 - **`prestige` was NOT present** in `erepublik.citizen` on `/en` (2026-07-14). If you need prestige/"wealth+prestige" reporting, source it elsewhere (profile JSON / another page) — do not assume this global carries it.
 - Current-**location** fields (`countryLocationId` / `regionLocationId`) differ from `residence.*` and citizenship when the citizen is abroad.
 
