@@ -1,281 +1,163 @@
-# Companies
+# Companies and holdings
 
-#erepublik #api #economy #companies
+[API docs](../README.md) › Economy › Companies
 
-[< Back to Economy Overview](README.md)
+**My Places**: your companies and holding companies, building and buying new ones, upgrades, and moving companies between holdings. Producing is on [Work](work.md#work-as-manager).
 
-Company management page -- viewing and managing factories, holdings, production stats, and upgrade trees.
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [My companies page](#my-companies-page) | GET | `/en/economy/myCompanies` | ✅ Verified 2026-11-27 |
+| [Build page](#build-page) | GET | `/en/economy/create-company` | ✅ Verified 2026-11-27 |
+| [Build](#build) | POST | `/en/economy/build-company` | 🔍 From code |
+| [Company market](#company-market) | GET | `/en/economy/buy-company/{countryId}` | ✅ Verified 2026-11-27 |
+| [Buy a company](#buy-a-company) | POST | `/en/economy/buy-company/…` | 🔍 From code |
+| [Upgrade a company](#upgrade-a-company) | POST | `/en/economy/upgrade-company` | 🔍 From code |
+| [Sell or dissolve](#sell-or-dissolve) | GET | `/en/economy/sell-company/{companyId}` | 🔍 From code |
+| [Advanced buildings page](#advanced-buildings-page) | GET | `/en/economy/advanced-buildings` | ✅ Verified 2026-11-27 |
+| [Upgrade an advanced building](#upgrade-an-advanced-building) | POST | `/en/economy/upgrade-factory` | 🔍 From code |
+| [Create holding popup](#create-holding-popup) | GET | `/en/economy/create-holding-popup` | ✅ Verified 2026-11-27 |
+| [Create holding](#create-holding) | POST | `/en/economy/create-holding` | 🔍 From code |
+| [Edit holding popup](#edit-holding-popup) | POST | `/en/economy/edit-holding-popup` | ✅ Verified 2026-11-27 |
+| [Rename or delete holding](#rename-or-delete-holding) | POST | `/en/economy/edit-holding` | 🔍 From code |
+| [Move one company popup](#move-one-company-popup) | POST | `/en/economy/assign-to-holding-popup` | ✅ Verified 2026-11-27 |
+| [Move one company](#move-one-company) | POST | `/en/economy/assign-to-holding` | 🔍 From code |
+| [Move several popup](#move-several-popup) | POST | `/en/economy/assign-multiple-to-holding-popup` | ✅ Verified 2026-11-27 |
+| [Move several](#move-several) | POST | `/en/economy/assign-multiple-to-holding` | 🔍 From code |
+| [Unassign popup](#unassign-popup) | POST | `/en/economy/unassign-factories-popup` | ✅ Verified 2026-11-27 |
+| [Unassign](#unassign) | POST | `/en/economy/unassign-factories` | 🔍 From code |
 
-**Related:** [Work](work.md) | [Job Market](job-market.md) | [Inventory](inventory.md)
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## My Companies Page
+## My companies page
 
-**Method:** GET
-**URL:** `/en/economy/myCompanies`
-**Auth Required:** Yes
+`GET /en/economy/myCompanies` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-The company management page where citizens view and manage all their factories and holding companies. Returns an HTML page containing embedded JavaScript variables with full company data, production stats, upgrade trees, raw material stocks, employee/work info, and action URLs. This is a **page endpoint** (returns HTML, not JSON) -- structured data is embedded in `<script>` tags.
-
-### Parameters
-
-No URL parameters.
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| Accept | `text/html,application/xhtml+xml` | Recommended |
-
-<details>
-<summary>Example Request (cURL)</summary>
+HTML page; the data is in JavaScript variables inside `<script>` tags. With hundreds of companies the page is large (earlier notes: about 1.8 MB for 315 companies).
 
 ```bash
 curl 'https://www.erepublik.com/en/economy/myCompanies' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
 ```
 
-</details>
+| Variable | Contents |
+|----------|----------|
+| [`companies`](#companies) | Companies, keyed by ID |
+| [`holdingCompanies`](#holdingcompanies) | Holdings, keyed by ID |
+| [`pageDetails`](#pagedetails) | Stocks, job, energy, overtime, industry definitions |
+| [`totals`](#totals) | Production totals of the preset work |
+| [`energyData`](#energydata) | Energy state |
+| [other](#scalar-variables) | Flags and action URLs |
 
-### Embedded JavaScript Variables
-
-#### `companies` -- All Owned Companies
-
-A map keyed by company ID containing every company the citizen owns. Each company includes production configuration, upgrade tree, work-as-manager (WAM) status, and holding assignment.
+### `companies`
 
 <details>
-<summary>companies variable example</summary>
+<summary>One entry (sample values)</summary>
 
-```javascript
-var companies = {
-  "358462": {
-    "id": 358462,
-    "holding_company_id": "148744",       // false if unassigned
-    "industry_id": 2,
-    "industry_name": "Weapons",
-    "industry_token": "WEAPON",
-    "products_img": "https://www.erepublik.net/images/icons/industry/2/q7_55x55.png?...",
-    "quality": 7,
-    "building_name": "Weapons Factory",
+```json
+{
+  "111111": {
+    "id": 111111, "holding_company_id": "222222",
+    "industry_id": 2, "industry_name": "Weapons", "industry_token": "WEAPON",
+    "products_img": "https://www.erepublik.net/images/icons/industry/2/q7_55x55.png",
+    "quality": 7, "building_name": "Weapons Factory",
     "building_img": "//www.erepublik.net/images/modules/myland/buildings/weapons_q7.png",
-    "is_raw": false,
-    "raw_img": "https://www.erepublik.net/images/icons/industry/12/default.png?...",
-    "wam_enabled": true,
-    "can_work_as_manager": true,
-    "cannot_work_as_manager_reason": "",   // "no_holding" when unassigned
-    "can_assign_employees": true,
-    "is_assigned_to_holding": true,
-    "preset_works": 0,
-    "preset_own_work": 1,
-    "base_production": 10,
-    "resource_bonus": 84,
-    "effective_bonus": 184,
-    "raw_usage": 36.8,
-    "production": 18.4,
-    "employee_limit": "10",
-    "upgrade_url": "//economy.erepublik.com/en/company/customize/358462",
-    "already_worked": false,
-    "todays_works": 0,
-    "total_works": 10,
-    "sell_url": "//www.erepublik.com/en/economy/sell-company/358462",
+    "is_raw": false, "raw_img": "https://www.erepublik.net/images/icons/industry/12/default.png",
+    "wam_enabled": true, "can_work_as_manager": true, "cannot_work_as_manager_reason": "",
+    "can_assign_employees": true, "is_assigned_to_holding": true,
+    "preset_works": 0, "preset_own_work": 1,
+    "base_production": 10, "resource_bonus": 84, "effective_bonus": 184,
+    "raw_usage": 36.8, "production": 18.4, "employee_limit": "10",
+    "upgrade_url": "//economy.erepublik.com/en/company/customize/111111",
+    "already_worked": false, "todays_works": 0, "total_works": 10,
+    "sell_url": "//www.erepublik.com/en/economy/sell-company/111111",
     "upgrades": {
-      "1": { "level": 1, "employees": 1, "cost": 610, "img": "...", "raw_usage": 0.1, "type": -1 },
-      "2": { "level": 2, "employees": 2, "cost": 600, "img": "...", "raw_usage": 0.2, "type": -1 },
-      "3": { "level": 3, "employees": 3, "cost": 575, "img": "...", "raw_usage": 0.3, "type": -1 },
-      "4": { "level": 4, "employees": 5, "cost": 525, "img": "...", "raw_usage": 0.4, "type": -1 },
-      "5": { "level": 5, "employees": 10, "cost": 425, "img": "...", "raw_usage": 0.5, "type": -1 },
-      "6": { "level": 6, "employees": 10, "cost": 225, "img": "...", "raw_usage": 0.6, "type": -1 },
-      "7": { "level": 7, "employees": 10, "cost": 0,   "img": "...", "raw_usage": 2,   "type": 0  }
+      "1": { "level": 1, "employees": 1, "cost": 610, "img": "…", "raw_usage": 0.1, "type": -1 },
+      "2": { "level": 2, "employees": 2, "cost": 600, "img": "…", "raw_usage": 0.2, "type": -1 },
+      "3": { "level": 3, "employees": 3, "cost": 575, "img": "…", "raw_usage": 0.3, "type": -1 },
+      "4": { "level": 4, "employees": 5, "cost": 525, "img": "…", "raw_usage": 0.4, "type": -1 },
+      "5": { "level": 5, "employees": 10, "cost": 425, "img": "…", "raw_usage": 0.5, "type": -1 },
+      "6": { "level": 6, "employees": 10, "cost": 225, "img": "…", "raw_usage": 0.6, "type": -1 },
+      "7": { "level": 7, "employees": 10, "cost": 0, "img": "…", "raw_usage": 2, "type": 0 }
     },
-    "max_quality": 7,
-    "own_tax": 65.5057
+    "max_quality": 7, "own_tax": 100
   }
-  // ... more companies keyed by ID
 }
 ```
 
 </details>
 
-**Company fields:**
-
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | number | Unique company ID |
-| `holding_company_id` | string\|false | ID of the holding this company is assigned to, or `false` if unassigned |
-| `industry_id` | number | Industry type ID (1=Food, 2=Weapons, 4=House, 7=FRM, 12=WRM, 17=HRM, 23=Aircraft, 24=ARM) |
-| `industry_name` | string | Human-readable industry name (e.g., "Food", "Weapons", "Rubber", "Deer") |
-| `industry_token` | string | Token identifier (e.g., `FOOD`, `WEAPON`, `HOUSE`, `AIRCRAFT`) |
-| `quality` | number | Product quality level (1-7) |
-| `building_name` | string | Display name (e.g., "Weapons Factory", "Food Factory") |
-| `is_raw` | boolean | `true` for raw material companies, `false` for finished goods |
-| `wam_enabled` | boolean | Whether Work-as-Manager is enabled for this company |
-| `can_work_as_manager` | boolean | Whether the citizen can currently WAM this company |
-| `cannot_work_as_manager_reason` | string | Reason WAM is unavailable: `"no_holding"`, or empty string if available |
-| `can_assign_employees` | boolean | Whether employees can be assigned |
-| `is_assigned_to_holding` | boolean | Whether the company is part of a holding |
-| `preset_works` | number | Number of employee work slots pre-configured for today |
-| `preset_own_work` | number | Whether owner WAM is pre-configured (0 or 1) |
-| `base_production` | number | Base production units per work (e.g., 10 for weapons, 100 for food) |
-| `resource_bonus` | number | Region resource bonus percentage (e.g., 84) |
-| `effective_bonus` | number | Total effective bonus: `base_production + resource_bonus` (e.g., 184) |
-| `raw_usage` | number | Raw materials consumed per production cycle |
-| `production` | number | Units produced per production cycle |
-| `employee_limit` | string | Maximum employees (as string, e.g., "10") |
-| `already_worked` | boolean | Whether the citizen has already WAM'd this company today |
-| `todays_works` | number | Number of employee works completed today |
-| `total_works` | number | Maximum works available today (includes employee slots) |
-| `upgrade_url` | string | URL to customize/upgrade this company (on economy.erepublik.com subdomain) |
-| `sell_url` | string | URL to sell this company |
-| `upgrades` | object | Map of upgrade levels (see below) |
-| `max_quality` | number | Maximum quality this company type can be upgraded to |
-| `own_tax` | number | Work-as-manager tax amount in local currency |
+| `id` | number | Company ID |
+| `holding_company_id` | string \| false | Holding, or `false` |
+| `industry_id`, `industry_name`, `industry_token` | | 1 Food, 2 Weapons, 4 House, 23 Aircraft; raw companies use resource IDs (7–19, 21–22, 24–28). Tokens `FOOD`, `WEAPON`, `HOUSE`, `AIRCRAFT`, … |
+| `quality` | number | 1–7 |
+| `building_name`, `building_img`, `products_img`, `raw_img` | string | Display data |
+| `is_raw` | boolean | Raw material company |
+| `wam_enabled`, `can_work_as_manager` | boolean | WAM allowed for the type; possible now |
+| `cannot_work_as_manager_reason` | string | `""`, `no_holding`, `location`, `war` |
+| `can_assign_employees`, `is_assigned_to_holding` | boolean | |
+| `preset_works`, `preset_own_work` | number | Preselected employee works and own work (0/1) |
+| `base_production` | number | Units per work (10 weapons, 100 food) |
+| `resource_bonus`, `effective_bonus` | number | Region bonus %, and base plus bonus (184) |
+| `raw_usage`, `production` | number | Raw material used and units produced per work |
+| `employee_limit` | string | Maximum employees |
+| `already_worked` | boolean | WAM done today |
+| `todays_works`, `total_works` | number | Employee works done; maximum today |
+| `upgrade_url`, `sell_url` | string | Links |
+| `upgrades.{level}` | object | `level`, `employees`, `cost` (Gold), `img`, `raw_usage` (per product), `type`: `-1` below current, `0` current, `1` above |
+| `max_quality` | number | Highest level |
+| `own_tax` | number | WAM tax in local currency |
 
-**Upgrade level fields:**
+The client locks levels above 5 for the `HOUSE` and `AIRCRAFT` industries.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `level` | number | Upgrade level (1-7) |
-| `employees` | number | Employee slots at this level |
-| `cost` | number | Gold cost to upgrade to this level (0 = current level) |
-| `raw_usage` | number | Raw materials consumed per product at this level |
-| `type` | number | `-1` = below current, `0` = current level, `1` = above current (available upgrade) |
+### `holdingCompanies`
 
-#### `holdingCompanies` -- Holding Companies
-
-A map keyed by holding ID containing all the citizen's holding companies.
-
-<details>
-<summary>holdingCompanies variable example</summary>
-
-```javascript
-var holdingCompanies = {
-  "148744": {
-    "id": 148744,
-    "owner_id": 4690052,
-    "owner_entity_type": "citizen",
-    "region_id": 663,
-    "name": "Hail Lithuania",
-    "created_at": 1675322000,
-    "num_factories": 224,
+```json
+{
+  "222222": {
+    "id": 222222, "owner_id": 1000001, "owner_entity_type": "citizen", "region_id": 1,
+    "name": "Holding Name", "created_at": 1700000000, "num_factories": 10,
     "avatar": "https://www.erepublik.net/images/default_avatars/holding_100x100.png"
   }
-  // ... more holdings
 }
 ```
 
-</details>
+`region_id` is the holding's region; `created_at` is Unix time.
+
+### `pageDetails`
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `id` | number | Unique holding company ID |
-| `owner_id` | number | Citizen ID of the owner |
-| `owner_entity_type` | string | Entity type (always `"citizen"`) |
-| `region_id` | number | Region ID where the holding is located |
-| `name` | string | Holding company name (user-defined) |
-| `created_at` | number | Unix timestamp of creation |
-| `num_factories` | number | Total factories assigned to this holding |
-| `avatar` | string | Avatar image URL |
+| `total_works` | string | Employee work slots |
+| `food_raw_stock`, `weapon_raw_stock`, `house_raw_stock`, `airplane_raw_stock` | number | Raw material stocks (FRM, WRM, HRM, ARM) |
+| `health`, `energy` | number | Current energy; the client counts `energy` on top for energy bars. Earlier notes call `energy` the cost of the preset work |
+| `recoverable_health` | object | `value`, `reset` (Unix) |
+| `recoverable_health_in_food` | number | Energy value of stored food |
+| `employee` | object | Your job: `salary`, `total_daily_salary`, `currency`, `employer` (`id`, `name`, `created_at`, `has_avatar`), `alreadyWorked`, `taxes` |
+| `next_overtime_work` | number | Unix time of the next overtime |
+| `overtime_points` | number | Overtime points |
+| `overtime_works` | number | Earlier notes: total overtime work count |
+| `president` | array | Empty, or president data |
+| `show_first_view`, `tutorial` | boolean | Interface flags |
+| `food`, `weapon`, `house`, `airplane` | object | Industry definitions, below |
+| `*_tip`, `*_tooltip`, `*_warn*`, `*_critical` | string | Interface texts |
 
-#### `pageDetails` -- Page-Level Economy Data
-
-Aggregated economy information including raw material stocks, employee data, energy, overtime stats, and product attribute definitions.
+Industry definition: `id` (1, 2, 4, 23), `name`, `token`, `bp` (base production: 100 food, 10 weapons), `max_quality`, `all_qualities` (includes special items), `attributes` (quality → `effect`, `uses`, `name`; plus `effect_name`, `use_name`, `type`), `tooltip_attr`, `bomb_ids` (weapons), `buildingName`, `wam_enabled`, `raw` (`id`, `name`, `short_name`, `token`, `is_raw`), `industryBuildingIcon`.
 
 <details>
-<summary>pageDetails variable example</summary>
+<summary>Food and weapon qualities (2026-11-27)</summary>
 
-```javascript
-var pageDetails = {
-  "total_works": "579",
-  "food_raw_stock": 8089,
-  "weapon_raw_stock": 4605,
-  "house_raw_stock": 1353,
-  "airplane_raw_stock": 720,
-  "recoverable_health": { "value": 0, "reset": "1770900062" },
-  "recoverable_health_in_food": 14282854,
-  "health": 128,
-  "employee": {
-    "salary": 7500,
-    "total_daily_salary": 15000,
-    "currency": "LTL",
-    "employer": {
-      "id": "2580095",
-      "name": "Greenday_1989",
-      "created_at": "2010-01-18 03:00:03",
-      "has_avatar": "1"
-    },
-    "alreadyWorked": true,
-    "taxes": 75
-  },
-  "show_first_view": false,
-  "tutorial": false,
-  "president": [],
-  "next_overtime_work": 1770887170,
-  "energy": 7135200,
-  "overtime_points": 10792,
-  "overtime_works": 449,
-  "food": { /* product definition -- see below */ },
-  "weapon": { /* product definition */ },
-  "house": { /* product definition */ },
-  "airplane": { /* product definition */ }
-}
-```
-
-</details>
-
-**Top-level fields:**
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `total_works` | string | Total employee work slots available across all companies |
-| `food_raw_stock` | number | Current Food Raw Materials (FRM) stock |
-| `weapon_raw_stock` | number | Current Weapon Raw Materials (WRM) stock |
-| `house_raw_stock` | number | Current House Raw Materials (HRM) stock |
-| `airplane_raw_stock` | number | Current Aircraft Raw Materials (ARM) stock |
-| `recoverable_health.value` | number | Recoverable energy amount |
-| `recoverable_health.reset` | string | Unix timestamp when recoverable health resets |
-| `recoverable_health_in_food` | number | Energy value of all food in inventory |
-| `health` | number | Current citizen energy |
-| `employee` | object | Employment data (salary, employer, taxes -- same as `/en/main/job-data`) |
-| `next_overtime_work` | number | Unix timestamp for next overtime availability |
-| `energy` | number | Total energy cost for all preset WAM work (in energy units) |
-| `overtime_points` | number | Accumulated overtime points |
-| `overtime_works` | number | Total overtime work count |
-| `president` | array | Empty array, or president data if citizen is president |
-
-**Product definition fields** (nested under `food`, `weapon`, `house`, `airplane`):
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | number | Product type ID (1=Food, 2=Weapons, 4=House, 23=Aircraft) |
-| `name` | string | Product name |
-| `token` | string | Token (e.g., `FOOD`, `WEAPON`) |
-| `bp` | number | Base production per work (100 for food, 10 for weapons) |
-| `max_quality` | number | Max quality level |
-| `all_qualities` | array | All available quality values including special items |
-| `wam_enabled` | boolean | Whether WAM is enabled for this industry |
-| `buildingName` | string | Factory building display name |
-| `raw` | object | Raw material info: `{ id, name, short_name, token, is_raw }` |
-| `attributes` | object | Quality -> effect mapping (energy restored, fire power, durability, etc.) |
-
-**Food quality attributes** (from `pageDetails.food.attributes`):
-
-| Quality | Effect (Energy) | Name |
-|---------|----------------|------|
-| 0 | 1 | *(base)* |
-| 1 | 2 | Q1 Food |
-| 2 | 4 | Q2 Food |
-| 3 | 6 | Q3 Food |
-| 4 | 8 | Q4 Food |
-| 5 | 10 | Q5 Food |
-| 6 | 12 | Q6 Food |
-| 7 | 20 | Q7 Food |
+| Food quality | Energy | Name |
+|--------------|--------|------|
+| 0 | 1 | |
+| 1–6 | 2, 4, 6, 8, 10, 12 | |
+| 7 | 20 | |
 | 10 | 100 | Energy Bar |
 | 11 | 200 | Double Energy Bar |
-| 12 | 50 | Treat |
+| 12 | 50 | Pumpkin |
 | 13 | 50 | Carrot |
 | 14 | 50 | Ice Cream |
 | 15 | 50 | Pumpkin |
@@ -283,135 +165,384 @@ var pageDetails = {
 | 17 | 300 | Triple Energy Bar |
 | 18 | 10 | Bonbons |
 
-#### `totals` -- Production Totals
+| Weapon quality | Fire power | Uses | Name |
+|----------------|-----------|------|------|
+| 0 | 5 | 1 | |
+| 1–6 | 20–120 (step 20) | 1–6 | |
+| 7 | 200 | 10 | |
+| 8 | 250 | 999 | |
+| 10 | 10000 | 3 | Bazooka |
+| 11, 100 | 100 | 3 | |
+| 21, 22 | 1500000, 5000000 | 1 | Small Bomb, Big Bomb |
+| 51, 52 | 50000000, 100000000 | 1 | SLG Peacemaker, BB Scatter Bomb |
+| 211, 212, 213 | 75000, 375000, 750000 | 1 | Small Bomb |
+| 215 | 1500000 | 1 | Cruise Missile |
+| 216 | 180000000 | 1 | Annihilator MK18 |
 
-Aggregated production and raw material consumption across all companies.
+</details>
 
-<details>
-<summary>totals variable example</summary>
+### `totals`
 
-```javascript
-var totals = {
-  "food_raw": 0,
-  "weapon_raw": 109.65,
-  "house_raw": 0,
-  "airplane_raw": 0,
-  "health_used": -2240,
-  "own_works": 224,
-  "food_units": 0,
-  "weapon_units": 441.6,
-  "house_units": 0,
-  "airplane_units": 0,
-  "preset_works": 0,
-  "preset_own_works": 224,
-  "work_as_manager_tax": -14673.28,
-  "food_raw_img": "...",
-  "food_img": "...",
-  "weapon_img": "...",
-  "weapon_raw_img": "...",
-  "house_raw_img": "...",
-  "house_img": "...",
-  "airplane_raw_img": "...",
-  "airplane_img": "..."
+`food_raw`, `weapon_raw`, `house_raw`, `airplane_raw` (raw materials the preset work uses), `food_units`, `weapon_units`, `house_units`, `airplane_units`, `health_used` (negative), `own_works`, `preset_works`, `preset_own_works`, `work_as_manager_tax` (negative, local currency), and `*_img` icons.
+
+### `energyData`
+
+```json
+{ "energy": 100, "energyPoolLimit": 1000, "recoverableEnergy": 0, "energyPerInterval": 10, "energyStatus": "recovering" }
+```
+
+`energyPerInterval` is per 6 minutes (earlier notes). `energyStatus`: `recovering`, `full`, or `limitReached` (energy above the pool limit). Details: [Energy](../home/energy.md).
+
+### Scalar variables
+
+| Variable | Description |
+|----------|-------------|
+| `csrfToken` | [CSRF token](../guides/requests.md#csrf-token) |
+| `food_remaining` | Earlier notes: food raw materials remaining after preset production (see [Open questions](#open-questions)) |
+| `has_captcha` | Whether a [captcha](work.md#submit-a-captcha) is required (`0` / `1`) |
+| `has_pin` | Whether a safety code is set (`0` / `1`) |
+| `is_organization` | Empty for citizens |
+| `rawMultiplier` | Raw material multiplier per employee (`0.01`) |
+| `promoMultiplier`, `promoMultiplierHouse` | Upgrade discount fraction, `0` without a promotion; the second applies to House companies |
+| `defaultHoldingsOpenClosedState` | `closed` or `open` |
+| `work_url`, `work_overtime_url`, `resign_url`, `captcha_url` | See [Work](work.md) and [Resign](job-market.md#resign) |
+| `upgarade_url` | [Upgrade](#upgrade-a-company) (misspelled by the game) |
+| `linkForBuy` | [Marketplace](marketplace.md) link |
+| `serverTime`, `resign_confirm`, `raw_consumption`, `MY_COMPANIES_TEXTS` | Interface values |
+
+**Source:** real request, 2026-11-27; field notes from earlier documentation.
+
+---
+
+## Build page
+
+`GET /en/economy/create-company` · Auth required · ✅ Verified 2026-11-27
+
+HTML page for new companies, storage and training grounds. Variables: `prices` (industry ID → `value`, `currency`: `gold` or `local`), `training_grounds_prices` (`[0,100,200,300]`), your `gold` and `money`.
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Build
+
+`POST /en/economy/build-company` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Spends Gold or currency.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `buildingType` | number | Yes | `1` company, `2` storage, `3` training ground |
+| `industryId` | number | Yes | Industry; for storage `1` small (currency), `2` large (Gold) |
+| `amountToBuild` | number | Yes | 1–99 |
+
+```bash
+curl 'https://www.erepublik.com/en/economy/build-company' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw 'buildingType=1&industryId=1&amountToBuild=1&_token=YOUR_CSRF_TOKEN'
+```
+
+JSON with `error` and `message`.
+
+**Source:** `company/create.js` (version 1698060179).
+
+---
+
+## Company market
+
+`GET /en/economy/buy-company/{countryId}` · Auth required · ✅ Verified 2026-11-27
+
+HTML list of companies for sale. It links filters of the form `/en/economy/buy-company/{industryId}/{quality}` for industries 1, 2, 4 and 23. The observed listings were empty.
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Buy a company
+
+`POST /en/economy/buy-company/…` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Spends Gold.
+
+Buying several at once sends one request per company to a URL built by the server, observed as `/en/economy/buy-company/{countryId}/0/asc/1`:
+
+| Name | Type | Description |
+|------|------|-------------|
+| `_token` | string | CSRF token |
+| `companyId` | number | The offer |
+| `format` | string | `json` |
+
+The answer has `error` and `message`. A single purchase submits a page form with the field `buyCompany_companyId`.
+
+**Source:** inline script of the company market page, 2026-11-27.
+
+---
+
+## Upgrade a company
+
+`POST /en/economy/upgrade-company` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Changes the company level: an upgrade spends Gold, a downgrade refunds it.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `type` | string | Yes | `upgrade` |
+| `companyId` | number | Yes | |
+| `level` | number | Yes | Target level |
+| `pin` | string | Yes | Safety code when required |
+| `shownCost` | number | Yes | The price displayed to the player |
+
+Answers: `status: true`; or `status: false` with `message` `redirect` or `not_enough_gold`; `message` `INVALID_PIN`, `PIN_ATTEMPTS`.
+
+**Source:** `citizen/myCompanies.js` (version 1760600930), `upgradeCompany`.
+
+---
+
+## Sell or dissolve
+
+`GET /en/economy/sell-company/{companyId}` · Auth required · 🔍 From code
+
+> [!WARNING]
+> The **Sell/Dissolve** button of a company links here. The page was not opened; do not call it unless you mean to sell or dissolve.
+
+Parameters of the form behind it are unknown.
+
+**Source:** My Places markup and `companies.{id}.sell_url`, 2026-11-27.
+
+---
+
+## Advanced buildings page
+
+`GET /en/economy/advanced-buildings` · Auth required · ✅ Verified 2026-11-27
+
+HTML page with special buildings such as the rocket factory. Variables: `upgrade_factory_url`, `FACTORY_TEXTS` (the first three factory levels produce 2 rockets a day, higher ones one rocket and one damage booster), `has_pin`. Assembling items: [Inventory](inventory.md#assemble).
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Upgrade an advanced building
+
+`POST /en/economy/upgrade-factory` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Changes the building level and may spend Gold.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `type` | string | Yes | `upgrade_factory` |
+| `level` | number | Yes | Target level |
+| `pin` | string \| boolean | Yes | Safety code for a downgrade, otherwise `false` |
+| `shownCost` | number | Yes | Displayed price |
+
+Answers as for [Upgrade a company](#upgrade-a-company).
+
+The older script `citizen/healthBuildings.js` (version 1704452307), still loaded, posts `type=townHall`, `shownCost=0` to a variable `upgrade_url` that the page no longer defines.
+
+**Source:** `citizen/armory.js` (version 1704452307), `upgradeBuilding`.
+
+---
+
+## Create holding popup
+
+`GET /en/economy/create-holding-popup` · Auth required · ✅ Verified 2026-11-27
+
+HTML popup for a new holding in your current region. The script variable `popupPageDetails` describes the place:
+
+| Field | Description |
+|-------|-------------|
+| `region`, `country` | Region (with `city`, `resources`, `determination`) and its owner (with `productivityBonus`) |
+| `currencies` | `country`, `entity` (yours) |
+| `cost` | Price of the holding, formatted |
+| `taxes` | `vat`, `import`, `income` per industry ID |
+| `incomeTax` | Formatted percent |
+| `salary` | `minimum`, `average`, `highest` |
+| `embargoes`, `pollution` | Trade embargoes; pollution per industry and level |
+| `industries` | Industry definitions as in [`pageDetails`](#pagedetails) |
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Create holding
+
+`POST /en/economy/create-holding` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Creates a holding and spends its price.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `action` | string | Yes | `create` |
+| `holdingCompanyName` | string | Yes | Name |
+
+Answer: `error`, `message`.
+
+**Source:** script of the create holding popup, 2026-11-27.
+
+---
+
+## Edit holding popup
+
+`POST /en/economy/edit-holding-popup` · Auth required · ✅ Verified 2026-11-27
+
+HTML popup with the holding's location, bonuses, taxes, salaries and the rename and delete controls. Read-only. A `GET` answers `404`.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `holdingCompanyId` | number | Yes | Holding |
+
+```bash
+curl 'https://www.erepublik.com/en/economy/edit-holding-popup' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw 'holdingCompanyId=222222&_token=YOUR_CSRF_TOKEN'
+```
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Rename or delete holding
+
+`POST /en/economy/edit-holding` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Renames or deletes the holding.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `action` | string | Yes | `changeName` or `delete` |
+| `holdingCompanyId` | number | Yes | |
+| `holdingCompanyName` | string | For `changeName` | New name |
+
+Answer: `error`, `message`.
+
+**Source:** script of the edit holding popup, 2026-11-27.
+
+---
+
+## Move one company popup
+
+`POST /en/economy/assign-to-holding-popup` · Auth required · ✅ Verified 2026-11-27
+
+HTML popup listing target holdings with the price of moving there. Read-only. A `GET` answers `404`.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `factoryId` | number | Yes | Company ID |
+
+The script variable `assignPageDetails.holdingCompanies.{id}` holds the [holding fields](#holdingcompanies) plus `locationInfo` (`region`, `country`, `city`), `incorporationCost` (formatted) and `incorporationData`:
+
+```json
+{
+  "base_value": 17000, "upgrades_value": 121000, "multiplier": 0, "company_value": 138000,
+  "holding_company_id": 222222, "current_region_id": 2,
+  "travel_distance": "N/A", "travel_cost": "N/A",
+  "tokens_cost": 3, "cost": 0, "quality": 3
 }
 ```
 
-</details>
+`cost` is the relocation price in currency, `tokens_cost` the price in Factory Reset Tokens.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `food_raw` | number | Total FRM consumed by all preset food companies |
-| `weapon_raw` | number | Total WRM consumed by all preset weapon companies |
-| `house_raw` | number | Total HRM consumed by all preset house companies |
-| `airplane_raw` | number | Total ARM consumed by all preset aircraft companies |
-| `health_used` | number | Total energy consumed (negative value) |
-| `own_works` | number | Total WAM work count across all companies |
-| `food_units` | number | Total food units produced |
-| `weapon_units` | number | Total weapon units produced |
-| `house_units` | number | Total house units produced |
-| `airplane_units` | number | Total aircraft units produced |
-| `preset_works` | number | Total preset employee works |
-| `preset_own_works` | number | Total preset WAM works |
-| `work_as_manager_tax` | number | Total WAM tax cost in local currency (negative value) |
+**Source:** real request, 2026-11-27.
 
-#### `energyData` -- Current Energy Status
+---
 
-<details>
-<summary>energyData variable example</summary>
+## Move one company
 
-```javascript
-var energyData = {
-  "energy": 128,
-  "energyPoolLimit": 10220,
-  "recoverableEnergy": 0,
-  "energyPerInterval": 64,
-  "energyStatus": "recovering"
-}
+`POST /en/economy/assign-to-holding` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Moves the company and spends currency or Factory Reset Tokens.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `action` | string | Yes | `assign` |
+| `holdingCompanyId` | number | Yes | Target holding |
+| `factoryId` | number | Yes | Company |
+| `acceptedCost` | number | Yes | `incorporationData.cost` of the target |
+| `acceptedTokens` | number | Yes | `incorporationData.tokens_cost` |
+
+The script's comment says the server refuses the move when the price no longer matches. Answer: `error`, `message`.
+
+**Source:** script of the popup, 2026-11-27.
+
+---
+
+## Move several popup
+
+`POST /en/economy/assign-multiple-to-holding-popup` · Auth required · ✅ Verified 2026-11-27
+
+As [Move one company popup](#move-one-company-popup), with `factoriesIds[]` instead of `factoryId`; it shows the total price. Read-only.
+
+```bash
+curl 'https://www.erepublik.com/en/economy/assign-multiple-to-holding-popup' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-urlencode 'factoriesIds[0]=111111' \
+  --data-urlencode 'factoriesIds[1]=111112' \
+  --data-raw '_token=YOUR_CSRF_TOKEN'
 ```
 
-</details>
+**Source:** real request, 2026-11-27.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `energy` | number | Current energy points |
-| `energyPoolLimit` | number | Maximum energy pool capacity |
-| `recoverableEnergy` | number | Energy that can be recovered |
-| `energyPerInterval` | number | Energy recovered per 6-minute interval |
-| `energyStatus` | string | Recovery status: `"recovering"`, `"full"`, or `"limitReached"` (when current energy exceeds pool limit, e.g. after eating food) |
+---
 
-#### Scalar Configuration Variables
+## Move several
 
-<details>
-<summary>Scalar variables</summary>
+`POST /en/economy/assign-multiple-to-holding` · Auth required · 🔍 From code
 
-```javascript
-var csrfToken        = 'YOUR_CSRF_TOKEN';
-var food_remaining   = 0;
-var has_captcha      = 0;
-var has_pin          = 1;
-var is_organization  = '';
-var rawMultiplier    = 0.01;
-var promoMultiplier  = parseFloat(0);       // active production promo multiplier
-var promoMultiplierHouse = parseFloat(0);    // active house production promo multiplier
-var defaultHoldingsOpenClosedState = "closed";
+> [!WARNING]
+> Moves the companies and spends currency or Factory Reset Tokens.
 
-// Action URLs
-var work_url          = '//www.erepublik.com/en/economy/work';
-var work_overtime_url = '//www.erepublik.com/en/economy/workOvertime';
-var resign_url        = '//www.erepublik.com/en/economy/resign';
-var captcha_url       = '//www.erepublik.com/en/economy/recaptchaAjax';
-var upgarade_url      = '//www.erepublik.com/en/economy/upgrade-company';  // note: typo is in original
-var linkForBuy        = '/en/economy/marketplace#72/1';
-```
+Parameters: `_token`, `action=assign`, `holdingCompanyId`, `factoriesIds[]`, `acceptedCost`, `acceptedTokens`. Answer: `error`, `message`.
 
-</details>
+**Source:** script of the popup, 2026-11-27.
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| `csrfToken` | string | CSRF token for POST requests on this page |
-| `food_remaining` | number | Food raw materials remaining after preset production |
-| `has_captcha` | number | Whether CAPTCHA verification is required (0=no, 1=yes) |
-| `has_pin` | number | Whether the citizen has set a PIN (0=no, 1=yes) |
-| `is_organization` | string | Empty string for citizens; set for organization accounts |
-| `rawMultiplier` | number | Base raw material consumption multiplier per employee |
-| `promoMultiplier` | number | Active production bonus multiplier (0 = no promo) |
-| `promoMultiplierHouse` | number | Active house production bonus multiplier (0 = no promo) |
-| `defaultHoldingsOpenClosedState` | string | UI default state for holding panels: `"closed"` or `"open"` |
-| `work_url` | string | POST endpoint to perform employee work |
-| `work_overtime_url` | string | POST endpoint to perform overtime work |
-| `resign_url` | string | POST endpoint to resign from current job |
-| `captcha_url` | string | AJAX endpoint for CAPTCHA verification |
-| `upgarade_url` | string | POST endpoint to upgrade a company (note: variable name typo `upgarade` is in the original source) |
-| `linkForBuy` | string | Marketplace link for buying raw materials |
+---
 
-### Notes
+## Unassign popup
 
-- This is an **HTML page endpoint**, not a JSON API endpoint
-- Data is extracted from `<script>` tags embedded in the page HTML
-- The `companies` map can be very large -- a citizen with 315 companies generates ~1.8 MB of HTML
-- Companies not assigned to a holding have `holding_company_id: false` and `cannot_work_as_manager_reason: "no_holding"`
-- The `upgrades` object uses `type` to indicate relative position: `-1` = already surpassed, `0` = current level, `1` = available upgrade
-- The `upgarade_url` variable has a typo in the original eRepublik source code (`upgarade` instead of `upgrade`)
-- Industry IDs for raw materials: 7=FRM, 12=WRM, 17=HRM, 24=ARM; for raw resource companies: Deer, Cattle, Fish (food raws), Rubber, Aluminum, Granite, Neodymium (weapon/house/aircraft raws)
-- The `promoMultiplier` and `promoMultiplierHouse` values are non-zero during special production bonus events
-- Action URLs (`work_url`, `resign_url`, etc.) require a POST with `csrfToken` as `_token` parameter
+`POST /en/economy/unassign-factories-popup` · Auth required · ✅ Verified 2026-11-27
+
+HTML popup with the price (in Factory Reset Tokens) of removing companies from their holdings. Parameters: `_token`, `factoriesIds[]`. Read-only.
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Unassign
+
+`POST /en/economy/unassign-factories` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Removes the companies from their holdings and spends Factory Reset Tokens.
+
+Parameters: `_token`, `action=unassign`, `factoriesIds[]`. Answer: `error`, `message`.
+
+**Source:** script of the popup, 2026-11-27.
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| Food quality 12 and 18 | 12 `Treat`, 18 `Bonbons` | 12 `Pumpkin`, 18 `Bonbons` | Live page |
+| `pageDetails.energy` | Energy cost of preset work | Added to recoverable energy in the energy bar check | Not settled |
+| `effective_bonus` | `base_production + resource_bonus` | `10` and `84` give `184` only with base 100% | Not settled |
+| `food_remaining` | Food raw materials left after preset production | [Marketplace](marketplace.md#marketplace-page) notes call the same name the remaining daily food limit | Not settled |
+| `upgrade_url` of a company | Customize URL | Upgrades go to `upgrade-company` | — |

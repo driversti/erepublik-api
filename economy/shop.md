@@ -1,239 +1,339 @@
-# Shop
+# Shop and pack purchases
 
-#erepublik #api #economy #shop
+[API docs](../README.md) › Economy › Shop
 
-[< Back to Economy Overview](README.md)
+The shop (`/en/main/special-items`) sells two different things:
 
-Gold Shop and VIP Shop items -- retrieving available items, prices, discounts, and purchase limits.
+- **Packs**, paid with real money or Game Tokens, shown as large cards.
+- **Items**, paid with in-game currency (Gold, Loyalty Points, VIP currencies).
 
-**Related:** [Inventory](inventory.md) | [Boosters](boosters.md)
+```mermaid
+flowchart LR
+    A[Shop page] --> B[Pack popup]
+    B --> D[promo-packs check]
+    D -->|real money| C[get-gold/gold] --> I[External payment] --> J[buy-check-status]
+    D -->|Game Tokens| E[Tokens popup] --> H[Confirm purchase]
+    A --> F[Item list] --> G[Buy item]
+```
+
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Shop page](#shop-page) | GET | `/en/main/special-items` | ✅ Verified 2026-11-27 |
+| [Pack popup](#pack-popup) | GET | `/en/main/custom-pack` | ✅ Verified 2026-11-27 |
+| [List items](#list-items) | GET | `/en/main/shopItemsJson` | ✅ Verified 2026-11-27 |
+| [Buy item](#buy-item) | POST | `/en/main/buyGoldItems`, `/en/main/vip-shop-buy` | ✅ Verified 2026-11-28 |
+| [Buy or claim a pack](#buy-or-claim-a-pack) | POST | `/en/get-gold/gold` | ✅ Verified 2026-11-27 (payment) |
+| [Payment window](#payment-window) | GET | `/en/main/paymenthub-buy` | ✅ Verified 2026-11-27 |
+| [Payment status](#payment-status) | GET | `/en/main/buy-check-status/{transactionId}` | ✅ Verified 2026-11-27 |
+| [Check pending purchase](#check-pending-purchase) | POST | `/en/main/promo-packs` | ✅ Verified 2026-11-27 |
+| [Game Tokens popup](#game-tokens-popup) | POST | `/en/main/buy-withGameTokensPopup` | ✅ Verified 2026-11-27 |
+| [Confirm token purchase](#confirm-token-purchase) | POST | `/en/main/buy-withGameTokens` | ✅ Verified 2026-11-27 |
+
+Headers and `_token`: see [Making requests](../guides/requests.md#common-headers).
 
 ---
 
-## Get Shop Items
+## Shop page
 
-**Method:** GET
-**URL:** `/en/main/shopItemsJson`
-**Auth Required:** Yes
+`GET /en/main/special-items` · Auth required · ✅ Verified 2026-11-27
 
-### Description
+HTML page. Each pack is an element with class `packContainer`; its `id` is the **pack type** used by every pack endpoint.
 
-Retrieves all available items in the Gold Shop and VIP Shop, including prices, discounts, purchase limits, and item details. This endpoint returns two main sections:
-- **Gold Items:** Standard shop items purchasable with Gold or Loyalty Points (energy bars, fuel, boosters, bazooka parts, storage)
-- **VIP Shop Items:** Special discounted items available at different VIP levels, purchasable with Gold, Raw Materials, or Currency
+| Class on the pack | Meaning |
+|-------------------|---------|
+| `section_black_friday`, `section_one_time`, `section_unlimited` | Shop section |
+| `one_time_only`, `limited_amount` | Purchase limits |
+| `progressive_pack` | Part of a "Chain Deal" |
+| `already_bought` | Already bought or received |
+| `freePack` | Costs nothing |
 
-### Parameters
+The buy button is `a.pop_custom_packs` with `data-type="{packType}"`. The client can also open the page at a section or pack with `?showType=…` or `?showPack=…` (🔍 From code).
 
-No parameters required.
+---
 
-### Headers
+## Pack popup
 
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
+`GET /en/main/custom-pack?packType={packType}` · Auth required · ✅ Verified 2026-11-27
 
-<details>
-<summary>Example Request (cURL)</summary>
+HTML fragment with the pack's contents, price and purchase scripts.
+
+| Name | In | Required | Description |
+|------|----|----------|-------------|
+| `packType` | query | Yes | Pack element `id`, e.g. `goldPack_S` |
+| `to_citizen_id` | query | No | Buy as a gift (🔍 From code) |
 
 ```bash
-curl 'https://www.erepublik.com/en/main/shopItemsJson' \
+curl 'https://www.erepublik.com/en/main/custom-pack?packType=goldPack_S' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Accept: application/json, text/plain, */*'
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+The fragment contains a form `#goBuy` (action `/en/get-gold/gold`) and, for packs payable with tokens, a button `#buyWithGameTokens` with `data-pack-name`. Prices are shown in the account's local currency.
 
-<details>
-<summary>Example Response</summary>
+A pack that is not available to you (for example a locked tier, or a gift already received) returns only the message `"You cannot buy this pack"` with status 200.
+
+---
+
+## List items
+
+`GET /en/main/shopItemsJson` · Auth required · ✅ Verified 2026-11-27
+
+Returns `data.goldItems.items[]` and `data.vipShopItems.items[]`.
+
+Fields relevant to buying and discounts:
+
+| Field | Where | Meaning |
+|-------|-------|---------|
+| `id` | both | Sent as `itemId` |
+| `goldPrice` | gold items | Regular price |
+| `discountedGoldPrice` | gold items | Present when discounted; the client charges this price |
+| `lpPrice` | gold items | Price in Loyalty Points, if offered |
+| `itemPurchaseLimit`, `initialPurchaseLimit` | both | Remaining and original limit |
+| `soldOut` | both | Sold out |
+| `packClasses` | gold items | CSS classes; event items carry an event class |
+| `price`, `currency`, `discount`, `discountClass` | VIP items | Price and discount badge |
+
+---
+
+### More fields and values (earlier notes)
+
+| Field | Description |
+|-------|-------------|
+| `type` | `speed_booster_X`, `damage_booster_X`, `catchup_booster`, `deploy_size_booster`, `prestige_points`, `energy_bars`, `fuel`, `storage`, reset tokens, discharge documents and others; VIP items add a suffix (`catchup_booster_40_300_vip11`) |
+| `quantity`, `maxQuantity`, `cost` | VIP item amount, limit and cost |
+| `vipLevel`, `locked` | Minimum VIP level; `true` above your level |
+| `currency` | `gold`, `currency`, `food_raw`, `weapon_raw`, `aircraft_raw`, `house_raw`, `loyalty_points`, `unavailable` (locked) |
+| `currencyName`, `currencyIcon`, `lpCurrencyName`, `lpCurrencyIcon` | Display data of the currencies |
+| `data` | `name`, `type`, `image`, `quality`, `tooltip`, `discount`, `duration` |
+| `isKey`, `dotNotification` | Flags, `false` observed |
+| `discountClass` | `green` 5–20%, `blue` 25–40%, `purple` 45–60%, `orange` 65–80%, `red` 85% and more |
+
+Some prices rise with each purchase (for example Fuel).
+
+## Buy item
+
+`POST /en/main/buyGoldItems` (or `/en/main/vip-shop-buy` for VIP items) · Auth required · ✅ Verified 2026-11-28 (`buyGoldItems`; `vip-shop-buy` 🔍 From code)
+
+> [!WARNING]
+> Spends in-game currency immediately.
+
+| Name | Type | Description |
+|------|------|-------------|
+| `_token` | string | CSRF token |
+| `itemId` | string \| number | Item `id` |
+| `amount` | number | Quantity |
+| `currency` | string | `gold`, `lp`, a key type for boxes, or the VIP item's currency |
+| `shownPrice` | number | Unit price shown to the player (the discounted one if present) |
+| `vipShopItem` | boolean | Set for VIP items; selects the `vip-shop-buy` path |
+
+### Request
+
+```bash
+curl 'https://www.erepublik.com/en/main/buyGoldItems' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  -H 'Referer: https://www.erepublik.com/en/main/gold-items' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&itemId=doubleEnergyBarPack2&vipShopItem=false&shownPrice=15.4&amount=100&currency=gold'
+```
+
+### Response
 
 ```json
 {
   "error": false,
-  "data": {
-    "goldItems": {
-      "sectionId": "goldItems",
-      "title": "Gold Items",
-      "items": [
-        {
-          "id": "fuel",
-          "category": "fuel",
-          "name": "Fuel",
-          "details": {
-            "description": "Increases your Deployment limit for the current week. Unused Fuel does not carry over to the next week. Fuel price starts at 1 Gold and increases with every purchase. Bought this week: 5"
-          },
-          "description": "+1 Fuel",
-          "itemPurchaseLimit": 1,
-          "initialPurchaseLimit": 1,
-          "goldPrice": 1,
-          "currencyIcon": "https://www.erepublik.net/images/icons/rewards/64px/gold.png",
-          "currencyName": "Gold",
-          "isKey": false,
-          "dotNotification": false
-        },
-        {
-          "id": "refill",
-          "category": "energyBars",
-          "name": "1 Energy Bar",
-          "details": {
-            "description": "+200 Energy (Energy is vital in the eWorld as it is used in most of the Citizen's actions, such as fighting, training, working etc.)"
-          },
-          "description": "+200 Energy",
-          "goldPrice": 5,
-          "currencyIcon": "https://www.erepublik.net/images/icons/rewards/64px/gold.png",
-          "currencyName": "Gold",
-          "lpPrice": 30,
-          "lpCurrencyIcon": "https://www.erepublik.net/images/icons/rewards/64px/loyalty_points.png",
-          "lpCurrencyName": "Loyalty Points",
-          "isKey": false,
-          "dotNotification": false
-        },
-        {
-          "id": "storage",
-          "category": "storage",
-          "name": "Storage",
-          "details": {
-            "description": "Extends the capacity of your Storage with 20000 Units (Storage is a building that stores products such as Energy Bars, Food, Weapons, Raw Materials etc.)"
-          },
-          "description": "+20000 Storage",
-          "goldPrice": 100,
-          "currencyIcon": "https://www.erepublik.net/images/icons/rewards/64px/gold.png",
-          "currencyName": "Gold",
-          "lpPrice": 175,
-          "lpCurrencyIcon": "https://www.erepublik.net/images/icons/rewards/64px/loyalty_points.png",
-          "lpCurrencyName": "Loyalty Points",
-          "isKey": false,
-          "dotNotification": false
-        }
-      ]
-    },
-    "vipShopItems": {
-      "sectionId": "goldItems",
-      "title": "VIP Shop",
-      "items": [
-        {
-          "id": 3054,
-          "vipLevel": 0,
-          "type": "speed_booster_1_180",
-          "quantity": 10,
-          "currency": "gold",
-          "cost": 0.7,
-          "discount": 30,
-          "data": {
-            "name": "x2 Damage Accelerator",
-            "type": "speed_booster",
-            "image": "/images/icons/boosters/128px/speed.png",
-            "quality": 1,
-            "tooltip": "Hit x2 faster for 3 minutes",
-            "discount": 30,
-            "duration": 180
-          },
-          "maxQuantity": 10,
-          "currencyIcon": "https://www.erepublik.net/images/icons/rewards/64px/gold.png",
-          "currencyName": "Gold",
-          "price": 0.7,
-          "category": "vipShop",
-          "vipShopItem": true,
-          "name": "x2 Damage Accelerator",
-          "description": "Hit x2 faster for 3 minutes",
-          "discountClass": "blue",
-          "itemPurchaseLimit": 10,
-          "soldOut": false
-        },
-        {
-          "id": 3055,
-          "vipLevel": 1,
-          "type": "damage_booster_50_7200",
-          "quantity": 10,
-          "currency": "food_raw",
-          "cost": 6,
-          "discount": 85,
-          "currencyIcon": "https://www.erepublik.net/images/icons/industry/7/default_55x55.png",
-          "currencyName": "Food Raw Materials",
-          "price": 6,
-          "name": "+50% Ground Damage",
-          "description": "Hit 50% stronger in Ground Battles for 2 hours",
-          "discountClass": "red",
-          "itemPurchaseLimit": 10,
-          "soldOut": false
-        },
-        {
-          "id": 3074,
-          "vipLevel": 11,
-          "type": "catchup_booster_40_300_vip11",
-          "quantity": 0,
-          "currency": "unavailable",
-          "cost": 0,
-          "discount": 10,
-          "maxQuantity": 0,
-          "locked": true,
-          "currencyIcon": null,
-          "currencyName": "Unavailable",
-          "name": "+40% Ghost Booster",
-          "description": "Add 40% of the Best Damage per Hit in a Ground Battle to your Damage for 5 minutes",
-          "discountClass": "green",
-          "itemPurchaseLimit": 0,
-          "soldOut": false
-        }
-      ]
-    }
-  }
+  "message": "Your purchase was successful.",
+  "loyaltyPoints": 0,
+  "gold": 0,
+  "boxKeys": [],
+  "health": 100,
+  "canBuyMore": false,
+  "itemPurchaseLimit": false,
+  "initialPurchaseLimit": 100,
+  "soldOut": true
 }
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `error`, `message` | boolean, string | Result and text shown to the player |
+| `gold`, `loyaltyPoints` | number | Your balances |
+| `boxKeys` | array | Box keys; empty here |
+| `health` | number | Your energy |
+| `canBuyMore`, `soldOut` | boolean | `false` and `true` after buying up to the limit |
+| `itemPurchaseLimit` | mixed | `false` observed with `soldOut: true`, although the item list gives a number |
+| `initialPurchaseLimit` | number | Original purchase limit; `100` here, equal to the `amount` bought |
+
+**Source:** real request, 2026-11-28 (double energy bars bought with Gold); client behaviour from `erpk_angular_controllers.js` (1795779904), shop controller `popupTriggerGold`, `purchase`; `ErpkShopFactory.purchase`.
+
+---
+
+## Buy or claim a pack
+
+`POST /en/get-gold/gold` · Auth required · ✅ Verified 2026-11-27 (`paymenthub`); `free` 🔍 From code
+
+> [!WARNING]
+> Starts a **real-money** payment, or claims a free pack.
+
+| Name | Description |
+|------|-------------|
+| `_token` | CSRF token |
+| `buy_what` | Pack type |
+| `payment_method` | `paymenthub` (payment) or `free` (free pack) |
+| `force_pack` | From the popup form; `0` observed |
+| `to_citizen_id` | Gift recipient, `0` for yourself |
+| `buy_for_a_friend_check` | `on` or `off` |
+| `gift_message`, `no_message_gift` | Gift options |
+
+A `free` claim sends only `_token`, `buy_what` and `payment_method`; the client then reloads the page. The popup requires accepting the Terms of Service before a payment.
+
+```bash
+curl -L 'https://www.erepublik.com/en/get-gold/gold' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&buy_what=bf2026Tokens_XS&payment_method=paymenthub&force_pack=0&buy_for_a_friend_check=off&gift_message=&no_message_gift=false&to_citizen_id=0'
+```
+
+For `paymenthub` the final response is the [payment window](#payment-window).
+
+**Source:** live request and inline script of the [pack popup](#pack-popup), 2026-11-27.
+
+---
+
+## Payment window
+
+`GET /en/main/paymenthub-buy?id={transactionId}` · Auth required · ✅ Verified 2026-11-27
+
+HTML fragment shown while the payment is open. The browser's network log shows this request right after [Buy or claim a pack](#buy-or-claim-a-pack), whose own caller receives the fragment, so the `POST` evidently redirects here (the redirect status was not captured). The request was seen in the network log and was not sent on its own.
+
+The fragment contains a form `#paymenthub-form` that opens the external payment provider in a new window (not documented here), and a script holding the numeric `transactionId`. The script polls [Payment status](#payment-status) every second. When processed, it shows a thank-you message and after 3 seconds opens `redirectURL`, or reloads the page if there is none.
+
+---
+
+## Payment status
+
+`GET /en/main/buy-check-status/{transactionId}` · Auth required · ✅ Verified 2026-11-27
+
+```bash
+curl 'https://www.erepublik.com/en/main/buy-check-status/1234567' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+<details>
+<summary>Responses: waiting and finished</summary>
+
+```json
+{"status": 1, "isProcessed": false, "description": "Started", "redirectURL": null}
+```
+
+```json
+{"status": 4, "isProcessed": true, "description": "Finished", "redirectURL": "/en/main/special-items?thankYou=YmYyMDI2VG9rZW5zX1hT"}
 ```
 
 </details>
 
-### Notes
+| Field | Meaning |
+|-------|---------|
+| `status`, `description` | Only `1` Started and `4` Finished were observed |
+| `isProcessed` | The client stops polling when `true` |
+| `redirectURL` | `thankYou` is the Base64 pack type (`bf2026Tokens_XS` above) |
 
-- **Gold Items Section:**
-  - Standard shop items available to all players
-  - Purchasable with Gold or Loyalty Points (some items offer both options)
-  - Includes: Fuel, Energy Bars, Speed Boosters, Bazooka Parts, Storage upgrades
-  - `itemPurchaseLimit`: Remaining quantity available for purchase
-  - `initialPurchaseLimit`: Original purchase limit before any purchases
-  - Some items have dynamic pricing (e.g., Fuel price increases with each purchase)
+---
 
-- **VIP Shop Section:**
-  - Special discounted items unlocked progressively by VIP level (0-13)
-  - `vipLevel`: Minimum VIP level required to purchase the item
-  - `locked`: `true` for items above the citizen's current VIP level
-  - `soldOut`: `true` when purchase limit is exhausted
-  - `discount`: Percentage discount applied (affects `discountClass` color)
+## Check pending purchase
 
-- **Currencies:**
-  - `gold`: Standard Gold currency
-  - `food_raw`, `weapon_raw`, `aircraft_raw`, `house_raw`: Raw materials
-  - `currency`: Country currency (CC)
-  - `loyalty_points`: Loyalty Points (alternative to Gold for some items)
-  - `unavailable`: Item is locked (insufficient VIP level)
+`POST /en/main/promo-packs` · Auth required · ✅ Verified 2026-11-27
 
-- **Discount Classes:**
-  - `green`: 5-20% discount
-  - `blue`: 25-40% discount
-  - `purple`: 45-60% discount
-  - `orange`: 65-80% discount
-  - `red`: 85%+ discount
+Sent before both a real-money and a Game Tokens purchase.
 
-- **Item Types:**
-  - `speed_booster_X`: Damage accelerators (x2, x5, x9 faster hitting)
-  - `damage_booster_X`: Damage increase boosters (+50%, +100%, +150%)
-  - `energy_bars`: Energy restoration items (+100, +200 energy)
-  - `storage`: Storage capacity expansion
-  - `fuel`: Weekly deployment limit increase
-  - `catchup_booster`: Ghost boosters (% of best damage)
-  - `deploy_size_booster`: Deployment size increase
-  - `prestige_points`: Prestige increase
-  - Various other specialized items (reset tokens, discharge documents, etc.)
+| Name | Description |
+|------|-------------|
+| `_token` | CSRF token |
+| `check_pack` | Pack type |
+| `force_pack` | From the popup form |
+| `to_citizen_id` | Gift recipient or `0` |
 
-- VIP levels range from 0 (non-VIP) to 13 (maximum VIP tier)
-- Items often have limited daily/weekly purchase quantities
-- Raw material prices make high-tier items accessible without spending Gold
+```json
+{"purchaseInProgress": false}
+```
 
-- **Pack Promotions:**
-  - Special pack offers (Tycoon Pack, Hero Packs, Combat Packs, Seasonal Packs) appear in `ErpkShop` variable on the homepage
-  - `ErpkShop = {"promotions":[],"popupPromotions":[],"battlePromotions":[],"numberOfPurchasablePacks":0,"specialSalesEvent":false}`
-  - Packs are real-money purchases (EUR/USD/Game Tokens), not available via this JSON endpoint
-  - See [[Packs]] for pack mechanics (Tycoon Pack: 20g + 150 tickets + 20% productivity for 7 days)
-  - Promotions shown as banners on homepage, purchased via external payment providers
+`purchaseInProgress: true` makes the client show a double-purchase warning (🔍 From code). The warning says a second purchase of the same pack is converted into Game Tokens.
+
+**Source:** live request and inline script of the pack popup, `purchasePack.isPackAvailable`, 2026-11-27.
+
+---
+
+## Game Tokens popup
+
+`POST /en/main/buy-withGameTokensPopup` · Auth required · ✅ Verified 2026-11-27
+
+Returns the HTML confirmation popup for paying with Game Tokens. It does not buy anything.
+
+| Name | Description |
+|------|-------------|
+| `_token` | CSRF token |
+| `packName` | Pack type |
+| `friendId` | Gift recipient, `0` for yourself |
+| `buyForFriendCheck` | `on` or `off` |
+| `giftMessage`, `noGiftMessage` | Gift options (`noGiftMessage`: `0` or `1`) |
+
+```bash
+curl 'https://www.erepublik.com/en/main/buy-withGameTokensPopup' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&packName=bf2026ProgGold_XS&friendId=0&buyForFriendCheck=off&giftMessage=&noGiftMessage=0'
+```
+
+The popup states the token cost and your token balance, and warns that processing may take up to 5 minutes.
+
+| Case | Popup content |
+|------|---------------|
+| Pack can be bought with tokens | Button `#confirmBuyWithTokens` |
+| Pack cannot (seen on `bf2026Tokens_XS`) | "… cannot be bought", only a Close button |
+
+Its inline script holds `packPrice`, which the [confirmation](#confirm-token-purchase) sends back.
+
+---
+
+## Confirm token purchase
+
+`POST /en/main/buy-withGameTokens` · Auth required · ✅ Verified 2026-11-27
+
+> [!WARNING]
+> Spends Game Tokens. A pack can only be bought once.
+
+| Name | Description |
+|------|-------------|
+| `_token` | CSRF token |
+| `packName` | Pack type |
+| `packPrice` | Value from the popup script, e.g. `4.99` (currency unconfirmed) |
+| `friendId`, `buyForFriendCheck` | Gift recipient, `on`/`off` |
+| `giftMessage`, `noGiftMessage` | Gift options |
+
+```bash
+curl 'https://www.erepublik.com/en/main/buy-withGameTokens' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&packName=bf2026ProgEB_XS&packPrice=4.99&friendId=0&buyForFriendCheck=off&giftMessage=&noGiftMessage=0'
+```
+
+The response is HTML shown as the next popup. On success the root element has classes `buyResult buySuccess`:
+
+<details>
+<summary>Success response (shortened, balance replaced with 0)</summary>
+
+```html
+<div class="global_pack ... gameTokensPopup bf2026ProgEB buyResult buySuccess">
+  <p class="gameTokensInfo success">You successfully used <b>49 Game Tokens</b> for the purchase of a <b>Black Energy XS</b>.</p>
+  <p class="gameTokensInfo"><em>You currently have <b>0</b> Game Tokens in your inventory.</em></p>
+  <a id="closeBuyWithTokens">Great</a>
+</div>
+```
+
+</details>
+
+A `buyError` class exists in the styles; no error response was observed.
+
+Delivery is asynchronous (the popup warns of up to 5 minutes). Right after the purchase the [shop page](#shop-page) shows the pack with classes `already_bought pending` and the label "Processing". In the observed case it was delivered within about a minute: the next tier had replaced it on the shop page.
+
+**Source:** live request and inline script of the [Game Tokens popup](#game-tokens-popup), 2026-11-27.

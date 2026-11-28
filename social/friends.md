@@ -1,156 +1,218 @@
-# Add/Remove Friend
+# Friends and blocking
 
-#erepublik #api #social #friends
+[API docs](../README.md) › Social › Friends and blocking
 
-Endpoint for managing friendship connections between citizens.
+The friends screen of a profile, the friend buttons on profiles and [hovercards](profiles.md#hovercard), and the block button.
 
-[< Back to Social API](README.md)
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Friends page](#friends-page) | GET | `/en/main/citizen-friends/{citizenId}` | ✅ Verified 2026-11-27 |
+| [Friend list page](#friend-list-page) | GET | `/en/main/citizen-friends/{citizenId}/{page}/list` | ✅ Verified 2026-11-27 |
+| [Add or remove a friend](#add-or-remove-a-friend) | POST | `/en/main/citizen-addRemoveFriend/` | 🔍 From code |
+| [Remove link of the friends page](#remove-link-of-the-friends-page) | GET | `/en/main/citizen-friends/{citizenId}/{friendId}/remove` | 🔍 From code |
+| [Block or unblock](#block-or-unblock) | POST | `/en/main/citizen-blocklist-ajax/` | 🔍 From code |
+| [Invited friends page](#invited-friends-page) | GET | `/en/main/citizen-invited-friends/{page}` | ✅ Verified 2026-11-27 |
 
-**Related:** [Citizen Profiles](profiles.md) | [Search Citizens](search.md)
-
----
-
-## Add/Remove Friend
-
-**Method:** POST
-**URL:** `/en/main/citizen-addRemoveFriend/`
-**Auth Required:** Yes
-
-### Description
-
-Adds or removes a friendship connection with another citizen. This endpoint handles both sending friend requests and removing existing friendships.
-
-### Request Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| _token | string | Yes | CSRF token for request validation |
-| citizenId | number | Yes | The target citizen ID to add/remove as friend |
-| action | string | Yes | Either `addFriend` or `removeFriend` |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-<details>
-<summary>Example Request (cURL)</summary>
-
-```bash
-curl -X POST 'https://www.erepublik.com/en/main/citizen-addRemoveFriend/' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw '_token=YOUR_CSRF_TOKEN&citizenId=2886612&action=addFriend'
-```
-
-</details>
-
-<details>
-<summary>Example Response (Success)</summary>
-
-```json
-{
-  "status": true,
-  "message": "Friend request sent successfully"
-}
-```
-
-</details>
-
-<details>
-<summary>Example Response (Error - Pending Request)</summary>
-
-```json
-{
-  "message": "ghoghnooos already has a friendship request pending from you.",
-  "status": false,
-  "error": true
-}
-```
-
-</details>
-
-### Notes
-
-- Requires authentication via session cookie
-- CSRF token (`_token`) must be obtained from the page where the action is triggered
-- The `action` parameter determines whether to add or remove friendship
-- Possible error scenarios:
-  - Pending friend request already exists
-  - Citizen is already a friend (when using `addFriend`)
-  - Not friends with the citizen (when using `removeFriend`)
-- Response includes a user-friendly message describing the result
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## List Friends (Paginated)
+## Friends page
 
-**Method:** GET
-**URL:** `/en/main/citizen-friends/{citizenId}/{page}/list`
-**Auth Required:** Yes
+`GET /en/main/citizen-friends/{citizenId}` · Auth required · ✅ Verified 2026-11-27
 
-### Description
+The HTML screen. Its script reads `#current_page` and `#maxim_page` and, on **Previous** / **Next**, loads [one list page](#friend-list-page) as `{link href}/{page}/list`, replacing `#friends_list` and `#results`.
 
-Returns a single page of a citizen's friend list. The friends page on a profile lazy-loads its list via this endpoint, fetching 20 friends at a time as the user scrolls. The response is a JSON envelope: a `results` field with the human-readable index range covered by this page, and a `content` field containing a rendered HTML `<table>` of friend rows.
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-friends/2' -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
 
-### Parameters
+**Source:** real request for the logged-in citizen's own page, 2026-11-27, with its inline scripts.
+
+---
+
+## Friend list page
+
+`GET /en/main/citizen-friends/{citizenId}/{page}/list` · Auth required · ✅ Verified 2026-11-27
+
+Up to 20 friends of any citizen. The response is a JSON envelope around an HTML table.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `citizenId` | path | number | Yes | Whose friends |
+| `page` | path | number | Yes | 1-based; page 3 holds entries 41–60 |
+
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-friends/2/1/list' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+Earlier notes also send `Accept: application/json, text/javascript, */*; q=0.01` and an optional `Referer` of the friends page.
+
+### Response
+
+```json
+{ "results": "1 - 12", "content": "<script>…</script>\n<table width=\"100%\" class=\"lister\">…</table>" }
+```
+
+<details>
+<summary>Example rows (names replaced)</summary>
+
+```html
+<table width="100%" class="lister">
+  <tr id="friend_1000001">
+    <td class="friend_info">
+      <a hovercard=1 href="/en/citizen/profile/1000001" title="PlayerName">
+        <img src="https://cdnt.erepublik.net/…" alt="PlayerName" width="55" height="55" />
+        <strong>PlayerName</strong>
+      </a>
+    </td>
+  </tr>
+  <tr id="friend_1000002" class="dead">
+    <td class="friend_info">…</td>
+  </tr>
+</table>
+```
+
+</details>
+
+| Value | Source in `content` |
+|-------|---------------------|
+| Citizen ID | Row `id` (`friend_{id}`) or the profile link |
+| Name | `<strong>` text, also the link `title` |
+| Avatar | `<img src>` |
+| Dead or banned account | Row has `class="dead"`; the profile link still resolves |
+| Actions (your own list) | `td.actions`: `a.send` (compose a message) and `a.remove` ([remove link](#remove-link-of-the-friends-page)) |
+
+> [!WARNING]
+> On your own list every `a.remove` link carries your CSRF token in its URL. Do not publish the response, and never follow these links when crawling.
+
+`content` starts with an inline `<script>` for the remove dialog. No action links were found in another citizen's list.
+
+### Errors
+
+A page past the last friend returns HTTP `404`. Without a session the request is redirected to the home page (HTML, `200`).
+
+**Source:** real requests, 2026-11-27; example rows — earlier notes.
+
+---
+
+## Add or remove a friend
+
+`POST /en/main/citizen-addRemoveFriend/` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Sends or cancels a friend request, or removes a friend.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| citizenId | number | Yes | Path segment — the citizen whose friends are being listed |
-| page | number | Yes | Path segment — 1-based page index. Each page returns 20 friends (page 3 → entries 41–60) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Referer | `https://www.erepublik.com/en/main/citizen-friends/{citizenId}` | No |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `citizenId` | number | Yes | The other citizen |
+| `action` | string | Yes | `addFriend`, `removeFriend` or `cancelPending` |
+| `requestedFrom` | string | No | `hovercard`, sent when removing from a hovercard |
+| `url` | string | No | The hovercard also posts its own `actionURL` as a field |
 
 ```bash
-curl 'https://www.erepublik.com/en/main/citizen-friends/1844547/3/list' \
+curl 'https://www.erepublik.com/en/main/citizen-addRemoveFriend/' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'accept: application/json, text/javascript, */*; q=0.01'
+  --data-raw '_token=YOUR_CSRF_TOKEN&citizenId=1000001&action=addFriend'
 ```
 
-</details>
+The hovercard posts to the button's `actionURL`, which has no trailing slash.
 
-<details>
-<summary>Example Response</summary>
+### Response
+
+The profile page reads `error` and `message`, or on success `isFriend` and `isFriendRequestPending`. The hovercard treats a response with `status` as a message (`message`) and one without it as new hovercard data.
+
+Examples from earlier notes:
 
 ```json
-{
-  "results": "41 - 60",
-  "content": "<table width=\"100%\" class=\"lister\">\n\t<tr id=\"friend_1243978\">\n\t\t<td class=\"friend_info\">\n\t\t\t<a hovercard=1 href=\"/en/citizen/profile/1243978\" title=\"Justino Figueiredo\">\n\t\t\t\t<img src=\"https://cdnt.erepublik.net/.../55x55/smart/avatars/Citizens/...jpg\" alt=\"Justino Figueiredo\" width=\"55\" height=\"55\" />\n\t\t\t\t<strong>Justino Figueiredo</strong>\n\t\t\t</a>\n\t\t</td>\n\t</tr>\n\t<tr id=\"friend_6443107\" class=\"dead\">\n\t\t<td class=\"friend_info\">\n\t\t\t<a hovercard=1 href=\"/en/citizen/profile/6443107\" title=\"twall\">\n\t\t\t\t<img src=\"...\" alt=\"twall\" width=\"55\" height=\"55\" />\n\t\t\t\t<strong>twall</strong>\n\t\t\t</a>\n\t\t</td>\n\t</tr>\n\t...\n</table>"
-}
+{ "status": true, "message": "Friend request sent successfully" }
 ```
 
-</details>
+```json
+{ "message": "PlayerName already has a friendship request pending from you.", "status": false, "error": true }
+```
 
-### Parsing the `content` HTML
+### Errors
 
-Each friend is a `<tr id="friend_{citizenId}">` row. From each row you can extract:
+Earlier notes list: a request is already pending, already friends (`addFriend`), not friends (`removeFriend`).
 
-| Field | Source |
-|-------|--------|
-| Citizen ID | The `id` attribute (`friend_{id}`) or the profile link `/en/citizen/profile/{id}` |
-| Name | The `<strong>` text (and the link `title` attribute) |
-| Avatar URL | The `<img src>` |
-| Dead/banned flag | The row carries `class="dead"` when the citizen account is dead/banned |
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `ProfileFactory.friendAction`, `HovercardFactory`; `erpk_angular_directives.js`, `hovercardDetails`; examples — earlier notes.
 
-### Notes
+---
 
-- Returns HTTP `200` with a JSON body even though `content` is HTML markup.
-- Page size is fixed at 20 friends; the `results` range string (e.g. `"41 - 60"`) reflects the requested page.
-- Requesting a page beyond the last friend returns an empty/short table — iterate until the returned table has no `<tr>` rows to enumerate all friends.
-- Works for any citizen whose friend list is public, not just your own (this example lists citizen `1844547`'s friends).
-- Friend rows marked `class="dead"` indicate dead/banned accounts; the profile link still resolves.
+## Remove link of the friends page
+
+`GET /en/main/citizen-friends/{citizenId}/{friendId}/remove?_token={token}` · Auth required · 🔍 From code
+
+> [!WARNING]
+> A `GET` that removes a friend. The page asks for confirmation first; the URL itself does not.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `citizenId` | path | number | Yes | Your citizen ID |
+| `friendId` | path | number | Yes | Friend to remove |
+| `_token` | query | string | Yes | CSRF token, prefilled in the link |
+
+**Source:** links and dialog script in the friends page, 2026-11-27; not requested.
+
+---
+
+## Block or unblock
+
+`POST /en/main/citizen-blocklist-ajax/` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Changes your blocklist.
+
+The button appears on other citizens' profiles, except on citizen `2` (Plato).
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `blockedId` | number | Yes | The other citizen |
+| `action` | string | Yes | `block` or `unblock` |
+
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-blocklist-ajax/' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&blockedId=1000001&action=block'
+```
+
+### Response
+
+The client reads `error` with `message`, or `isBlocked`. The current state is `isBlocked` in the [profile data](profiles.md#profile-data).
+
+The profile page links to a blocklist screen, `/en/main/citizen-blocklist`; it returned `404` on 2026-11-27.
+
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `blockAction`.
+
+---
+
+## Invited friends page
+
+`GET /en/main/citizen-invited-friends/{page}` · Auth required · ✅ Verified 2026-11-27
+
+HTML list of the players you invited, with the columns **Citizen name**, **Collected Gold** and **Send message**.
+
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-invited-friends/1' -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| Page past the end | Empty or short table | HTTP `404` | Live response |
+| `results` | Range of the requested page | `1 - 12` for a 12-friend list | Live response |
+| Success of add or remove | `status`, `message` | Profile reads `isFriend`, `isFriendRequestPending` | Both listed |
+| Visibility of a list | "Any citizen whose friend list is public" | One other citizen's list was readable; no privacy setting was found | Not settled |
+| Blocklist screen | Not described | Linked, but `404` | Live response |

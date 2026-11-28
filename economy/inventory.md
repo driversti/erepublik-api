@@ -1,51 +1,58 @@
-# Inventory
+# Inventory and boosters
 
-#erepublik #api #economy #inventory
+[API docs](../README.md) › Economy › Inventory
 
-[< Back to Economy Overview](README.md)
+The **Storage** screen: everything you own, activating boosters and houses, and assembling weapons from parts. Selling from storage is on [Marketplace](marketplace.md#post-or-change-an-offer). Boosters used on the battlefield are on [Boosters, bombs and PvP](../military/battlefield/boosters-bombs-pvp.md).
 
-Complete inventory snapshot -- all currencies, items, boosters, active enhancements, production status, and assembly components.
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Inventory page](#inventory-page) | GET | `/en/economy/inventory`, `/en/main/inventory` | ✅ Verified 2026-11-27 |
+| [Inventory data](#inventory-data) | GET | `/en/economy/inventory-json` | ✅ Verified 2026-11-27 |
+| [Activate a booster](#activate-a-booster) | POST | `/en/main/activateBooster` | 🔍 From code |
+| [Activate a house](#activate-a-house) | POST | `/en/economy/activateHouse` | 🔍 From code |
+| [Assemble](#assemble) | POST | `/en/main/assemble` | 🔍 From code |
+| [Build a rocket](#build-a-rocket) | POST | `/en/main/build-rocket` | 🔍 From code |
+| [Activate booster (old buy script)](#activate-booster-old-buy-script) | POST | `/en/main/activate-booster/` | 🔍 From code |
 
-**Related:** [Boosters](boosters.md) | [Marketplace](marketplace.md) | [Shop](shop.md)
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## Get Inventory
+## Inventory page
 
-**Method:** GET
-**URL:** `/en/economy/inventory-json`
-**Auth Required:** Yes
+`GET /en/economy/inventory` · Auth required · ✅ Verified 2026-11-27
 
-### Description
+HTML page (`StorageController`, `SellItemsController`). `/en/main/inventory` returns the same page. It embeds `SERVER_DATA.storageFilter` (filter tabs: `key` → `i18n`, `tooltip`, `attribute`) and [`SERVER_DATA.sellItems`](marketplace.md#sell-form-data).
 
-Retrieves the complete inventory of the authenticated citizen, including all currencies, items (food, weapons, raw materials), boosters, active enhancements, items in production, and assembly components. This is a comprehensive endpoint that provides a full snapshot of the player's resources and possessions.
+**Source:** real request, 2026-11-27.
 
-### Parameters
+---
 
-No parameters required.
+## Inventory data
 
-### Headers
+`GET /en/economy/inventory-json` · Auth required · ✅ Verified 2026-11-27
 
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-<details>
-<summary>Example Request (cURL)</summary>
+The whole inventory in one answer, no paging. It can exceed 50 KB.
 
 ```bash
 curl 'https://www.erepublik.com/en/economy/inventory-json' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Accept: application/json, text/plain, */*'
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+### Response
 
-<details>
-<summary>Example Response</summary>
+An array of sections:
+
+| `id` | `title` | Contents |
+|------|---------|----------|
+| `mainStorage` | Storage | Currencies, goods, raw materials, tokens; has `status` |
+| `boosters` | Boosters | Inactive boosters |
+| `activeEnhancements` | Active Boosters | Active house and pack boosters |
+| `inProduction` | In Production | Partly produced units |
+| `assembly` | Assembly | Things you can build from parts |
+
+Shortened:
 
 ```json
 [
@@ -54,241 +61,76 @@ curl 'https://www.erepublik.com/en/economy/inventory-json' \
     "title": "Storage",
     "items": [
       {
-        "id": "gold",
-        "industryId": 1000,
-        "quality": 1,
-        "name": "Gold",
-        "type": "currency",
-        "rarity": "epic",
-        "icon": "https://www.erepublik.net/images/icons/rewards/128px/gold.png",
-        "attributes": {
-          "canDonate": true,
-          "currencyId": 62,
-          "currency": true
-        },
-        "tooltip": {
-          "attributes": [
-            {
-              "type": "quantity",
-              "text": "Quantity",
-              "value": "0"
-            }
-          ]
-        },
-        "description": "eRepublik's universal currency",
-        "amount": 0,
-        "amountDisplay": "0"
-      },
-      {
-        "id": "currency",
-        "industryId": 1000,
-        "quality": null,
-        "name": "Currency",
-        "type": "currency",
-        "rarity": "rare",
-        "attributes": {
-          "canDonate": true,
-          "currencyId": 1,
-          "currency": true
-        },
-        "description": "Your country's currency",
-        "amount": 0,
-        "amountDisplay": "0"
-      },
-      {
-        "id": "1_3",
-        "industryId": 1,
-        "quality": 3,
-        "name": "Food Q3",
-        "type": "food",
-        "rarity": "common",
-        "attributes": {
-          "canBeSold": true,
-          "food": true,
-          "manufactured": true,
-          "storage": 2332968,
-          "energy": "\u2060+6\u2060",
-          "refillValue": "\u2060+6\u2060",
-          "highStorage": true
-        },
-        "description": "Consuming food recovers your Energy",
-        "amount": 2332968,
-        "amountDisplay": "\u20062.33M\u2060",
-        "amountForSale": 2332968
-      },
-      {
-        "id": "2_7",
-        "industryId": 2,
-        "quality": 7,
-        "name": "Ammunition Q7",
-        "type": "groundWeapon",
-        "rarity": "epic",
-        "attributes": {
-          "canBeSold": true,
-          "groundWeapon": true,
-          "manufactured": true,
-          "storage": 47619,
-          "durability": "10 uses",
-          "battleDamageGnd": "\u2060+200%\u2060"
-        },
+        "id": "2_1", "industryId": 2, "quality": 1, "name": "Ammunition Q1",
+        "type": "groundWeapon", "rarity": "common",
+        "icon": "https://www.erepublik.net/images/icons/industry/2/q1_128x128.png",
+        "attributes": { "canBeSold": true, "groundWeapon": true, "manufactured": true, "storage": 3, "durability": "1 use", "battleDamageGnd": "+20%" },
+        "tooltip": { "attributes": [ { "type": "quantity", "text": "Quantity", "value": 3 } ], "info": null, "help": null },
         "description": "Using Ammunition improves your damage in battles",
-        "uses": 476183,
-        "amount": 47619,
-        "amountDisplay": "\u206047.6k\u2060",
-        "amountForSale": 47618
+        "uses": 3, "amount": 3, "amountDisplay": "3", "amountForSale": 3
       }
     ],
-    "status": {
-      "usedStorage": 4148795,
-      "totalStorage": 5622000,
-      "availableStorage": 1473205,
-      "storagePercentage": "73.8%",
-      "color": "yellow"
-    }
-  },
+    "status": { "usedStorage": 1000, "totalStorage": 5000, "availableStorage": 4000, "storagePercentage": "20.0%", "color": "green" }
+  }
+]
+```
+
+<details>
+<summary>Other sections (sample amounts)</summary>
+
+```json
+[
   {
-    "id": "boosters",
-    "title": "Boosters",
+    "id": "boosters", "title": "Boosters",
     "items": [
       {
-        "id": "100_damage_10_7200",
-        "industryId": 100,
-        "quality": 10,
-        "name": "+100% Ground Damage",
-        "type": "booster",
-        "rarity": "rare",
-        "attributes": {
-          "booster": "damage",
-          "duration": "2h",
-          "durationSeconds": 7200,
-          "battleDamageGnd": "+100%",
-          "battleDamage": "+100%",
-          "damage": 100,
-          "actionable": true
-        },
-        "description": "Hit 100% stronger in Ground Battles for 2 hours",
-        "amount": 486,
-        "amountDisplay": "\u2060486\u2060",
+        "id": "100_air_damage_2_600", "industryId": 100, "quality": 2, "name": "+20% Air Damage",
+        "type": "booster", "rarity": "uncommon",
+        "attributes": { "booster": "air_damage", "duration": "10m", "durationSeconds": 600, "battleDamageAir": "+20%", "battleDamage": "+20%", "air_damage": 20, "actionable": true },
+        "description": "Hit 20% stronger in Air Battles for 10 minutes",
+        "amount": 5, "amountDisplay": "5",
         "actionable": {
           "url": "https://www.erepublik.com/en/main/activateBooster",
-          "params": {
-            "type": "damage",
-            "quality": 10,
-            "duration": 7200,
-            "amount": 1
-          },
-          "maxAmount": 486,
-          "confirmType": "inline"
+          "params": { "type": "air_damage", "quality": 2, "duration": 600, "amount": 1 },
+          "maxAmount": 5, "confirmType": "inline"
         }
       }
     ]
   },
   {
-    "id": "activeEnhancements",
-    "title": "Active Boosters",
+    "id": "activeEnhancements", "title": "Active Boosters",
     "items": [
       {
-        "id": "4_1_active",
-        "industryId": 4,
-        "quality": 1,
-        "name": "House Q1",
-        "type": "house",
-        "rarity": "common",
+        "id": "4_1_active", "industryId": 4, "quality": 1, "name": "House Q1", "type": "house",
         "attributes": {
-          "energyPool": "\u2060+100\u2060",
-          "active": {
-            "activeTimeLeft": 701048,
-            "activeUntil": 1770053964,
-            "showProgress": true,
-            "progress": 1.29,
-            "state": null
-          },
-          "overtimePoints": "\u2060+1/h\u2060",
-          "residenceBonus": "active"
+          "energyPool": "+100",
+          "active": { "activeTimeLeft": 100000, "activeUntil": 1700000000, "showProgress": true, "progress": 50, "state": null },
+          "overtimePoints": "+1/h", "residenceBonus": "active"
         },
-        "description": null,
-        "amount": 701048,
-        "amountDisplay": "\u20608d\u2060"
+        "amount": 100000, "amountDisplay": "1d"
       }
     ]
   },
   {
-    "id": "inProduction",
-    "title": "In Production",
+    "id": "inProduction", "title": "In Production",
     "items": [
-      {
-        "id": "1_3_inProduction",
-        "industryId": 1,
-        "quality": 3,
-        "name": "Food Q3",
-        "type": "food",
-        "rarity": "common",
-        "attributes": {
-          "food": true,
-          "inProduction": true,
-          "component": true,
-          "energy": "\u2060+6\u2060",
-          "refillValue": "\u2060+6\u2060"
-        },
-        "description": "Consuming food recovers your Energy",
-        "amount": 0.71,
-        "amountDisplay": "\u206071%\u2060"
-      }
+      { "id": "1_3_inProduction", "industryId": 1, "quality": 3, "name": "Food Q3", "type": "food",
+        "attributes": { "food": true, "inProduction": true, "component": true, "energy": "+6", "refillValue": "+6" },
+        "amount": 0.71, "amountDisplay": "71%" }
     ]
   },
   {
-    "id": "assembly",
-    "title": "Assembly",
+    "id": "assembly", "title": "Assembly",
     "items": [
       {
-        "finalProduct": {
-          "id": "2_10",
-          "industryId": 2,
-          "quality": 10,
-          "name": "Bazooka",
-          "type": "groundWeapon",
-          "rarity": "epic",
-          "attributes": {
-            "canBeSold": true,
-            "groundWeapon": true,
-            "durability": "3 uses",
-            "fixedDamage": true,
-            "firepowerGnd": "10k"
-          },
-          "description": null,
-          "uses": 13608,
-          "amount": 4536,
-          "amountDisplay": "\u20604.53k\u2060",
-          "amountForSale": 4536
-        },
+        "finalProduct": { "id": "2_10", "industryId": 2, "quality": 10, "name": "Bazooka", "type": "groundWeapon",
+          "attributes": { "canBeSold": true, "groundWeapon": true, "durability": "3 uses", "fixedDamage": true, "firepowerGnd": "10k" }, "amount": 1 },
         "components": [
-          {
-            "id": "collection_part_4",
-            "industryId": 1000,
-            "quality": null,
-            "name": "Bazooka Scope",
-            "type": "miscellaneous",
-            "rarity": "common",
-            "attributes": {
-              "miscellaneous": true,
-              "token": true,
-              "component": true
-            },
-            "description": "One of the 5 parts required to assemble Bazookas.",
-            "amount": 4536,
-            "amountDisplay": "\u20604.53k\u2060"
-          }
+          { "id": "collection_part_4", "industryId": 1000, "quality": null, "name": "Bazooka Scope", "type": "miscellaneous",
+            "attributes": { "miscellaneous": true, "token": true, "component": true }, "amount": 1 }
         ],
-        "buttonText": "Build Bazooka",
-        "canAssemble": true,
-        "componentsPerItem": 1,
-        "actionable": {
-          "url": "https://www.erepublik.com/en/main/assemble",
-          "params": {
-            "itemLevel": 1,
-            "isAjax": true
-          }
-        }
+        "buttonText": "Build Bazooka", "canAssemble": true, "componentsPerItem": 1,
+        "actionable": { "url": "https://www.erepublik.com/en/main/assemble", "params": { "itemLevel": 1, "isAjax": true } }
       }
     ]
   }
@@ -297,126 +139,250 @@ curl 'https://www.erepublik.com/en/economy/inventory-json' \
 
 </details>
 
-### Notes
+### Item fields
 
-- **Inventory Structure:**
-  - The response is an array of inventory sections (Storage, Boosters, Active Boosters, In Production, Assembly)
-  - Each section has an `id`, `title`, and `items` array
-  - The mainStorage section also includes a `status` object with storage capacity information
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | See [Item IDs](#item-ids) |
+| `industryId`, `quality` | number | Industry and quality; `quality` is `null` for tokens and country currency (Gold has `1`) |
+| `name`, `description` | string | |
+| `type` | string | `currency`, `food`, `groundWeapon`, `airWeapon`, `groundBomb`, `house`, `ticket`, `raw`, `booster`, `miscellaneous`, `vehicle_blueprint` |
+| `rarity` | string | `common`, `uncommon`, `rare`, `epic`; earlier notes add `legendary` |
+| `icon` | string | Image URL |
+| `amount`, `amountDisplay` | number, string | Raw and short form (`2.33M`). In production: progress `0`–`1` |
+| `amountForSale` | number | Quantity that can be listed |
+| `uses` | number | Remaining uses of weapons |
+| `tooltip` | object | `attributes[]` (`type`, `text`, `value`), `info`, `help` |
+| `actionable` | object | `url`, `params`, `maxAmount`, `confirmType` — how to activate it |
 
-- **Main Storage Section:**
-  - Contains all currencies (Gold, Country Currency, Game Tokens, Loyalty Points)
-  - Contains all consumable items (Food Q1-Q11, Weapons Q1-Q7, Aircraft Q5, Houses, etc.)
-  - Contains raw materials (Food Raw, Weapon Raw, House Raw, Aircraft Raw)
-  - Contains special items (Vehicle Blueprints, Tokens, etc.)
-  - Storage status shows: `usedStorage`, `totalStorage`, `availableStorage`, `storagePercentage`, `color`
-  - Color indicates storage health: `green` (low), `yellow` (medium), `red` (nearly full)
+In the `inProduction` section, earlier notes say production completes when `amount` reaches `1.0`.
 
-- **Item Types:**
-  - `currency`: Gold, Country Currency, Game Tokens, Loyalty Points
-  - `food`: Food Q1-Q11, Energy Bars, Double Energy Bars
-  - `groundWeapon`: Ammunition Q1-Q7, Bazookas, Bombs, Rockets, Missiles
-  - `airWeapon`: Air-to-Air Missiles Q1-Q5
-  - `house`: Houses Q1-Q5
-  - `ticket`: Moving Tickets Q1-Q5
-  - `raw`: Raw materials for production (Food, Weapon, House, Aircraft)
-  - `booster`: Temporary combat/production boosters
-  - `miscellaneous`: Tokens, Blueprints, special items
-  - `groundBomb`: Small Bomb, Big Bomb, Cruise Missile
-  - `vehicle_blueprint`: Tank and Aircraft blueprints
+### Assembly fields
 
-- **Rarity Levels:**
-  - `common`: Basic items
-  - `uncommon`: Enhanced items
-  - `rare`: High-value items
-  - `epic`: Very rare items
-  - `legendary`: Unique/premium items
+| Field | Description |
+|-------|-------------|
+| `finalProduct` | The item that is built |
+| `components` | Required parts with the quantities you hold |
+| `canAssemble` | Earlier notes: `true` when all parts are available in sufficient quantity |
+| `componentsPerItem` | Parts needed per built item |
+| `buttonText` | Button label |
+| `actionable` | `url` and `params` of the build request |
 
-- **Item Attributes:**
-  - `canBeSold`: Item can be sold on marketplace
-  - `canDonate`: Item can be donated
-  - `manufactured`: Item is produced in companies
-  - `storage`: Storage space occupied by this item stack
-  - `highStorage`: Warning flag for items using excessive storage
-  - `energy`: Energy restored when consumed (food)
-  - `energyRecovery`: Energy recovery rate boost
-  - `durability`: Number of uses (weapons)
-  - `battleDamageGnd` / `battleDamageAir`: Combat damage boost percentage (directional)
-  - `battleInfluence` / `battleInfluenceGnd` / `battleInfluenceAir`: Battle influence boost (flat or directional)
-  - `fixedDamage`: Weapon deals fixed damage (not affected by boosters)
-  - `firepowerGnd` / `firepowerAir`: Fixed damage value (directional)
-  - `militaryRank` / `militaryRankGnd` / `militaryRankAir`: Military rank point boost (flat or directional)
-  - `prestigePoints` / `prestige_points`: Prestige point boost — **note:** API uses both camelCase and snake_case inconsistently
-  - `deploySize` / `deploy_size`: Deploy size boost — **note:** same API inconsistency in naming
-  - `ground_deploy_influence` / `air_deploy_influence`: Deploy influence boost (directional)
-  - `ground_deploy_rank_points` / `air_deploy_rank_points`: Rank points from deploy (directional)
-  - `air_damage`: Air damage boost (specific naming for some booster types)
-  - `acceleration`: Movement/speed acceleration boost
-  - `speed`: Speed boost
-  - `distance`: Travel distance bonus
-  - `heroReward`: Hero reward bonus
-  - `overtimePoints`: Overtime point generation rate (e.g. `+1/h` from Houses)
-  - `temporary`: Time-limited item with expiration data
-  - `actionable`: Item can be activated/used (boosters, houses)
-  - `component`: Used in assembly/production
-  - `armory`: Item associated with armory mechanics
-  - `packBooster`: Pack booster indicator
-  - `blitzkrieg_pack`: Blitzkrieg pack booster type
-  - `catchup`: Catch-up mechanic booster
-  - `power_pack`: Power pack booster type
+`mainStorage.status`: `usedStorage`, `totalStorage`, `availableStorage`, `storagePercentage`, `color` (`green`, `yellow`, `red`: low to nearly full).
 
-- **Boosters Section:**
-  - Contains all available (inactive) boosters
-  - Types: Damage boosters, Speed boosters, Deploy Size boosters, Influence boosters, Rank boosters, Prestige boosters, Ghost boosters
-  - Each booster has `actionable` object with activation URL and parameters
-  - Duration ranges from 1 minute to 24 hours
-  - Quality levels indicate boost strength (e.g., Q10 = +100%, Q15 = +150%)
+### Item IDs
 
-- **Active Enhancements Section:**
-  - Shows currently active temporary effects (Houses, Pack Boosters)
-  - `active.activeTimeLeft`: Seconds remaining until expiration
-  - `active.activeUntil`: Unix timestamp of expiration
-  - `active.showProgress`: Whether to show progress bar
-  - `active.progress`: Progress percentage (can exceed 100%)
-  - Houses provide energy pool bonuses and overtime points
+| Pattern | Examples |
+|---------|----------|
+| `{industryId}_{quality}` | `1_3`, `2_7`, `23_5`, `3_5` |
+| `{industryId}_{quality}_temporary` | `1_17_temporary`, `2_51_temporary` (expiring items) |
+| `{industryId}_{quality}_active`, `_inProduction` | `4_1_active` |
+| `raw_{industryId}_1` | `raw_7_1` (FRM), `raw_12_1` (WRM), `raw_17_1` (HRM), `raw_24_1` (ARM) |
+| Booster | `100_{booster}_{quality}_{seconds}`; active: `100_{booster}_{value}_active` |
+| Currencies | `gold`, `currency`, `game_token`, `loyalty_points`, `amazing_coin` |
+| Tokens and parts | `overtime_points`, `factory_reset_token`, `vehicle_unenroll_token`, `collection_part_{n}`, `1000_{n}` |
 
-- **In Production Section:**
-  - Shows items currently being produced in companies
-  - `amount` represents production progress as a decimal (0.0 to 1.0)
-  - `amountDisplay` shows percentage (e.g., "71%" for 0.71)
-  - Production completes when `amount` reaches 1.0
+Industry IDs: 1 Food, 2 Weapons, 3 Moving Tickets, 4 Houses, 7 / 12 / 17 / 24 raw materials, 23 Air weapons, 100 Boosters, 1000 currencies and miscellaneous. Currency IDs (`attributes.currencyId`): 1 country currency in the earlier Lithuanian example, 62 Gold.
 
-- **Assembly Section:**
-  - Contains items that can be assembled from components (Bazookas, Rockets)
-  - `finalProduct`: The assembled item
-  - `components`: Array of required parts with current quantities
-  - `canAssemble`: `true` if all components are available in sufficient quantity
-  - `componentsPerItem`: Number of components needed per assembled item
-  - Bazookas require 5 parts (Stock, Barrel, Scope, Projectile, Trigger Kit)
-  - Rockets require 20 ammunition items (Q1-Q6)
+### Attributes
 
-- **Amount Display:**
-  - `amount`: Raw numeric value
-  - `amountDisplay`: Formatted display string (e.g., "2.33M")
-  - Display uses K (thousands), M (millions) abbreviations
+| Attribute | Meaning |
+|-----------|---------|
+| `canBeSold`, `canDonate` | Can be sold on the market; can be donated |
+| `currency`, `currencyId` | Currency item |
+| `food`, `groundWeapon`, `airWeapon`, `ticket`, `raw`, `miscellaneous`, `token`, `vehicle_blueprint`, `booster` | Category (for boosters, the booster type) |
+| `manufactured` | Made in companies |
+| `storage`, `highStorage` | Storage used; warning for large stacks |
+| `energy`, `refillValue`, `energyRecovery`, `energyPool` | Food and house energy |
+| `durability`, `fixedDamage`, `firepowerGnd`, `firepowerAir` | Weapons; fixed damage ignores boosters |
+| `battleDamage`, `battleDamageGnd`, `battleDamageAir`, `damage`, `air_damage` | Damage boost |
+| `battleInfluence`, `battleInfluenceGnd`, `battleInfluenceAir`, `ground_deploy_influence`, `air_deploy_influence` | Influence boost |
+| `militaryRank`, `militaryRankGnd`, `militaryRankAir`, `ground_deploy_rank_points`, `air_deploy_rank_points` | Rank points boost |
+| `prestigePoints` / `prestige_points`, `deploySize` / `deploy_size` | Both spellings appear |
+| `acceleration`, `speed`, `distance`, `catchup`, `heroReward`, `overtimePoints`, `residenceBonus` | Speed, travel distance, Ghost booster, hero reward, house bonuses |
+| `duration`, `durationSeconds` | Booster length |
+| `temporary` | `expiresAt` (Unix), `expiresIn`, `progress`, `showProgress`, `state` |
+| `active` | `activeTimeLeft`, `activeUntil` (Unix), `showProgress`, `progress` (can exceed 100), `state` |
+| `actionable`, `component`, `inProduction`, `armory` | Can be activated; assembly part; being produced; armory item |
+| `packBooster`, `power_pack`, `blitzkrieg_pack`, `division_switch_pack`, `catchup` | Pack boosters |
 
-- **Currency IDs:**
-  - 1: Country Currency
-  - 62: Gold
+Booster types seen 2026-11-27: `damage`, `air_damage`, `speed`, `catchup`, `deploy_size`, `prestige_points`, `ground_deploy_influence`, `air_deploy_influence`, `ground_deploy_rank_points`, `air_deploy_rank_points`.
 
-- **Industry IDs:**
-  - 1: Food
-  - 2: Weapons (Ammunition)
-  - 4: Houses
-  - 7: Food Raw Materials
-  - 12: Weapon Raw Materials
-  - 17: House Raw Materials
-  - 23: Aircraft Weapons (Air-to-Air Missiles)
-  - 24: Aircraft Raw Materials
-  - 100: Boosters and special items
-  - 1000: Currencies and miscellaneous items
+**Source:** real request, 2026-11-27; earlier notes.
 
-- This endpoint is used by the Inventory page to display all player possessions
-- Very comprehensive response (can be 50KB+ for players with large inventories)
-- No pagination - returns entire inventory in a single response
-- Response time varies based on inventory size (typically 200-500ms)
+---
+
+## Activate a booster
+
+`POST /en/main/activateBooster` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Consumes the booster. It can replace an active one of the same type, losing the remaining time.
+
+Send `actionable.params` of the item to `actionable.url`.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `type` | string | Yes | Booster type |
+| `quality` | number | Yes | Strength |
+| `duration` | number | Yes | Seconds |
+| `amount` | number | Yes | `1` |
+| `unit`, `value` | string, number | No | The client adds the duration for display: `s`, `m`, `h`, `d` |
+| `confirmExtendBooster` | string | No | `yes` to confirm replacing or extending an active booster |
+
+```bash
+curl 'https://www.erepublik.com/en/main/activateBooster' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw 'type=speed&quality=2&duration=300&amount=1&_token=YOUR_CSRF_TOKEN'
+```
+
+### Response
+
+The client treats a truthy `error` as failure. Earlier notes:
+
+```json
+{
+  "error": true,
+  "status": "error",
+  "message": "Please confirm activating this booster",
+  "confirmationRequired": true,
+  "confirmationText": "You already have another active item of this type.<br><br>\n Are you sure you want to activate this item?"
+}
+```
+
+```json
+{ "status": "success", "message": "Booster activated" }
+```
+
+Earlier notes: boosters of different types run together, the same type does not stack. Quality: speed 1 = ×2, 2 = ×5, 3 = ×9; damage 5 = +50%, 10 = +100%, 15 = +150%. Durations from 60 to 86400 seconds.
+
+**Source:** `StorageController.toggleConfirmation` in `erpk_angular_controllers.js` (version 1795779904); responses from earlier notes.
+
+---
+
+## Activate a house
+
+`POST /en/economy/activateHouse` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Consumes a house and charges an activation tax. Earlier notes: it replaces the active house and the remaining time is lost.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `type` | string | Yes | `house` |
+| `quality` | number | Yes | 1–5 |
+| `amount` | number | Yes | `1` |
+
+```bash
+curl 'https://www.erepublik.com/en/economy/activateHouse' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw 'type=house&quality=1&amount=1&_token=YOUR_CSRF_TOKEN'
+```
+
+### Response
+
+Earlier notes:
+
+```json
+{ "status": true, "message": "Successfully activated house", "activationTax": 100, "currency": 0, "error": false }
+```
+
+`activationTax` is in country currency and depends on country and quality; `currency` is the balance afterwards (earlier notes give it in hundredths, see [Open questions](#open-questions)).
+
+In the current scripts a house is activated from the city page's residence panel: the server supplies `activationData.url` and `activationData.params`, and the client posts them with `_token`, `url` and `panel`. No house in the observed inventory carried an `actionable` object.
+
+Earlier notes on effects: Q1–Q5 give +100, +200, +300, +400, +500 energy pool (see [Open questions](#open-questions)), +1 overtime point per hour, and last from about 7 to 30 days.
+
+### Errors
+
+The client treats a falsy `status` as failure and shows `message`. Earlier notes list these cases, without response bodies:
+
+- Not enough currency for the activation tax
+- No house of that quality in the inventory
+- Invalid CSRF token
+
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `activateHouse`; parameters, response and error cases from earlier notes.
+
+---
+
+## Assemble
+
+`POST /en/main/assemble` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Consumes the parts.
+
+Builds a Bazooka from its five parts (`collection_part_2`–`6`: Stock, Barrel, Scope, Projectile, Trigger Kit), one of each (`componentsPerItem: 1`).
+
+| Name | Type | Description |
+|------|------|-------------|
+| `_token` | string | CSRF token |
+| `itemLevel` | number | From `actionable.params` (`1`) |
+| `isAjax` | boolean | `true` |
+
+A truthy `error` means failure; the client shows `message`.
+
+**Source:** `inventory-json` `actionable` data, 2026-11-27; `StorageController.assembleItem`.
+
+---
+
+## Build a rocket
+
+`POST /en/main/build-rocket` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Consumes ammunition.
+
+The observed entry builds "Rocket Q2" from Q1–Q6 ammunition, `componentsPerItem: 20`.
+
+| Name | Type | Description |
+|------|------|-------------|
+| `_token` | string | CSRF token |
+| `what` | string | `build_rocket` |
+| `isAjax` | boolean | `true` |
+
+**Source:** `inventory-json` `actionable` data, 2026-11-27; `StorageController.assembleItem`.
+
+---
+
+## Activate booster (old buy script)
+
+`POST /en/main/activate-booster/` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Uses a booster.
+
+Called by `activate_booster` in `buy.js`, an older script; whether any current screen reaches it was not established. Current activation is described in [Activate a booster](#activate-a-booster) and on the [battlefield](../military/battlefield/boosters-bombs-pvp.md#activate-booster).
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `boosterId` | number | Yes | From the element ID `booster_{boosterId}` |
+
+```bash
+curl 'https://www.erepublik.com/en/main/activate-booster/' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-urlencode '_token=YOUR_CSRF_TOKEN' \
+  --data-urlencode 'boosterId=1'
+```
+
+The client reads `error` and `message`.
+
+**Source:** `buy.js` (version 1741941928).
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| Booster confirmation | Parameter unknown | `confirmExtendBooster=yes` | Code |
+| House energy pool | +100 … +500 | Marketplace data: Q2 160, Q3 200, Q4 300, Q5 400 ([table](marketplace.md#product-effects)) | Not settled |
+| House activation | From the inventory | Residence panel; no `actionable` on houses | Not settled |
+| Unit of `currency` after house activation | Hundredths | The client passes it to its currency display; unit not checked | Not settled |
+| `expiresAt` in booster answers | Mentioned | Not in the examples | — |

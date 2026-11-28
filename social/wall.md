@@ -1,116 +1,102 @@
-# Wall Posts
+# Wall and feeds
 
-#erepublik #api #social #wall
+[API docs](../README.md) › Social › Wall and feeds
 
-Endpoints for creating and deleting wall posts on citizen profiles and country pages.
+The feed block of the home page: tabs for friends, country, military unit, party and community. Every tab uses the same set of requests under its own route name.
 
-[< Back to Social API](README.md)
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Load a feed](#load-a-feed) | GET | `/en/main/{feedRoute}/retrieve/json` | ✅ Verified 2026-11-27 |
+| [Older posts](#older-posts) | POST | `/en/main/{feedRoute}/older/json` | 🔍 From code |
+| [Create a post](#create-a-post) | POST | `/en/main/{feedRoute}/create/json` | 🔍 From code |
+| [React to a post](#react-to-a-post) | POST | `/en/main/{feedRoute}/vote/json` | 🔍 From code |
+| [Delete a post](#delete-a-post) | POST | `/en/main/{feedRoute}/delete/json` | 🔍 From code |
+| [Load comments](#load-comments) | POST | `/en/main/{commentRoute}/retrieve/json` | 🔍 From code |
+| [Create a comment](#create-a-comment) | POST | `/en/main/{commentRoute}/create/json` | 🔍 From code |
+| [React to a comment](#react-to-a-comment) | POST | `/en/main/{commentRoute}/vote/json` | 🔍 From code |
+| [Delete a comment](#delete-a-comment) | POST | `/en/main/{commentRoute}/delete/json` | 🔍 From code |
 
-**Related:** [Citizen Profiles](profiles.md) | [Friends](friends.md)
+Automatic posts (`POST /en/main/wall-post/automatic`) are described under [badges and auto-posts](../home/badges.md#auto-post).
+
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## Create Wall Post
+## Feeds and routes
 
-**Method:** POST
-**URL:** `/en/main/wall-post/create/json`
-**Auth Required:** Yes
+The routes come from `SERVER_DATA.wallData.citizenFeeds` on the home page (fields: [dashboard](../home/dashboard.md)). Seen on 2026-11-27:
 
-### Description
+| Tab | `feedRoute` | `commentRoute` | `viewPostParameter` | Posting |
+|-----|-------------|----------------|---------------------|---------|
+| `friends` | `wall-post` | `wall-comment` | `viewPost` | Yes |
+| `country` | `country-post` | `country-comment` | `countryPost` | Yes |
+| `militaryUnit` | `military-unit-post` | `military-unit-comment` | `unitPost` | Yes |
+| `party` | `party-post` | `party-comment` | `viewPartyPost` | Yes |
+| `community` | `community-post` | `community-comment` | `communityPost` | Officials only |
 
-Creates a new wall post on the citizen's profile or country page. Posts are rate-limited to prevent spam (typically a few minutes between posts).
+`canPost` per feed says whether you may post. `SERVER_DATA.wallData` also gives `postsPerPage` (20), `commentsPerPage` (5), `postCharactersLimit` (280) and `commentCharactersLimit` (480); on the community tab the client applies the comment limit to posts too. Each tab has an `unreadCount`, which the client resets when you open it; loading a feed may therefore mark its posts as read.
 
-### Request Parameters
+---
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| post_as | number | Yes | Posting mode: `0` = post as self, other values likely for organizations |
-| post_message | string | Yes | The wall post message content |
-| _token | string | Yes | CSRF token for request validation |
+## Load a feed
 
-### Headers
+`GET /en/main/{feedRoute}/retrieve/json` · Auth required · ✅ Verified 2026-11-27
 
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
+The first page of a tab. Verified with `wall-post` and `community-post`.
 
-<details>
-<summary>Example Request (cURL)</summary>
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `firstPostId` | query | number | No | The feed's `firstPostId`, set when the page was opened from a link to one post |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/main/wall-post/create/json' \
+curl 'https://www.erepublik.com/en/main/wall-post/retrieve/json' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw 'post_as=0&post_message=Hello%20world&_token=YOUR_CSRF_TOKEN'
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+### Response
 
-<details>
-<summary>Example Response (Success)</summary>
+Shortened; a community post:
 
 ```json
 {
   "wallData": {
-    "wallType": "friends",
-    "params": {
-      "wallType": "friends",
-      "viewPost": "viewPost",
-      "wallPosts": "wall-post",
-      "wallComments": "wall-comment"
-    },
-    "isGroupWall": false,
-    "showDictator": true,
+    "wallType": "community",
+    "params": { "wallType": "community", "viewPost": "communityPost", "wallPosts": "community-post", "wallComments": "community-comment" },
+    "isGroupWall": true,
+    "showDictator": false,
     "showPoliticalTitles": false,
-    "canPost": true
+    "canPost": false
   },
   "citizenData": {
-    "4690052": {
-      "id": 4690052,
-      "name": "driver sti",
-      "avatar": "https://cdnt.erepublik.net/.../avatar.png",
-      "profileUrl": "//www.erepublik.com/en/citizen/profile/4690052",
-      "isDictator": 0,
-      "politicalTitle": ""
-    }
+    "2": { "id": 2, "name": "Plato", "avatar": "https://cdnt.erepublik.net/…", "profileUrl": "//www.erepublik.com/en/citizen/profile/2", "isDictator": false, "politicalTitle": "" }
   },
   "wallPosts": [
     {
-      "id": 26680941,
-      "authorId": 4690052,
+      "id": 75,
+      "authorId": 2,
       "title": false,
-      "message": "Here is a more sophisticated post. <q class=\"emoji emoji_1f601\" alt=\"&#x1f601;\" draggable=\"false\">&#x1f601;</q><br />\n\u0406 \u0432\u0456\u043d \u043c\u0456\u0441\u0442\u0438\u0442\u044c \u043a\u0438\u0440\u0438\u043b\u0438\u0446\u044e",
-      "createdAt": 1769353893,
-      "createdAtTimeAgo": "now",
-      "canRemove": true,
+      "message": "Dear Citizens,<br />…",
+      "createdAt": 1793630748,
+      "createdAtTimeAgo": "25 days ago",
+      "canRemove": false,
       "canReport": false,
       "showCommentsAndVotes": true,
       "showLinkToPost": true,
       "canVote": true,
       "canReact": true,
       "isVoted": false,
-      "numVotes": 0,
-      "reactions": {
-        "1f44d": 0,
-        "1f60d": 0,
-        "1f606": 0,
-        "1f632": 0,
-        "1f614": 0,
-        "1f621": 0,
-        "1f44e": 0
-      },
+      "numVotes": 126,
+      "reactions": { "1f44d": 69, "1f60d": 7, "1f606": 9, "1f632": 14, "1f614": 6, "1f621": 10, "1f44e": 10 },
       "reactionId": false,
       "votedBy": [],
-      "canComment": true,
+      "canComment": false,
       "numComments": 0,
       "commentedBy": [],
       "meta": {
-        "reportURL": "//www.erepublik.com/en/main/tickets-report/26680941/wall-post",
+        "reportURL": "//www.erepublik.com/en/main/tickets-report/75/community-post",
         "isAutopost": false,
-        "isOwnPost": true,
+        "isOwnPost": false,
         "isLatestEvent": false,
         "seeMoreURL": null,
         "isInternationalEvent": false,
@@ -123,251 +109,264 @@ curl -X POST 'https://www.erepublik.com/en/main/wall-post/create/json' \
     }
   ],
   "currentPage": 1,
-  "pages": 100,
+  "pages": 4,
   "hasMore": true
 }
 ```
 
-</details>
-
-<details>
-<summary>Example Response (Error - Rate Limited)</summary>
-
-```json
-{
-  "error": true,
-  "message": "You must wait 4 minutes before posting again"
-}
-```
-
-</details>
-
-### Response Fields
-
 | Field | Type | Description |
 |-------|------|-------------|
-| wallData | object | Metadata about the wall (type, permissions, display settings) |
-| citizenData | object | Author citizen data keyed by citizen ID |
-| wallPosts | array | Array containing the newly created post object |
-| currentPage | number | Current page number for pagination |
-| pages | number | Total number of pages |
-| hasMore | boolean | Whether more posts exist |
+| `wallData` | object | Wall type, route names, permissions and display settings |
+| `citizenData` | object | Authors, keyed by citizen ID |
+| `wallPosts[]` | array | Up to 20 posts |
+| `wallPosts[].id`, `authorId` | number | Post and author |
+| `wallPosts[].message` | string | HTML: `<br />`, emoji as `<q class="emoji emoji_1f601">`; Unicode text is kept |
+| `wallPosts[].createdAt`, `createdAtTimeAgo` | number, string | Unix time; relative text |
+| `wallPosts[].canRemove`, `canReport`, `canVote`, `canReact`, `canComment` | boolean | Your permissions |
+| `wallPosts[].reactions` | object | Count per emoji code point |
+| `wallPosts[].reactionId` | `false` or value | Your reaction |
+| `wallPosts[].numVotes`, `numComments` | number | Totals |
+| `wallPosts[].meta` | object | Report link and post type flags; `isAutomaticMedalPost` marks [auto-posts](../home/badges.md#auto-post), which the client collapses |
+| `currentPage`, `pages`, `hasMore` | number, number, boolean | Pagination |
 
-### Wall Post Object Fields
+### Errors
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | number | Unique post ID |
-| authorId | number | Citizen ID of the post author |
-| message | string | Post content (HTML encoded, may contain emoji tags) |
-| createdAt | number | Unix timestamp of creation |
-| createdAtTimeAgo | string | Human-readable time (e.g., "now", "5 minutes ago") |
-| canRemove | boolean | Whether viewer can delete this post |
-| canVote | boolean | Whether viewer can vote on this post |
-| canReact | boolean | Whether viewer can add reactions |
-| reactions | object | Reaction counts by emoji unicode (e.g., "1f44d" = thumbs up) |
-| numVotes | number | Total vote count |
-| numComments | number | Total comment count |
-| meta | object | Additional post metadata (report URL, post type flags) |
+Without a session: HTTP `200`, `{"error":"not_authorized"}`.
 
-### Notes
-
-- Requires authentication via session cookie
-- CSRF token (`_token`) must be obtained from the page where the post is created
-- **Rate limiting:** Enforced server-side to prevent spam (typically 3-5 minutes between posts)
-- The `post_as` parameter likely controls posting as citizen (0) vs organization/other entity
-- Returns HTTP 200 even when rate-limited (check `error` field in JSON response)
-- Wall posts appear on the citizen's profile page or country wall, depending on context
-- **Unicode/Emoji support:** Full unicode support including emojis (converted to HTML tags) and Cyrillic/other scripts
-- Response includes full wall context with pagination metadata
-- The newly created post appears as the first item in the `wallPosts` array
+**Source:** real requests, 2026-11-27; `erpk_angular_controllers.js` (version 1795779904), `ErpkFeedController`, `ErpkFeedFactory`.
 
 ---
 
-## Delete Wall Post
+## Older posts
 
-**Method:** POST
-**URL:** `/en/main/wall-post/delete/json`
-**Auth Required:** Yes
+`POST /en/main/{feedRoute}/older/json` · Auth required · 🔍 From code
 
-### Description
-
-Deletes a wall post by its ID. Only the post author can delete their own posts.
-
-### Request Parameters
+The **load more** request. It only reads.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| postId | number | Yes | The ID of the wall post to delete |
-| _token | string | Yes | CSRF token for request validation |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `lastPostId` | number | Yes | Smallest post ID already loaded |
+| `page` | number | Yes | `currentPage + 1` |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/main/wall-post/delete/json' \
+curl 'https://www.erepublik.com/en/main/wall-post/older/json' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&lastPostId=12345678&page=2'
+```
+
+The client merges `citizenData`, `wallData` and `wallPosts` and reads `currentPage`, `pages`, `hasMore`: the shape of [load a feed](#load-a-feed).
+
+**Source:** same script, `loadMore`.
+
+---
+
+## Create a post
+
+`POST /en/main/{feedRoute}/create/json` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Publishes a post.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `post_message` | string | Yes | Text |
+| `post_as` | number | Yes | `0` posts as yourself, the client default |
+
+```bash
+curl 'https://www.erepublik.com/en/main/wall-post/create/json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw 'post_as=0&post_message=Hello%20world&_token=YOUR_CSRF_TOKEN'
+```
+
+### Response
+
+The shape of [load a feed](#load-a-feed), with the new post as `wallPosts[0]`.
+
+### Errors
+
+HTTP `200` with `error` and `message`. Earlier notes report a limit of one post every few minutes (typically 3–5):
+
+```json
+{ "error": true, "message": "You must wait 4 minutes before posting again" }
+```
+
+**Source:** same script, `postPost`; error and limit — earlier notes.
+
+---
+
+## React to a post
+
+`POST /en/main/{feedRoute}/vote/json` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Records your reaction on a post.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `postId` | number | Yes | Post |
+| `reactionId` | | Yes | Chosen reaction |
+
+```bash
+curl 'https://www.erepublik.com/en/main/wall-post/vote/json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&postId=12345678&reactionId=REACTION_ID'
+```
+
+The client reads `numVotes`, `reactions`, `reactionId`, or `error` with `message`.
+
+**Source:** same script, `postReact`.
+
+---
+
+## Delete a post
+
+`POST /en/main/{feedRoute}/delete/json` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Deletes the post. The client asks for confirmation first.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `postId` | number | Yes | Post with `canRemove: true` |
+
+```bash
+curl 'https://www.erepublik.com/en/main/wall-post/delete/json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
   --data-raw 'postId=12345678&_token=YOUR_CSRF_TOKEN'
 ```
 
-</details>
+### Response
 
-<details>
-<summary>Example Response (Success)</summary>
-
-```json
-{
-  "status": true,
-  "message": "Post deleted successfully"
-}
-```
-
-</details>
-
-<details>
-<summary>Example Response (Error - Post Not Found)</summary>
+The client reads only `error` and `message`. Examples from earlier notes:
 
 ```json
-{
-  "error": true,
-  "message": "This post is not available anymore"
-}
+{ "status": true, "message": "Post deleted successfully" }
 ```
-
-</details>
-
-<details>
-<summary>Example Response (Error - Not Authorized)</summary>
 
 ```json
-{
-  "error": true,
-  "message": "You are not authorized to delete this post"
-}
+{ "error": true, "message": "This post is not available anymore" }
 ```
 
-</details>
+```json
+{ "error": true, "message": "You are not authorized to delete this post" }
+```
 
-### Notes
+All with HTTP `200`. Earlier notes: you can delete your own posts; an invalid or expired token also fails.
 
-- Requires authentication via session cookie
-- CSRF token (`_token`) must be obtained from the page context
-- Only the post author can delete their own posts
-- Returns HTTP 200 even on error (check `error` field in JSON response)
-- Possible error scenarios:
-  - Post ID doesn't exist or was already deleted
-  - User doesn't have permission to delete the post (not the author)
-  - Invalid or expired CSRF token
+**Source:** same script, `postDelete`; examples — earlier notes.
 
 ---
 
-## Auto-Post Award to Wall
+## Load comments
 
-**Method:** POST
-**URL:** `/en/main/wall-post/automatic`
-**Auth Required:** Yes
-**Source:** `awards.{ts}.js`
+`POST /en/main/{commentRoute}/retrieve/json` · Auth required · 🔍 From code
 
-### Description
-
-Automatically posts an award/medal announcement to the citizen's wall. This is triggered from the award popup on the homepage when the citizen checks the "Share on wall" checkbox before clicking "Get Reward".
-
-Unlike the regular `wall-post/create/json` endpoint, this one uses a **dedicated CSRF token** from `#award_token` (not the standard `#_token`), and accepts the message content directly from a pre-filled checkbox value.
-
-### Request Parameters
+Sent when the comments of a post are first opened. It only reads.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| _token | string | Yes | CSRF token from `$j('#award_token').val()` — **not** the standard `#_token` |
-| message | string | Yes | Wall post message text (pre-populated by the server in the checkbox value) |
-| awardId | string | Yes | Award identifier (extracted from checkbox element ID) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| `_token` | string | Yes | CSRF token |
+| `postId` | number | Yes | Post |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/main/wall-post/automatic' \
+curl 'https://www.erepublik.com/en/main/wall-comment/retrieve/json' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-urlencode '_token=YOUR_AWARD_CSRF_TOKEN' \
-  --data-urlencode 'message=I earned a Hard Worker medal!' \
-  --data-urlencode 'awardId=12345'
+  --data-raw '_token=YOUR_CSRF_TOKEN&postId=12345678'
 ```
 
-</details>
+The client reads `postComments[]` (with `id`), or `error` with `message`. A link to a post may carry `?commentId={id}`, which the client highlights.
 
-<details>
-<summary>Example Response (Success — Expected)</summary>
+**Source:** same script, `commentsToggle`.
 
-```json
-{
-  "message": true
-}
+---
+
+## Create a comment
+
+`POST /en/main/{commentRoute}/create/json` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Publishes a comment.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `postId` | number | Yes | Post |
+| `comment_message` | string | Yes | Text, up to `commentCharactersLimit` |
+
+```bash
+curl 'https://www.erepublik.com/en/main/wall-comment/create/json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&postId=12345678&comment_message=Hello'
 ```
 
-</details>
+The client appends `postComments[0]` of the response.
 
-<details>
-<summary>Example Response (Error — Expected)</summary>
+**Source:** same script, `postComment`.
 
-```json
-{
-  "message": false,
-  "error_message": "Something went wrong"
-}
+---
+
+## React to a comment
+
+`POST /en/main/{commentRoute}/vote/json` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Records your reaction on a comment.
+
+Fields: `_token`, `postId`, `commentId`, `reactionId`.
+
+```bash
+curl 'https://www.erepublik.com/en/main/wall-comment/vote/json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&postId=12345678&commentId=1&reactionId=REACTION_ID'
 ```
 
-</details>
+The client reads `numVotes`, `reactions`, `reactionId`.
 
-### Response Fields
+**Source:** same script, `commentReact`.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| message | boolean | `true` if the wall post was created successfully |
-| error_message | string | Human-readable error text (only present on failure) |
+---
 
-### How the Frontend Calls This
+## Delete a comment
 
-```javascript
-// In awards.js — only fires if a "Share on wall" checkbox is checked
-var checkbox = $j(this).siblings('p').children('input:checked');
-if (checkbox.length) {
-    var checkbox_id_bits = checkbox.attr('id').split('_');
-    $j.post('/' + erepublik.settings.culture + '/main/wall-post/automatic', {
-        _token: $j('#award_token').val(),
-        message: checkbox.val(),
-        awardId: checkbox_id_bits[3]  // from id="award_checkbox_{index}_{awardId}"
-    }, function(response) { ... }, 'json');
-}
+`POST /en/main/{commentRoute}/delete/json` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Deletes the comment.
+
+Fields: `_token`, `postId`, `commentId`.
+
+```bash
+curl 'https://www.erepublik.com/en/main/wall-comment/delete/json' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&postId=12345678&commentId=1'
 ```
 
-### Notes
+The client reads `error` and `message`.
 
-- **Optional action** — only fires when the user explicitly checks the "Share on wall" checkbox in the award popup
-- Uses a separate CSRF token (`#award_token`) from the standard page token (`#_token`)
-- The `awardId` is parsed from the checkbox DOM element's `id` attribute, split by `_`, taking the 4th segment (index 3)
-- The `message` comes pre-filled from the server as the checkbox's `value` attribute
-- On error, the message is displayed via `erepublik.functions.displayHumanMsgError()`
-- On success, the response has `message: true` (boolean) — note this is different from the regular wall post endpoint which returns full wall data
-- The award popup system blocks other popups (`erepublik.settings.achievementPopup = true`) until all awards are dismissed — see [framework/client-objects.md](../framework/client-objects.md)
-- Awards are rendered server-side as hidden `.home_reward` divs in the homepage HTML and shown sequentially via `nextAward()`
-- Posts created this way have `meta.isAutomaticMedalPost: true` in the wall post object (see Create Wall Post response above)
+**Source:** same script, `commentDelete`.
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| Where posts appear | Profile and country walls | Home page feed tabs | Code |
+| `post_as` | Other values likely for organizations | `postAs` was `null` | Not settled |
+| `reactionId` values | Not described | Probably the emoji code points in `reactions` | Not settled |
+| `firstPostId` | Not described | `firstPostId=1` returned an ordinary first page | Not settled |
+| `votedBy`, `commentedBy` | Not described | Empty in the posts read | — |
+| Delete success | `status`, `message` | Client checks only `error` | Both listed |
+| Reporting and moderation | Not described | `meta.reportURL`; the moderator script (`ModerationService`) is for moderators only | Not described here |

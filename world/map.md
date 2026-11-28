@@ -1,775 +1,502 @@
-# Map & Regions
+# Map and regions
 
-#erepublik #api #world #map #regions
+[API docs](../README.md) › World and travel › Map and regions
 
-Endpoints for retrieving world map data and region page information.
+The world map (a popup, loaded by `js/cmp/map.js`) and the page of a single region.
 
-See also: [Travel](travel.md) | [Cities](cities.md) | [Overview](README.md)
+```mermaid
+flowchart LR
+    A[world-map HTML] --> B[map.js]
+    B --> C[map-data: all regions]
+    B -->|click a region| D[map-panel]
+    B -->|click an owner| E[map-country]
+    B -->|search box| F[map-search]
+    D -->|Move| G[travel]
+```
+
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [World map](#world-map) | GET | `/en/main/world-map` | ✅ Verified 2026-11-27 |
+| [Map data](#map-data) | GET | `/en/main/map-data` | ✅ Verified 2026-11-27 |
+| [Side panel](#side-panel) | POST | `/en/main/map-panel` | ✅ Verified 2026-11-27 |
+| [Country popup](#country-popup) | GET | `/en/main/map-country/{countryId}` | ✅ Verified 2026-11-27 |
+| [Map search](#map-search) | GET | `/en/main/map-search` | ✅ Verified 2026-11-27 |
+| [Map statistics](#map-statistics) | POST | `/en/main/map-stats` | 🔍 From code |
+| [Region page](#region-page) | GET | `/en/main/region/{permalink}` | ✅ Verified 2026-11-27 |
+
+"Move" on the map posts to [travel](travel.md#move). Map tiles come from a third-party map host and are not described here.
+
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## Get World Map Data
+## World map
 
-**Method:** GET
-**URL:** `/en/main/map-data?updated_at={timestamp}`
-**Auth Required:** Yes
+`GET /en/main/world-map` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-Retrieves world map data for all regions (574 total), including current/original country ownership, natural resources, city information, geographic coordinates (bounding boxes, centroids), and active/past battle information. Supports incremental updates via the `updated_at` timestamp parameter, returning only regions modified since that time.
-
-### Query Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| updated_at | string | Yes | ISO 8601 timestamp (URL-encoded). Returns regions updated since this time. Example: `2026-02-01T23%3A22%3A47-08%3A00` |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Accept | `application/json, text/javascript, */*; q=0.01` | Recommended |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+HTML of the map popup (about 13 KB): panels, search box and inline scripts. Without a session the request is redirected to the front page.
 
 ```bash
-curl 'https://www.erepublik.com/en/main/map-data?updated_at=2026-02-01T23%3A22%3A47-08%3A00' \
+curl 'https://www.erepublik.com/en/main/world-map' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Accept: application/json, text/javascript, */*; q=0.01'
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+| Variable in the page | Holds |
+|----------------------|-------|
+| `mapSettings` | `carto_time_cache` (last map update), `mapbox_time_cache`, `layer_*_enabled`, `map_enabled` |
+| `options` | Zoom and projection settings |
+| `boundingBox` | Initial view: your region |
+| `my_location` | Your city: `id`, `region_id`, `name`, `latitude`, `longitude`, `my_level` |
+| `mapDailyOrder` | Daily order: `do_mission_id`, `do_region_id`, `do_battle_id`, `do_progress`, `do_target`, `do_reward_on` |
+| `statsEnabled` | Enables [map statistics](#map-statistics); `false` on 2026-11-27 |
 
-### Example Response
+> [!CAUTION]
+> The page contains your location and avatar. Do not share saved copies.
 
-The response is an object keyed by region ID (string). The example below shows region `143` (Donbas), which is occupied and has a recently concluded battle:
+**Source:** real request, 2026-11-27; `generalPopup.mapPopup` in `erepublik.js` (version 1795779896).
 
-<details>
-<summary>JSON Response</summary>
+---
+
+## Map data
+
+`GET /en/main/map-data` · Auth required · ✅ Verified 2026-11-27
+
+Every region (574): owners, resources, city, coordinates and battles. About 640 KB of JSON, served with `Content-Type: text/html`.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `updated_at` | query | string | No | The client sends `mapSettings.carto_time_cache` (ISO 8601 with offset) |
+
+```bash
+curl 'https://www.erepublik.com/en/main/map-data?updated_at=2026-11-27T09%3A45%3A47-08%3A00' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+On 2026-11-27 a request with `updated_at` one hour old returned exactly the same body as a request without it. Expect the full map. Without a session the request is redirected to the front page.
+
+### Response
+
+An object keyed by region ID. One region with an active battle:
 
 ```json
 {
-  "143": {
+  "3": {
     "resources": [
-      {
-        "id": "1",
-        "image": "/images/resources/1.png",
-        "name": "Grain",
-        "industry": "food",
-        "bonus": "25"
-      }
+      { "id": "17", "image": "/images/resources/17.png", "name": "Magnesium", "industry": "aircraft", "bonus": "10" }
     ],
-    "original_country": {
-      "id": "40",
-      "permalink": "Ukraine",
-      "name": "Ukraine",
-      "flag": "//www.erepublik.net/images/flags_png/M/Ukraine.png"
-    },
-    "current_country": {
-      "id": "29",
-      "permalink": "United-Kingdom",
-      "name": "United Kingdom",
-      "flag": "//www.erepublik.net/images/flags_png/M/United-Kingdom.png"
-    },
-    "city": {
-      "name": "Donetsk",
-      "latitude": 48.015883,
-      "longitude": 37.80285,
-      "is_capital": false
-    },
+    "original_country": { "id": "1", "permalink": "Romania", "name": "Romania", "flag": "//www.erepublik.net/images/flags_png/M/Romania.png" },
+    "current_country": { "id": "43", "permalink": "Turkey", "name": "Turkey", "flag": "//www.erepublik.net/images/flags_png/M/Turkey.png" },
+    "city": { "name": "Constanta", "latitude": 44.1733333, "longitude": 28.6383333, "is_capital": false },
     "region": {
-      "name": "Donbas",
-      "id": "143",
-      "population": "151",
-      "centroid_lat": 48.5119,
-      "centroid_lon": 38.34001,
-      "bbox_min_lat": 46.87564,
-      "bbox_max_lat": 50.06317,
-      "bbox_min_lon": 36.53113,
-      "bbox_max_lon": 40.15923,
-      "area": 52902.34297
+      "id": "3", "name": "Dobrogea", "population": "89",
+      "centroid_lat": 44.67274, "centroid_lon": 28.55972,
+      "bbox_min_lat": 43.73557, "bbox_max_lat": 45.45247,
+      "bbox_min_lon": 27.25279, "bbox_max_lon": 29.69987,
+      "area": 14929.57822
+    },
+    "active_battle_info": {
+      "invader": { "id": "72", "name": "Lithuania", "flag": "//www.erepublik.net/images/flags_png/M/Lithuania.png" },
+      "war_id": "228091",
+      "is_resistance": "0",
+      "status": null,
+      "id": "959040"
     },
     "past_battle_info": {
-      "invader": {
-        "id": "29",
-        "name": "United Kingdom",
-        "flag": "//www.erepublik.net/images/flags_png/M/United-Kingdom.png"
-      },
-      "victim": {
-        "id": "40",
-        "name": "Ukraine",
-        "flag": "//www.erepublik.net/images/flags_png/M/Ukraine.png"
-      },
-      "war_id": "213028",
+      "invader": { "id": "43", "name": "Turkey", "flag": "//www.erepublik.net/images/flags_png/M/Turkey.png" },
+      "victim": { "id": "164", "name": "Saudi Arabia", "flag": "//www.erepublik.net/images/flags_png/M/Saudi-Arabia.png" },
+      "war_id": "227470",
       "is_resistance": false,
       "status": "3",
-      "id": "871728",
-      "finished": "6,667"
+      "id": "949452",
+      "finished": "6,914"
     }
   }
 }
 ```
 
-</details>
-
-### Response Structure
-
-- Response is an object keyed by region ID (string)
-- Each region contains: `resources`, `original_country`, `current_country`, `city`, `region`
-- Optional fields per region: `active_battle_info`, `past_battle_info`
-
-### Response Fields (per region)
-
-#### resources (array)
-
 | Field | Type | Description |
 |-------|------|-------------|
-| id | string | Resource ID |
-| image | string | Relative path to the resource icon image |
-| name | string | Resource display name (e.g., "Grain", "Iron", "Oil") |
-| industry | string | Industry type: `food` or `weapon` |
-| bonus | string | Production bonus percentage (e.g., `"25"`) |
+| `resources[]` | array | `id`, `name`, `industry` (`food`, `weapon`, `house`, `aircraft`), `bonus` (percent), `image`; all strings. Empty for 353 of 574 regions |
+| `original_country`, `current_country` | object | `id` (string), `name`, `permalink`, `flag` (protocol-relative). Different IDs mean the region is occupied |
+| `city` | object | `name`, `latitude`, `longitude`, `is_capital` |
+| `region` | object | `id`, `name`, `population` (strings); centroid, bounding box, `area` (km²) as numbers |
+| `active_battle_info` | object | Optional (248 regions): `invader`, `war_id`, `id` (battle), `is_resistance` (`"0"` / `"1"`), `status` (`null`). No `victim` |
+| `past_battle_info` | object | Present for every region: also `victim`; `is_resistance` is a boolean; `status` was always `"3"`; `finished` is a formatted game day |
 
-#### original_country / current_country (object)
+The map reads `past_battle_info.finished` as the day of "Under Occupation since" or "Liberated on". It also reads an optional `gold_mine.status`, not present on 2026-11-27.
 
-| Field | Type | Description |
-|-------|------|-------------|
-| id | string | Country ID |
-| permalink | string | URL-friendly country name (e.g., `"United-Kingdom"`) |
-| name | string | Country display name |
-| flag | string | Protocol-relative URL to the country flag image |
-
-#### city (object)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| name | string | City name |
-| latitude | number | City latitude coordinate |
-| longitude | number | City longitude coordinate |
-| is_capital | boolean | Whether this city is the country capital |
-
-#### region (object)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | string | Region ID |
-| name | string | Region name |
-| population | string | Number of residents in the region |
-| centroid_lat | number | Centroid latitude of the region |
-| centroid_lon | number | Centroid longitude of the region |
-| bbox_min_lat | number | Bounding box minimum latitude |
-| bbox_max_lat | number | Bounding box maximum latitude |
-| bbox_min_lon | number | Bounding box minimum longitude |
-| bbox_max_lon | number | Bounding box maximum longitude |
-| area | number | Region area in square kilometers |
-
-#### active_battle_info (object, optional)
-
-Present when a battle is currently ongoing in the region. Structure is likely similar to `past_battle_info` (see below); exact fields for active battles are not yet verified.
-
-#### past_battle_info (object, optional)
-
-Present when a battle recently concluded in the region.
-
-| Field | Type | Description |
-|-------|------|-------------|
-| invader | object | The attacking country (see country sub-object below) |
-| victim | object | The defending country (see country sub-object below) |
-| war_id | string | War ID this battle belongs to |
-| is_resistance | boolean | Whether this was a resistance war |
-| status | string | Battle outcome status code |
-| id | string | Battle ID |
-| finished | string | Formatted number indicating when the battle finished (eRepublik day or tick) |
-
-**Country sub-object** (used in `invader` and `victim`):
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | string | Country ID |
-| name | string | Country display name |
-| flag | string | Protocol-relative URL to the country flag image |
-
-### Notes
-
-- **Incremental Updates:** Use the `updated_at` parameter to fetch only regions that changed since the last request. This is essential for real-time map tracking applications to minimize bandwidth.
-- **Response Size:** Full response is approximately 620KB (574 regions). Using incremental updates significantly reduces payload size.
-- **Geographic Data:** The bounding box fields (`bbox_min_lat`, `bbox_max_lat`, `bbox_min_lon`, `bbox_max_lon`) and centroid fields (`centroid_lat`, `centroid_lon`) are suitable for map rendering libraries (Leaflet, Mapbox, etc.).
-- **Battle Tracking:** Regions with active battles include `active_battle_info`. Recently concluded battles appear in `past_battle_info`. The `active_battle_info` structure is not yet verified from a live response.
-- **Occupation Status:** Compare `original_country.id` vs `current_country.id` to determine if a region is occupied.
-- **Resources:** Each region can have multiple natural resources providing production bonuses. All numeric-looking fields (`id`, `bonus`, `population`) are returned as strings.
-- **Flag URLs:** Flag image URLs use protocol-relative format (`//www.erepublik.net/...`) -- prepend `https:` before use.
-- **Timestamp Format:** The `updated_at` parameter must be URL-encoded. Example: `2026-02-01T23:22:47-08:00` becomes `2026-02-01T23%3A22%3A47-08%3A00`.
+**Source:** real requests, 2026-11-27; `MapApp.LoadData`, `City` in `js/cmp/map.js`.
 
 ---
 
-## Get Region Page
+## Side panel
 
-**Method:** GET
-**URL:** `/en/main/region/{RegionPermalink}`
-**Auth Required:** No
+`POST /en/main/map-panel` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-Retrieves a **server-rendered HTML page** containing comprehensive information about a specific region. Unlike most API endpoints that return JSON, this page embeds structured data within HTML elements (`data-` attributes, CSS classes) and inline JavaScript variables. The page does not require authentication and can be accessed with a simple GET request.
-
-The region permalink is the URL-friendly name of the region (e.g., `Lithuania-Minor`, `Rhineland-Westphalia`).
-
-### URL Parameters
+HTML fragment of one map side panel. Read-only.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| RegionPermalink | string | Yes | URL-friendly region name (e.g., `Lithuania-Minor`) |
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `panel` | string | Yes | Panel name, see below |
+| `id` | number | Yes | Region ID or country ID |
+| `back` | boolean | Yes* | Sent by the client when navigating back; `false` here |
 
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | No |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+| `panel` | `id` | Shows |
+|---------|------|-------|
+| `general_view` | region | City, region, owner, liberation, zone, travel cost and Move button |
+| `region_view` | region | Resources, capital status |
+| `region_details_view` | region | Current, conquered and historical region counts |
+| `neighbours_view` | region | Neighbouring regions |
+| `country_view` | country | Name, population, capital, campaign of the day |
+| `country_details_view` | country | Production bonuses and resources |
+| `political_view` | country | President and congress parties |
+| `military_view` | country | Allies |
 
 ```bash
-curl -s 'https://www.erepublik.com/en/main/region/Lithuania-Minor'
+curl 'https://www.erepublik.com/en/main/map-panel' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&panel=general_view&id=424&back=false'
 ```
 
-</details>
+The response is HTML (about 1–7 KB). `general_view` contains `mapTravel(424, 35)` behind its Move button.
 
-### Response Format
+**Source:** real requests (all eight panels), 2026-11-27; `MapPanels` in `js/cmp/map.js`.
 
-The response is an HTML page (~38KB). Data is embedded in various HTML structures and JavaScript variables described below.
+---
 
-### Embedded Data Sections
+## Country popup
 
-#### 1. Country Info
+`GET /en/main/map-country/{countryId}` · Auth required · ✅ Verified 2026-11-27
 
-Found in the page header area and country dropdown.
+Summary of a country, opened from a region's owner on the map. JSON, served with `Content-Type: text/html`.
 
-| Selector / Source | Data |
-|-------------------|------|
-| `#countrySelectorDropdown option[selected]` | Country ID (`value`), permalink (`data-permalink`) |
-| `a.country_rank` | Country rank (e.g., "Rank 39") |
-| `a.alliance_name` | Alliance name and link (e.g., `/en/main/alliances/6` for "WOLF"). Only present if the country belongs to an alliance. |
-| `span.dictatorship_flag_icon_l` | Dictatorship indicator icon. Present before the country flag image only when the country is under a dictatorship government form. Absent for democracies. |
-| Country flag image | Flag URL from `<img>` element near country name |
-
-<details>
-<summary>Example HTML (democracy with alliance)</summary>
-
-```html
-<option value="48" data-permalink="India" selected>India</option>
-<a class="alliance_name" href="//www.erepublik.com/en/main/alliances/6" title="World Organization of Loyalty and Freedom"><span>WOLF</span></a>
+```bash
+curl 'https://www.erepublik.com/en/main/map-country/35' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+### Response
 
-<details>
-<summary>Example HTML (dictatorship without alliance)</summary>
+Shortened, president replaced with placeholders:
 
-```html
-<span class="dictatorship_flag_icon_l"></span>
-<img src="//www.erepublik.net/images/flags/XL/Venezuela.gif" />
+```json
+{
+  "current_country_name": "Poland",
+  "current_country_flag": "//www.erepublik.net/images/flags_png/M/Poland.png",
+  "current_country_rank": 10,
+  "current_country_population": 700,
+  "current_country_capital": "Gdansk",
+  "current_country_president": { "name": "CITIZEN_NAME", "id": "1234567", "avatar": "AVATAR_URL" },
+  "current_country_nb_regions": 20,
+  "current_country_conquered_regions": 15,
+  "natural_enemy": { "name": "Estonia", "id": "70", "avatar": "//www.erepublik.net/images/flags_png/M/Estonia.png" },
+  "area": "1.844.237",
+  "resources": [
+    {
+      "resource": { "id": "1", "name": "Grain", "rarity": "rare", "bonus": "25", "manufacturing_industry": "food" },
+      "regions_connected": {
+        "307": {
+          "id": "307", "name": "Silesia", "permalink": "Silesia",
+          "current_owner_country_id": "35", "original_owner_country_id": "35",
+          "zone": "31", "terrain": "default", "determination": "1.00",
+          "under_occupation_since": "1674182584", "liberated_since": "1674338587"
+        }
+      },
+      "regions_concession_active": [],
+      "regions_disconnected": [],
+      "regions_concession_inactive": [],
+      "bonus": "25"
+    }
+  ],
+  "battle": {
+    "war_id": "145972",
+    "id": "958886",
+    "is_resistence": "0",
+    "region": { "id": "96", "name": "Prince Edward Island", "permalink": "Prince-Edward-Island", "...": "..." },
+    "invader_country": { "name": "Poland", "permalink": "Poland", "avatar": "//www.erepublik.net/images/flags_png/M/Poland.png" },
+    "victim_country": { "name": "Canada", "permalink": "Canada", "avatar": "//www.erepublik.net/images/flags_png/M/Canada.png" }
+  }
+}
 ```
 
-</details>
+The response also has `food_bonus`, `weapon_bonus` and `bbox_*` coordinates. `is_resistence` is spelled that way. The four `regions_*` lists group regions by how they give the resource; an empty one is `[]`.
 
-#### 2. City & Population
+An unknown country returns an HTML `404` page.
 
-Found in `div.holder.city` elements with ID pattern `cityId_{id}`.
+**Source:** real request, 2026-11-27; `City.registerCountryPopUp` in `js/cmp/map.js`.
+
+---
+
+## Map search
+
+`GET /en/main/map-search` · Auth required · ✅ Verified 2026-11-27
+
+Suggestions for the map search box: countries, regions and cities. The client asks for at least 2 characters and shows up to 5.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `q` | query | string | Yes | Search text |
+
+```bash
+curl 'https://www.erepublik.com/en/main/map-search?q=warsa' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+```json
+[
+  {
+    "type": "City",
+    "name": "Warsaw",
+    "avatar": "//www.erepublik.net/images/flags_png/M/Poland.png",
+    "bounds": {
+      "centroid_lat": "52.19662", "centroid_lon": "21.13861",
+      "bbox_min_lon": "18.05485", "bbox_max_lon": "23.92198",
+      "bbox_min_lat": "50.17441", "bbox_max_lat": "54.40118"
+    }
+  }
+]
+```
+
+No match returns `[]`. A `type=region` parameter did not change the result: the search-type menu of the map does not filter this request.
+
+**Source:** real requests, 2026-11-27; `MapSearch` (`tokenInput`) in `js/cmp/map.js`.
+
+---
+
+## Map statistics
+
+`POST /en/main/map-stats` · Auth required · 🔍 From code
+
+Usage tracking of map actions. Sent only when tracking is enabled (`statsEnabled`).
+
+| Name | Type | Description |
+|------|------|-------------|
+| `_token` | string | CSRF token |
+| `event_type` | string | `joinfight`, `travel`, `search`, `opencountrypopup`, and map events |
+| `battle`, `country`, `region`, `country_id`, `value`, `search_type` | | Depend on the event |
+
+```bash
+curl 'https://www.erepublik.com/en/main/map-stats' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&event_type=travel&country=35&region=424'
+```
+
+"Fight" on the map posts `joinfight` and opens the battlefield when this request answers.
+
+**Source:** `joinFight`, `mapTravel`, `Map.ajaxStats` in `js/cmp/map.js`.
+
+---
+
+## Region page
+
+`GET /en/main/region/{permalink}` · Auth not required · ✅ Verified 2026-11-27
+
+A server-rendered HTML page with everything about a region. It answers without a session. Data sits in elements, `data-` attributes and inline scripts, so you need an HTML parser.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `permalink` | path | string | Yes | Region permalink, for example `Mazovia` or `Rhineland-Westphalia`. Take it from [travel data](travel.md#region-object) |
+
+```bash
+curl 'https://www.erepublik.com/en/main/region/Mazovia'
+```
+
+An unknown permalink returns `404`.
+
+### Country and city
 
 | Selector | Data |
 |----------|------|
-| `div#cityId_{id}` | Container for city data; ID is the city numeric ID |
-| `a.cityLink` | City page URL and name (e.g., `/en/main/city/Klaipeda`) |
-| `img.cityEmblem` | City emblem image URL |
-| `h2.cityName small` | City role (e.g., "Capital City of Lithuania Minor") |
-| `span.cityResidents` | Number of residents (e.g., "274 residents") |
-| `span.cityVisitors` | Number of visitors (e.g., "54 visitors") |
-| `span.cityVoters small` | Voter registration info. Appears alongside both residents and visitors. Common values: "No registered voters", "No residents with the citizenship of this country". |
+| `#countrySelectorDropdown option[selected]` | Current owner (the occupier in an occupied region): ID (`value`), `data-permalink` |
+| `a.country_rank` | Country rank, for example "Rank 10" |
+| `a.alliance_name` | Alliance and link; only when the country is in one |
+| `span.dictatorship_flag_icon_l` | Present only under a dictatorship |
+| `div#cityId_{id}.holder.city` | City block; the ID is the city ID |
+| `a.cityLink`, `img.cityEmblem` | City page link and emblem |
+| `h2.cityName small` | Role, for example "(Capital City of Mazovia)" |
+| `span.cityResidents`, `span.cityVisitors` | Counters, as text |
+| `span.cityVoters small` | Voter note, for example "No registered voters" or "No residents with the citizenship of this country" |
 
 <details>
-<summary>Example HTML</summary>
+<summary>City block (structure from earlier notes; Warsaw and counts are placeholders)</summary>
 
 ```html
-<div class="holder city" id="cityId_714">
+<div class="holder city" id="cityId_231">
     <h2 class="section">Population</h2>
-    <a href="/en/main/city/Marijampole" class="cityLink">
-        <img src="//www.erepublik.net/images/modules/cities/128px/Marijampole.png"
-             class="cityEmblem goleft" alt="City Emblem" />
+    <a href="/en/main/city/Warsaw" class="cityLink">
+        <img src="//www.erepublik.net/images/modules/cities/128px/Warsaw.png" class="cityEmblem goleft" alt="City Emblem" />
     </a>
     <h2 class="largepadded special cityName">
-        <a class="cityLink" href="/en/main/city/Marijampole">Marijampole</a>
-        <br>
-        <small>(Capital City of Sudovia)</small>
+        <a class="cityLink" href="/en/main/city/Warsaw">Warsaw</a>
+        <br><small>(Capital City of Mazovia)</small>
     </h2>
     <p class="special">
-        <span class="cityResidents">226 residents</span>
-        <span class="cityVoters">
-            <small>(No registered voters)</small>
-        </span>
+        <span class="cityResidents">78 residents</span>
+        <span class="cityVoters"><small>(No registered voters)</small></span>
     </p>
     <p class="special">
-        <span class="cityVisitors">15 visitors</span>
-        <span class="cityVoters">
-            <small>(No residents with the citizenship of this country)</small>
-        </span>
+        <span class="cityVisitors">1 visitors</span>
+        <span class="cityVoters"><small>(No residents with the citizenship of this country)</small></span>
     </p>
 </div>
 ```
 
 </details>
 
-#### 3. Constructions (Building Slots)
+### Constructions
 
-Found in `.construction_listing` divs. Each region has **15 building slots**.
+`.construction_listing` holds the building slots (earlier notes: always 15; empty slots have no building `<span>`).
 
-| Selector / Attribute | Data |
-|----------------------|------|
-| `.construction_listing strong` | Slot number (1-15) |
-| `span.product_tooltip` | Building in slot |
-| `span[industry]` | Industry type ID |
-| `span[quality]` | Building quality level |
-| `span[id]` | Pattern: `building_{slot}{quality}` |
+| Selector | Data |
+|----------|------|
+| `.construction_listing strong` | Slot number |
+| `span.product_tooltip` | Building: `industry`, `quality`, `id="building_{slot}{quality}"` |
 
-Industry type IDs:
-
-| ID | Industry |
-|----|----------|
-| 1 | Food |
-| 2 | Weapons |
-| 4 | House |
-| 6 | Defense Systems |
-| 23 | Aircraft Weapons |
-
-<details>
-<summary>Example HTML (Defense System in slot 3)</summary>
+Building industry IDs: 1 Food, 2 Weapons, 4 House, 6 Defense System, 23 Aircraft Weapons.
 
 ```html
-<span id="building_31" class="product_tooltip" industry="6" quality="1">
-    <img src="https://www.erepublik.net/images/icons/industry/6/q1.png" />
+<span id="building_11" class="product_tooltip" industry="6" quality="5">
+    <img src="https://www.erepublik.net/images/icons/industry/6/q5.png" />
 </span>
 ```
 
-</details>
+### Determination
 
-#### 4. Determination
+Two inline arrays: `regionDeterminations` (resistance wars) and `defensiveDeterminations` (when attacked).
 
-Found in inline `<script>` blocks as JavaScript arrays.
-
-| Variable | Description |
-|----------|-------------|
-| `regionDeterminations` | Array of active resistance war determinations |
-| `defensiveDeterminations` | Array of active defensive determinations |
-
-Both arrays are empty (`[]`) when the region has not been recently conquered.
-
-Each determination object has the following fields:
+```javascript
+var regionDeterminations = [
+    { "countryId": 43, "countryName": "Turkey", "permalink": "Turkey", "determination": 1.05, "active": true },
+    { "countryId": 65, "countryName": "Serbia", "permalink": "Serbia", "determination": 1.01, "active": false }
+];
+var defensiveDeterminations = [];
+```
 
 | Field | Type | Description |
 |-------|------|-------------|
-| countryId | number | Country ID |
-| countryName | string | Country display name |
-| permalink | string | URL-friendly country name |
-| determination | number | Influence multiplier (e.g., `3.68` means x3.68 influence). **Note:** Values may have floating-point precision artifacts (e.g., `3.8300000000000001` instead of `3.83`) -- round to 2 decimal places when displaying. |
-| active | boolean | `true` if this country is the current occupier |
+| `countryId`, `countryName`, `permalink` | | Country |
+| `determination` | number | Influence multiplier. Earlier notes: may carry float artifacts, round to 2 decimals |
+| `active` | boolean | The current occupier |
 
-Additional determination text can appear in the HTML:
-- "This region has not been conquered in the past 250 days."
-- "Liberated: 1023 days ago"
-- "This region has no determination when attacked."
+A liberated region can list several countries, all with `active: false`. The blocks `.indent.productivity.regionDetermination` carry `hasDetermination` or `noDetermination`; the latter shows a text such as "This region has not been conquered in the past 250 days." The heading may add "(Liberated: 142 days ago)".
 
-The HTML section uses CSS class `hasDetermination` or `noDetermination` on `.indent.productivity.regionDetermination` to indicate state. Active occupier items have the CSS class `active` on `.item`.
+Earlier notes: the current occupier's `.item` has the class `active`, and another possible text is "This region has no determination when attacked."
 
-<details>
-<summary>Example (empty -- no recent conquests)</summary>
+### Productivity and resources
 
-```javascript
-var regionDeterminations = [];
-var defensiveDeterminations = [];
-```
-
-</details>
-
-<details>
-<summary>Example (populated -- Sudovia occupied by Indonesia)</summary>
-
-```javascript
-var regionDeterminations = [
-    {
-        "countryId": 49,
-        "countryName": "Indonesia",
-        "permalink": "Indonesia",
-        "determination": 3.68,
-        "active": true
-    },
-    {
-        "countryId": 166,
-        "countryName": "United Arab Emirates",
-        "permalink": "United-Arab-Emirates",
-        "determination": 3.68,
-        "active": false
-    }
-];
-var defensiveDeterminations = [];
-```
-
-</details>
-
-<details>
-<summary>Example (liberated region -- determinations against multiple past occupiers, none currently active)</summary>
-
-```javascript
-var regionDeterminations = [
-    {
-        "countryId": 24,
-        "countryName": "USA",
-        "permalink": "USA",
-        "determination": 1.49,
-        "active": false
-    },
-    {
-        "countryId": 53,
-        "countryName": "Portugal",
-        "permalink": "Portugal",
-        "determination": 1.22,
-        "active": false
-    }
-];
-var defensiveDeterminations = [];
-```
-
-</details>
-
-> **Note:** A region can have determination entries against multiple countries even when none of them is the current occupier (`active: false` for all). This occurs when a region has been liberated but retains stored determination from past conquests. Different countries may have different determination multipliers based on how long/often they occupied the region.
-
-#### 5. Productivity (Country Bonuses & Region Resources)
-
-**Country bonuses** are found in `.indent.productivity .area.bonus .item`:
+Country bonuses, `.area.bonus .item p.amount`:
 
 | Attribute | Data |
 |-----------|------|
-| `data-industryId` | Industry type ID |
-| `data-bonus` | Bonus percentage (can be decimal, e.g., `22.5`) |
-| CSS class `full-bonus` / `partial-bonus` / `noBonus` | Bonus level: `full-bonus` = 100%, `partial-bonus` = 1-99%, `noBonus` = 0% (text shows "No bonus") |
+| `data-industryId` | Industry ID |
+| `data-bonus` | Percent, may be decimal |
+| class | `full-bonus` (100), `partial-bonus`, `noBonus` (text "No bonus") |
 
-<details>
-<summary>Example HTML (Lithuania Minor -- has bonuses in all industries)</summary>
-
-```html
-<p data-industryId="1" data-bonus="100" class="amount full-bonus">+100%</p>
-<p data-industryId="2" data-bonus="100" class="amount full-bonus">+100%</p>
-<p data-industryId="4" data-bonus="5" class="amount partial-bonus">+5%</p>
-<p data-industryId="23" data-bonus="25" class="amount partial-bonus">+25%</p>
-```
-
-</details>
-
-<details>
-<summary>Example HTML (Sudovia -- some industries have no bonus)</summary>
-
-```html
-<p data-industryId="1" data-bonus="100" class="amount full-bonus">+100%</p>
-<p data-industryId="2" data-bonus="0" class="amount noBonus">No bonus</p>
-<p data-industryId="4" data-bonus="0" class="amount noBonus">No bonus</p>
-<p data-industryId="23" data-bonus="85" class="amount partial-bonus">+85%</p>
-```
-
-</details>
-
-**Region resources** are found in `.area.resource .item`:
+Region resources, `.area.resource .item`; the list is empty for regions without resources:
 
 | Attribute | Data |
 |-----------|------|
 | `data-resourceId` | Resource ID |
-| `data-bonus` | Bonus percentage from this resource |
-| CSS class `type-{industry}` | Which industry the resource benefits |
-| CSS class `rarity-{level}` | Resource rarity (see table below) |
-| `p.name` | Resource name (e.g., "Grain", "Iron", "Sand", "Neodymium") |
-| `div.icon.{name}` | Resource icon element (e.g., `div.icon.grain`, `div.icon.iron`, `div.icon.sand`, `div.icon.neodymium`) |
-| `title` attribute | Human-readable bonus description |
-
-Known resource rarities and their bonus percentages:
-
-| Rarity Class | Bonus | Example Resources |
-|--------------|-------|-------------------|
-| `rarity-verycommon` | +2% | Fish, Iron, Sand, Magnesium |
-| `rarity-common` | +3% | Fruits, Aluminum, Wood, Titanium |
-| `rarity-uncommon` | +4% | Cattle, Oil, Clay, Wolfram |
-| `rarity-rare` | +5% | Grain, Saltpeter, Cobalt, Limestone |
-| `rarity-veryrare` | +6% | Deer, Granite, Neodymium |
-| `rarity-epic` | -- | (not yet observed) |
-| `rarity-legendary` | -- | (not yet observed) |
-
-Known resource industry types on region pages: `type-food`, `type-weapon`, `type-house`, `type-aircraft`.
-
-Known resource IDs (from region page `data-resourceId` attributes):
-
-| ID | Name | Industry | Rarity | Bonus |
-|----|------|----------|--------|-------|
-| 1 | Grain | Food | rare | +5% |
-| 2 | Fish | Food | very common | +2% |
-| 3 | Fruits | Food | common | +3% |
-| 4 | Cattle | Food | uncommon | +4% |
-| 5 | Deer | Food | very rare | +6% |
-| 6 | Iron | Weapon | very common | +2% |
-| 7 | Saltpeter | Weapon | uncommon | +4% |
-| 8 | Aluminum | Weapon | common | +3% |
-| 9 | Oil | Weapon | uncommon | +4% |
-| 10 | Rubber | Weapon | rare | +5% |
-| 11 | Sand | House | very common | +2% |
-| 12 | Clay | House | uncommon | +4% |
-| 13 | Wood | House | common | +3% |
-| 14 | Limestone | House | rare | +5% |
-| 15 | Granite | House | very rare | +6% |
-| 16 | Neodymium | Aircraft | very rare | +6% |
-| 17 | Magnesium | Aircraft | very common | +2% |
-| 18 | Cobalt | Aircraft | rare | +5% |
-| 19 | Titanium | Aircraft | common | +3% |
-| 20 | Wolfram | Aircraft | uncommon | +4% |
-
-> **Note on food resource ID discrepancy:** The region page and the [map-data endpoint](#get-world-map-data) use **different resource ID schemas for food**. On region pages: Grain=1, Fish=2, Fruits=3, Cattle=4, Deer=5. In map-data: Grain=1, Cattle=3, Fish=11. IDs 1 match (Grain), but other food resources have different IDs across the two endpoints. Non-food resource IDs (6-20) appear consistent between both endpoints.
->
-> **Note on bonus values:** The map-data endpoint uses a different bonus scale than region pages. For example, Iron shows `bonus: 10` in map-data but `data-bonus="2"` on region pages. Both refer to the same resource (id=6). The map-data bonus appears to represent a percentage of base production, while the region page bonus represents the resource's contribution to the country's total industry bonus.
-
-<details>
-<summary>Example HTML (Donbas -- food resources)</summary>
+| `data-bonus` | Contribution to the country's industry bonus, percent |
+| class `type-{industry}` | `food`, `weapon`, `house`, `aircraft` |
+| class `rarity-{level}` | See below |
+| `p.name`, `div.icon.{name}` | Name and icon |
+| `title` | Description, for example "+2% to House production" |
 
 ```html
-<div data-resourceId="1" data-bonus="5" class="item type-food rarity-rare"
-     title="+5% to Food production">
-    <p class="name">Grain</p>
-    <div class="icon grain" title="+5% to Food production"></div>
-    <p class="amount">+5%</p>
-</div>
-<div data-resourceId="3" data-bonus="3" class="item type-food rarity-common"
-     title="+3% to Food production">
-    <p class="name">Fruits</p>
-    <div class="icon fruits" title="+3% to Food production"></div>
-    <p class="amount">+3%</p>
-</div>
-<div data-resourceId="4" data-bonus="4" class="item type-food rarity-uncommon"
-     title="+4% to Food production">
-    <p class="name">Cattle</p>
-    <div class="icon cattle" title="+4% to Food production"></div>
-    <p class="amount">+4%</p>
-</div>
-<div data-resourceId="5" data-bonus="6" class="item type-food rarity-veryrare"
-     title="+6% to Food production">
-    <p class="name">Deer</p>
-    <div class="icon deer" title="+6% to Food production"></div>
-    <p class="amount">+6%</p>
-</div>
-```
-
-</details>
-
-<details>
-<summary>Example HTML (Lithuania Minor -- weapon resources)</summary>
-
-```html
-<div data-resourceId="6" data-bonus="2" class="item type-weapon rarity-verycommon"
-     title="+2% to Weapon production">
-    <p class="name">Iron</p>
-</div>
-<div data-resourceId="8" data-bonus="3" class="item type-weapon rarity-common"
-     title="+3% to Weapon production">
-    <p class="name">Aluminum</p>
-</div>
-```
-
-</details>
-
-<details>
-<summary>Example HTML (Mazovia -- house resources)</summary>
-
-```html
-<div data-resourceId="11" data-bonus="2" class="item type-house rarity-verycommon"
-     title="+2% to House production">
+<div data-resourceId="11" data-bonus="2" class="item type-house rarity-verycommon" title="+2% to House production">
     <p class="name">Sand</p>
     <div class="icon sand" title="+2% to House production"></div>
     <p class="amount">+2%</p>
 </div>
-<div data-resourceId="15" data-bonus="6" class="item type-house rarity-veryrare"
-     title="+6% to House production">
-    <p class="name">Granite</p>
-    <div class="icon granite" title="+6% to House production"></div>
-    <p class="amount">+6%</p>
-</div>
 ```
 
-</details>
+| Rarity class | Page bonus | `map-data` bonus |
+|--------------|------------|------------------|
+| `rarity-verycommon` | 2 | 10 |
+| `rarity-common` | 3 | 15 |
+| `rarity-uncommon` | 4 | 20 |
+| `rarity-rare` | 5 | 25 |
+| `rarity-veryrare` | 6 | 30 |
+| `rarity-epic`, `rarity-legendary` | not seen | not seen |
 
-<details>
-<summary>Example HTML (Maharashtra -- aircraft resources)</summary>
+### Resource IDs
 
-```html
-<div data-resourceId="16" data-bonus="6" class="item type-aircraft rarity-veryrare"
-     title="+6% to Aircraft production">
-    <p class="name">Neodymium</p>
-    <div class="icon neodymium" title="+6% to Aircraft production"></div>
-    <p class="amount">+6%</p>
-</div>
-<div data-resourceId="18" data-bonus="5" class="item type-aircraft rarity-rare"
-     title="+5% to Aircraft production">
-    <p class="name">Cobalt</p>
-    <div class="icon cobalt" title="+5% to Aircraft production"></div>
-    <p class="amount">+5%</p>
-</div>
-<div data-resourceId="19" data-bonus="3" class="item type-aircraft rarity-common"
-     title="+3% to Aircraft production">
-    <p class="name">Titanium</p>
-    <div class="icon titanium" title="+3% to Aircraft production"></div>
-    <p class="amount">+3%</p>
-</div>
-<div data-resourceId="20" data-bonus="4" class="item type-aircraft rarity-uncommon"
-     title="+4% to Aircraft production">
-    <p class="name">Wolfram</p>
-    <div class="icon wolfram" title="+4% to Aircraft production"></div>
-    <p class="amount">+4%</p>
-</div>
-```
+Rarity and page bonus come from earlier notes on the region page; the `map-data` bonus is as returned by [map data](#map-data) on 2026-11-27. Where they disagree, see [Open questions](#open-questions).
 
-</details>
+| ID | Name | Industry | Page rarity | Page bonus | `map-data` bonus |
+|----|------|----------|-------------|------------|------------------|
+| 1 | Grain | Food | rare | +5% | 25 |
+| 2 | Fish | Food | very common | +2% | 10 |
+| 3 | Fruits | Food | common | +3% | 15 |
+| 4 | Cattle | Food | uncommon | +4% | 20 |
+| 5 | Deer | Food | very rare | +6% | 30 |
+| 6 | Iron | Weapon | very common | +2% | 10 |
+| 7 | Saltpeter | Weapon | uncommon | +4% | 25 |
+| 8 | Aluminum | Weapon | common | +3% | 15 |
+| 9 | Oil | Weapon | uncommon | +4% | 20 |
+| 10 | Rubber | Weapon | rare | +5% | 30 |
+| 11 | Sand | House | very common | +2% | 10 |
+| 12 | Clay | House | uncommon | +4% | 20 |
+| 13 | Wood | House | common | +3% | 15 |
+| 14 | Limestone | House | rare | +5% | 25 |
+| 15 | Granite | House | very rare | +6% | 30 |
+| 16 | Neodymium | Aircraft | very rare | +6% | 30 |
+| 17 | Magnesium | Aircraft | very common | +2% | 10 |
+| 18 | Cobalt | Aircraft | rare | +5% | 25 |
+| 19 | Titanium | Aircraft | common | +3% | 15 |
+| 20 | Wolfram | Aircraft | uncommon | +4% | 20 |
 
-> **Note:** Some regions have no resources at all (e.g., Sudovia). In that case, the `.area.resource .row` div is empty -- only containing a `<div class="clear"></div>`.
+### Pollution
 
-#### 6. Pollution
-
-Found in the `regionPollutionDetails` JavaScript variable. This is a JSON object keyed by industry ID, where each value is an array of 8 entries (indices 0-7 corresponding to raw/q1-q7).
-
-Industry IDs:
-
-| ID | Industry |
-|----|----------|
-| 1 | Food |
-| 2 | Weapons |
-| 4 | House |
-| 23 | Aircraft Weapons |
-
-Each entry has:
-
-| Field | Type | Description |
-|-------|------|-------------|
-| has_pollution | boolean \| 0 | Whether pollution data exists; `0` means N/A for that quality |
-| pollution | string | Pollution percentage (e.g., `"5.50%"`, `"0%"`, `"N/A"`) |
-
-<details>
-<summary>Example (Lithuania Minor)</summary>
+`regionPollutionDetails` is keyed by industry ID (1, 2, 4, 23). Each value has 8 entries: index 0 is raw material, 1–7 are Q1–Q7. Earlier notes: House and Aircraft stop at Q5, so indices 6–7 are `N/A`.
 
 ```javascript
 var regionPollutionDetails = {
-    "1": [
-        {"has_pollution": true, "pollution": "1.83%"},
-        {"has_pollution": true, "pollution": "5.50%"},
-        {"has_pollution": true, "pollution": "7.96%"},
-        {"has_pollution": true, "pollution": "1.97%"},
-        {"has_pollution": true, "pollution": "0.73%"},
-        {"has_pollution": true, "pollution": "5.30%"},
-        {"has_pollution": true, "pollution": "0.00%"},
-        {"has_pollution": true, "pollution": "0.18%"}
-    ],
-    "2": [
-        {"has_pollution": true, "pollution": "10.08%"},
-        {"has_pollution": true, "pollution": "0.00%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": true, "pollution": "0.00%"},
-        {"has_pollution": true, "pollution": "0.00%"},
-        {"has_pollution": true, "pollution": "0.00%"},
-        {"has_pollution": true, "pollution": "25.00%"}
-    ],
-    "4": [
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": true, "pollution": "0.00%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": 0, "pollution": "N/A"},
-        {"has_pollution": 0, "pollution": "N/A"}
-    ],
-    "23": [
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": false, "pollution": "0%"},
-        {"has_pollution": 0, "pollution": "N/A"},
-        {"has_pollution": 0, "pollution": "N/A"}
-    ]
+    "1": [ { "has_pollution": true, "pollution": "10.68%" }, { "has_pollution": true, "pollution": "14.93%" } ],
+    "4": [ { "has_pollution": false, "pollution": "0%" }, { "has_pollution": 0, "pollution": "N/A" } ]
 };
 ```
 
-</details>
+`has_pollution` is `true`, `false`, or `0` for not applicable. `table.pollution` shows the same, with classes `pollution-status-high`, `pollution-status-none`, `industry-{id}` and `quality-{q}`.
 
-The HTML also contains a `table.pollution` with CSS classes indicating pollution severity:
-- `pollution-status-high` -- significant pollution
-- `pollution-status-none` -- no pollution
-- `industry-{id}` and `quality-{q}` -- identify the cell
+### Neighbours
 
-#### 7. Neighbors
+Each row of `table.neighbours` after the header: the owner's flag and country link, then the region link.
 
-Found in `table.neighbours`. Each row contains a neighboring region with its current owner country.
+```html
+<td><img src="//www.erepublik.net/images/flags_png/L/Poland.png" class="flag">
+  <a href="//www.erepublik.com/en/main/country-society/Poland" class="dotted">Poland</a>,
+  <a href="//www.erepublik.com/en/main/region/Mazuria" class="dotted">Mazuria</a></td>
+```
 
-| Selector | Data |
-|----------|------|
-| Row `<a>` href | Link to neighbor region page |
-| Row text | Region name |
-| Country flag `<img>` | Owner country flag |
-| Country name text | Owner country name |
-
-Example neighbors for Lithuania Minor: Samogitia (Lithuania), Kaliningrad (Lithuania), Sudovia (Indonesia), Scania (Sweden).
-
-### Other Embedded JavaScript Variables
+### Other variables
 
 | Variable | Description |
 |----------|-------------|
-| `SERVER_DATA.csrfToken` | CSRF token (useful if making subsequent POST requests) |
-| `SERVER_DATA.serverTime` | Server time with RFC, dateTime, timezone, unix timestamp |
-| `SERVER_DATA.isLoggedIn` | Whether the current session is authenticated |
-| `erepublik.settings.eDay` | Current eRepublik day number |
-| `erepublik.settings.culture` | Language code (e.g., `"en"`) |
+| `SERVER_DATA.csrfToken`, `.isLoggedIn` | Session data |
+| `SERVER_DATA.serverTime` | `rfc`, `dateTime`, `timezone`, `offset`, `hour`, `unix`, `unixMs` |
+| `erepublik.settings.eDay`, `.culture` | Game day and language |
 | `countrySelector` | Country dropdown configuration |
 
-<details>
-<summary>Example SERVER_DATA.serverTime</summary>
-
-```json
-{
-    "rfc": "Fri, 06 Feb 2026 22:04:47 -0800",
-    "dateTime": "2026-02-06 22:04:47",
-    "timezone": "PST",
-    "offset": -800,
-    "hour": 22,
-    "unix": 1770444287,
-    "unixMs": 1770444287000
-}
-```
-
-</details>
-
-### Notes
-
-- **HTML Response:** Unlike most endpoints in this documentation, this is a full HTML page, not a JSON API. You need an HTML parser (e.g., Jsoup for Java, BeautifulSoup for Python, Cheerio for Node.js) to extract data.
-- **No Authentication Required:** The page is publicly accessible. However, authenticated requests may show additional UI elements.
-- **Permalink Format:** Region permalinks use hyphens for spaces (e.g., `Lithuania-Minor`, `Rhineland-Westphalia`). Invalid permalinks return a 404 page.
-- **Pollution Array Indexing:** Index 0 = raw materials, indices 1-7 = quality levels q1-q7. Houses and Aircraft only go up to q5; indices 6-7 have `has_pollution: 0` and `pollution: "N/A"`.
-- **Dynamic Content:** Some sections (like determination arrays) may be populated during wartime. Empty arrays indicate no active resistance or defensive determinations. See the Sudovia example for populated determination data.
-- **Dictatorship Indicator:** Countries under dictatorship government display a `<span class="dictatorship_flag_icon_l">` element before the country flag image. This can be used to determine the country's government type.
-- **Occupied Regions:** When a region is occupied by a foreign country, the country dropdown shows the occupier as `selected`.
-- **Voter Registration:** The `span.cityVoters` element appears on all region pages (not just occupied ones). It shows messages like "No registered voters" alongside residents and "No residents with the citizenship of this country" alongside visitors.
-- **Building Slots:** All regions have exactly 15 construction slots. Empty slots have no `<span>` with building data inside.
-- **No Resources:** Some regions have no natural resources. The `.area.resource .row` will be empty in this case.
+**Source:** real requests, 2026-11-27 (an unoccupied and an occupied region); selectors and variables not listed in that check come from earlier notes.
 
 ---
 
-**Tags:** #erepublik #api #world #map #regions #geography #resources
+## Open questions
+
+| Topic | Earlier notes | Observed | Page follows |
+|-------|---------------|----------|--------------|
+| `updated_at` of map data | Required; returns only changed regions | Optional; same full body | Live response |
+| Region page auth | None | Confirmed, 41 KB logged out and 92 KB logged in | Live response |
+| Food resource IDs | `map-data` differed from the region page: Cattle 3 (page: 4) and Fish 11 (page: 2) | `map-data` now uses 2 for Fish and 4 for Cattle, as the page does | Live response |
+| Weapon resource rarity | Region page: Saltpeter uncommon (+4), Rubber rare (+5) | `map-data` bonuses 25 and 30 match rare and very rare | Not settled |
+| `status` of past battles | Outcome code | Always `"3"` | Not settled |
+| `active_battle_info` | Not verified | Documented above | Live response |

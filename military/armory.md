@@ -1,56 +1,116 @@
-# Armory
+# Armory and protectors
 
-#erepublik #api #military #armory #vehicles
+[API docs](../README.md) › Military › Armory and protectors
 
-[< Back to Military Module](README.md)
+The **Armory** screen manages vehicles (tanks and aircraft) and your protector levels. An enrolled vehicle gives a damage bonus when you [deploy](battlefield/deployment.md) for that country. The three tabs share one page; the data comes from the two `armory-data` endpoints.
 
-Endpoints for managing military vehicles, enrollment, and the Protector system.
+```mermaid
+flowchart LR
+    A[Blueprints] -->|assemble| B[Not enrolled]
+    B -->|enroll| C[Enrolled in a country]
+    C -->|reset, costs a discharge document| B
+```
 
-**Related:** [deployment.md](deployment.md) | [battlefield.md](battlefield.md)
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Armory page](#armory-page) | GET | `/en/military/armory` | ✅ Verified 2026-11-27 |
+| [Protectors tab](#armory-page) | GET | `/en/military/armory/protectors` | ✅ Verified 2026-11-27 |
+| [Help tab](#armory-page) | GET | `/en/military/armory/help` | ✅ Verified 2026-11-27 |
+| [Vehicle overview](#vehicle-overview) | POST | `/en/military/armory-data/overview` | ✅ Verified 2026-11-27 |
+| [Protector list](#protector-list) | POST | `/en/military/armory-data/protectors` | ✅ Verified 2026-11-27 |
+| [Armory actions](#armory-actions) | POST | `/en/military/armory-actions` | 🔍 From code |
+
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels). The vehicle list used inside a battle is a separate endpoint: [Vehicles for this battle](battlefield/page.md#vehicles-for-this-battle).
 
 ---
 
-## Get Armory Overview
+## How protector levels work
 
-**Method:** POST
-**URL:** `/en/military/armory-data/overview`
-**Auth Required:** Yes
+Summary of the in-game **Help** tab (read 2026-11-27).
 
-### Description
+- A vehicle needs 10 blueprints of its own to be assembled.
+- A vehicle is enrolled in one country at a time. To move it, discharge it first; this needs a vehicle discharge document.
+- A country can hold up to three tanks and three aircraft. One vehicle of a type is enough for that type's bonus; more do not stack.
+- Ground and air levels are independent. Bombs earn no protector points.
 
-Retrieves the authenticated citizen's complete armory overview, including all owned and available military vehicles (tanks and aircraft) with their enrollment status, country-specific protection levels, damage bonuses, and blueprint progress. This endpoint provides a comprehensive view of the citizen's military vehicle collection and progression system.
+| Deploying for | Damage converted into protector points |
+|---------------|-----------------------------------------|
+| Your country of citizenship, with an enrolled vehicle | 10% |
+| An allied country, with an enrolled vehicle | 4% |
+| A non-allied country, with an enrolled vehicle | 2% |
+| Without an enrolled vehicle | 1% |
+| A country where you hold the top level | 1%, as universal points usable for another country |
 
-### Parameters
+### Damage bonus by level
+
+| Type | Observed |
+|------|----------|
+| Aircraft | Bonus equals the level (levels 0–13) |
+| Tanks | Equals the level up to 15; then 16 → 17, 19 → 23, 22 → 29, 25 → 35 (+2 per level); 26 → 38, 28 → 44 (+3); 33 → 65; 50 → 200 |
+
+Level 50 is the maximum, with a 200% tank bonus. Earlier notes (May 2026) add 32 → 60, and say 200% is the cap for aircraft too (no level 50 aircraft observed).
+
+---
+
+## Armory page
+
+`GET /en/military/armory` · `/protectors` · `/help` · Auth required · ✅ Verified 2026-11-27
+
+The same HTML page; the path only selects the tab, passed to the script as `initialTab` (`"protectors"`, `"help"`, otherwise `null` and the overview opens). The client rewrites the URL to `/en/military/armory/{tab}` when you switch, using `overview`, `protectors` or `help`. Without a cookie the page redirects.
+
+```bash
+curl 'https://www.erepublik.com/en/military/armory/protectors' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+**Source:** real requests, 2026-11-27; `ArmoryController` in `erpk_angular_controllers.js` (version 1795779904).
+
+---
+
+## Vehicle overview
+
+`POST /en/military/armory-data/overview` · Auth required · ✅ Verified 2026-11-27
+
+All vehicles, owned or not, with enrollment, protector level and blueprint progress.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| _token | string | Yes | CSRF token for security |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/military/armory-data/overview' \
+curl 'https://www.erepublik.com/en/military/armory-data/overview' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
   --data-raw '_token=YOUR_CSRF_TOKEN'
 ```
 
-</details>
+### Response
+
+Shortened to one vehicle:
+
+```json
+{
+  "panelUrl": "/en/military/armory-data/overview",
+  "vehicles": [
+    {
+      "id": 30, "type": "aircraft", "isActive": true, "name": "F8U-16 Gunslinger", "desc": "<p>…</p>",
+      "status": "enrolled", "intStatus": 1, "isDefault": false, "blueprints": null,
+      "countryId": 72,
+      "countryData": { "id": 72, "level": 13, "maxLevel": 50, "xp": 20309840, "requiredXP": 43076000,
+        "damageBonus": 13, "title": "Protector of Lithuania" },
+      "title": "Protector of Lithuania",
+      "attributes": [ { "type": "damageBonus", "value": 13 } ],
+      "displayPriority": 12
+    }
+  ],
+  "statuses": { "unavailable": "Unavailable", "blueprints": "Locked", "notAssembled": "Assemble",
+    "notEnrolled": "Enroll", "enrolled": "Enrolled" },
+  "settings": { "maxEnrollPerCountry": 3, "universalPoints": { "tanks": 0, "aircraft": 0 } }
+}
+```
 
 <details>
-<summary>Example Response</summary>
+<summary>Longer example response (earlier notes)</summary>
 
 ```json
 {
@@ -198,184 +258,80 @@ curl -X POST 'https://www.erepublik.com/en/military/armory-data/overview' \
 
 </details>
 
-### Response Fields
-
 | Field | Type | Description |
 |-------|------|-------------|
-| `panelUrl` | string | URL path to the armory overview panel |
-| `vehicles` | array | List of all available vehicles (tanks and aircraft) |
-| `vehicles[].id` | number | Unique vehicle ID |
-| `vehicles[].type` | string | Vehicle type ("tanks" or "aircraft") |
-| `vehicles[].isActive` | boolean | Whether this vehicle is currently active in combat |
-| `vehicles[].name` | string | Display name of the vehicle |
-| `vehicles[].desc` | string | HTML description of the vehicle and how it was obtained |
-| `vehicles[].status` | string | Vehicle status (see `statuses` mapping) |
-| `vehicles[].intStatus` | number | Integer status code (1=enrolled, 2=notEnrolled, 4=blueprints) |
-| `vehicles[].isDefault` | boolean | Whether this is a default vehicle available to all players |
-| `vehicles[].blueprints` | object/null | Blueprint progress if status is "blueprints", null otherwise |
-| `vehicles[].blueprints.current` | number | Number of blueprints currently owned |
-| `vehicles[].blueprints.required` | number | Total blueprints required to unlock |
-| `vehicles[].countryId` | number/null | Country ID for which this vehicle is enrolled (null if not enrolled) |
-| `vehicles[].countryData` | object/null | Country-specific protection level data (null if not enrolled) |
-| `vehicles[].countryData.id` | number | Country ID |
-| `vehicles[].countryData.level` | number | Current protection level for this country |
-| `vehicles[].countryData.maxLevel` | number | Maximum protection level (typically 50) |
-| `vehicles[].countryData.xp` | number/null | Current XP points (null if max level reached) |
-| `vehicles[].countryData.requiredXP` | number/null | XP required for next level (null if max level) |
-| `vehicles[].countryData.damageBonus` | number | Damage bonus percentage from this protection level |
-| `vehicles[].countryData.title` | string | Protection title (e.g., "Protector of Ukraine") |
-| `vehicles[].title` | string/null | Current protection title for enrolled vehicles |
-| `vehicles[].attributes` | array | List of vehicle attributes (typically damage bonus) |
-| `vehicles[].attributes[].type` | string | Attribute type (e.g., "damageBonus") |
-| `vehicles[].attributes[].value` | number | Attribute value |
-| `vehicles[].displayPriority` | number | Display order priority (lower = higher priority) |
-| `statuses` | object | Map of status keys to human-readable labels |
-| `statuses.unavailable` | string | Label for unavailable vehicles |
-| `statuses.blueprints` | string | Label for locked vehicles requiring blueprints |
-| `statuses.notAssembled` | string | Label for vehicles that need assembly |
-| `statuses.notEnrolled` | string | Label for owned but not enrolled vehicles |
-| `statuses.enrolled` | string | Label for enrolled vehicles |
-| `settings` | object | Armory configuration settings |
-| `settings.maxEnrollPerCountry` | number | Maximum number of vehicles that can be enrolled per country |
-| `settings.universalPoints` | object | Universal points available for vehicle upgrades |
-| `settings.universalPoints.tanks` | number | Universal points for tank upgrades |
-| `settings.universalPoints.aircraft` | number | Universal points for aircraft upgrades |
+| `panelUrl` | string | Path of this panel |
+| `vehicles[].id` | number | Vehicle ID; sent as `skinId` |
+| `vehicles[].type` | string | `tanks` or `aircraft` |
+| `vehicles[].isActive` | boolean | Active vehicle; one tank and one aircraft |
+| `vehicles[].name`, `desc` | string | Name; HTML description, including how it was obtained |
+| `vehicles[].status`, `intStatus` | string, number | See below |
+| `vehicles[].isDefault` | boolean | Default vehicle |
+| `vehicles[].blueprints` | object \| null | `current`, `required` while locked |
+| `vehicles[].countryId` | number \| null | [Country](../basics/id-tables.md) it is enrolled in |
+| `vehicles[].countryData` | object \| null | Your protector level there |
+| `vehicles[].countryData.level`, `maxLevel` | number | Current and maximum level |
+| `vehicles[].countryData.xp` | number \| null | Points collected in this level; `null` at the maximum |
+| `vehicles[].countryData.requiredXP` | number \| null | **Total** points of this level; `null` at the maximum |
+| `vehicles[].countryData.damageBonus` | number | Bonus in percent |
+| `vehicles[].countryData.title`, `vehicles[].title` | string \| null | `Protector of {Country}` |
+| `vehicles[].attributes[]` | array | `type`, `value`; only `damageBonus` observed |
+| `vehicles[].displayPriority` | number | Sort order, lower first |
+| `statuses` | object | Status key → label |
+| `settings.maxEnrollPerCountry` | number | Vehicles of one type per country (`3`) |
+| `settings.universalPoints` | object | Your universal points, `tanks` and `aircraft` |
 
-### Notes
+| `status` | `intStatus` | Meaning |
+|----------|-------------|---------|
+| `enrolled` | 1 | Enrolled in a country |
+| `notEnrolled` | 2 | Owned, can be enrolled |
+| `blueprints` | 4 | Locked, collecting blueprints |
+| `notAssembled` | not observed | Ready to assemble |
+| `unavailable` | 5 (earlier notes) | Cannot be obtained or used now |
 
-- **CSRF protection**: The `_token` parameter is required and must be a valid CSRF token from the current session
-- **Vehicle statuses**:
-  - `enrolled` (intStatus=1): Vehicle is enrolled for a specific country and can be used in combat
-  - `notEnrolled` (intStatus=2): Vehicle is owned but not enrolled for any country
-  - `blueprints` (intStatus=4): Vehicle is locked and requires collecting blueprints to unlock
-- **Country enrollment**: Each vehicle can be enrolled for one country at a time, earning "Protector of {Country}" titles
-- **Protection levels**: Each country enrollment has its own XP progression system (levels 1-50)
-- **Damage bonus curve differs by vehicle type** (observed in `damageBonus` field across a 40-vehicle sample, recorded 2026-05-22):
-  - **Aircraft**: linear — `damageBonus == level` (confirmed at levels 5, 7, 11, 13).
-  - **Tanks**: non-linear, per-level increment grows with level. Sample points: level 25 → 35, 26 → 38, 27 → 41, 28 → 44 (constant +3/level in that band); level 32 → 60 (avg +4/level for 28→32); level 50 → **200** (avg +7.78/level for 32→50). The +200% at level 50 is the cap for both vehicle types.
-- **Per-country enrollment cap**: `settings.maxEnrollPerCountry: 3` — up to 3 vehicles can be enrolled for the same country simultaneously.
-- **Default vehicles**: Some vehicles (`isDefault: true`) are available to all players at certain division thresholds
-- **Universal points**: Accumulated points that can be used to upgrade vehicle protection levels across countries
-- **Active vehicle**: Only one tank and one aircraft can be `isActive: true` at a time for ground and air combat respectively
-- **Display priority**: Vehicles are sorted by `displayPriority`, with enrolled vehicles typically appearing first
-- **HTML descriptions**: The `desc` field contains HTML-formatted text with vehicle lore and obtaining requirements
-- **Anniversary vehicles**: Many special vehicles were obtained from anniversary events and challenges
-- **Blueprint system**: Locked vehicles show current/required blueprint counts (typically 0-10 blueprints needed)
+**Source:** real request, 2026-11-27; longer example — earlier notes.
 
 ---
 
-## Enroll Vehicle (Armory Actions)
+## Protector list
 
-**Method:** POST
-**URL:** `/en/military/armory-actions`
-**Auth Required:** Yes
+`POST /en/military/armory-data/protectors` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-Enrolls a military vehicle (tank or aircraft) for a specific country's Protector program. The vehicle must be owned and have status `notEnrolled` (intStatus=2). Once enrolled, the vehicle earns "Protector of {Country}" XP when used in battles for that country, providing increasing damage bonuses as the protection level rises (up to level 50).
-
-### Request Parameters
+Your ground and air protector progress for every country (73 returned).
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| action | string | Yes | Must be `enroll` |
-| skinId | number | Yes | Vehicle ID (from armory overview `vehicles[].id`) |
-| countryId | number | Yes | Country ID to enroll for (use `get_countries` for the full list) |
-| _token | string | Yes | CSRF token for request validation |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| `_token` | string | Yes | CSRF token |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/military/armory-actions' \
+curl 'https://www.erepublik.com/en/military/armory-data/protectors' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw 'action=enroll&skinId=14&countryId=35&_token=YOUR_CSRF_TOKEN'
-```
-
-</details>
-
-<details>
-<summary>Example Response (Success)</summary>
-
-```json
-{"status": true, "message": "Vehicle successfully enrolled"}
-```
-
-</details>
-
-<details>
-<summary>Example Response (Error -- Invalid Parameters)</summary>
-
-```json
-{"status": false, "message": "Invalid parameters"}
-```
-
-</details>
-
-### Notes
-
-- **Modifying action** -- this endpoint changes game state (enrolls vehicle for a country)
-- The `skinId` parameter corresponds to `vehicles[].id` from the `/en/military/armory-data/overview` endpoint
-- Only vehicles with status `notEnrolled` (intStatus=2) can be enrolled
-- Vehicles with status `blueprints` (intStatus=4) or `unavailable` (intStatus=5) cannot be enrolled
-- Each vehicle can only be enrolled for ONE country at a time
-- Maximum 3 vehicles can be enrolled per country (`maxEnrollPerCountry` from armory settings)
-- The `action` parameter uses `enroll` (not `enrollVehicle`)
-- Returns `"Invalid parameters"` if the vehicle ID or country ID is invalid, or if the vehicle cannot be enrolled
-
----
-
-## Get Armory Protectors
-
-**Method:** POST
-**URL:** `/en/military/armory-data/protectors`
-**Auth Required:** Yes
-
-### Description
-
-Retrieves the authenticated citizen's complete Protector status across all countries, showing country-specific protection levels, XP progression, damage bonuses, and enrolled vehicles for both tanks and aircraft. This endpoint provides a comprehensive overview of the citizen's country-by-country vehicle protection system, including earned titles and universal points available for upgrades.
-
-### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| _token | string | Yes | CSRF token for security |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-<details>
-<summary>Example Request (cURL)</summary>
-
-```bash
-curl -X POST 'https://www.erepublik.com/en/military/armory-data/protectors' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
   --data-raw '_token=YOUR_CSRF_TOKEN'
 ```
 
-</details>
+### Response
+
+Shortened to one country:
+
+```json
+{
+  "panelUrl": "/en/military/armory-data/protectors",
+  "countries": [
+    {
+      "id": 72,
+      "tanks": { "level": 50, "maxLevel": 50, "xp": null, "requiredXP": null, "levelProgress": "100%",
+        "damageBonus": 200, "title": "Protector of Lithuania", "vehicles": [20] },
+      "aircraft": { "level": 13, "maxLevel": 50, "xp": 20309840, "requiredXP": 22766160,
+        "levelProgress": "47.1489%", "damageBonus": 13, "title": "Protector of Lithuania", "vehicles": [30] }
+    }
+  ],
+  "settings": { "maxEnrollPerCountry": 3, "universalPoints": { "tanks": 0, "aircraft": 0 } }
+}
+```
 
 <details>
-<summary>Example Response</summary>
+<summary>Longer example response (earlier notes)</summary>
 
 ```json
 {
@@ -486,61 +442,98 @@ curl -X POST 'https://www.erepublik.com/en/military/armory-data/protectors' \
 
 </details>
 
-### Response Fields
-
 | Field | Type | Description |
 |-------|------|-------------|
-| `panelUrl` | string | URL path to the armory protectors panel |
-| `countries` | array | List of all countries with protection progress |
 | `countries[].id` | number | Country ID |
-| `countries[].tanks` | object | Tank protection data for this country |
-| `countries[].tanks.level` | number | Current protection level (0-50) |
-| `countries[].tanks.maxLevel` | number | Maximum protection level (typically 50) |
-| `countries[].tanks.xp` | number/null | Current XP points (null if max level reached) |
-| `countries[].tanks.requiredXP` | number/null | XP needed for next level (null if max level) |
-| `countries[].tanks.levelProgress` | string | Progress percentage toward next level (e.g., "63.1956%") |
-| `countries[].tanks.damageBonus` | number | Damage bonus percentage at current level |
-| `countries[].tanks.title` | string | Protection title (e.g., "Protector of Ukraine") |
-| `countries[].tanks.vehicles` | array | Array of enrolled tank vehicle IDs for this country |
-| `countries[].aircraft` | object | Aircraft protection data for this country |
-| `countries[].aircraft.level` | number | Current protection level (0-50) |
-| `countries[].aircraft.maxLevel` | number | Maximum protection level (typically 50) |
-| `countries[].aircraft.xp` | number/null | Current XP points (null if max level reached) |
-| `countries[].aircraft.requiredXP` | number/null | XP needed for next level (null if max level) |
-| `countries[].aircraft.levelProgress` | string | Progress percentage toward next level |
-| `countries[].aircraft.damageBonus` | number | Damage bonus percentage at current level |
-| `countries[].aircraft.title` | string | Protection title |
-| `countries[].aircraft.vehicles` | array | Array of enrolled aircraft vehicle IDs for this country |
-| `settings` | object | Armory configuration settings |
-| `settings.maxEnrollPerCountry` | number | Maximum vehicles that can be enrolled per country (typically 3) |
-| `settings.universalPoints` | object | Universal points available for protection upgrades |
-| `settings.universalPoints.tanks` | number | Universal points for tank protection upgrades |
-| `settings.universalPoints.aircraft` | number | Universal points for aircraft protection upgrades |
+| `countries[].tanks`, `.aircraft` | object | Progress per vehicle type |
+| `.level`, `.maxLevel` | number | `0`–`50` |
+| `.xp` | number \| null | Points collected in this level; `null` at the maximum |
+| `.requiredXP` | number \| null | Points **still missing** for the next level; `null` at the maximum |
+| `.levelProgress` | string | `xp / (xp + requiredXP)`, e.g. `47.1489%`; `100%` at the maximum |
+| `.damageBonus` | number | Bonus in percent; `0` at level 0, where points are still collected |
+| `.title` | string | `Protector of {Country}` |
+| `.vehicles` | number[] | IDs of your vehicles enrolled there; can be empty |
+| `settings` | object | As in the [overview](#vehicle-overview) |
 
-### Notes
+> [!IMPORTANT]
+> `requiredXP` differs between the two endpoints: the level total in the overview, the remainder here. All 16 enrolled vehicles below the maximum level matched `overview.requiredXP - xp == protectors.requiredXP`.
 
-- **CSRF protection**: The `_token` parameter is required and must be a valid CSRF token from the current session
-- **Country ordering**: Countries are typically sorted by total protection level/progress (highest first)
-- **Protection system**:
-  - Each country has independent protection levels for tanks and aircraft (0-50)
-  - Fighting with enrolled vehicles earns XP toward the next protection level
-  - Higher levels provide increased damage bonuses
-  - At level 0, citizens can still earn XP but receive no damage bonus
-- **Max level behavior**: When `level: 50` is reached, both `xp` and `requiredXP` become `null`, and `levelProgress` shows "100%"
-- **Damage bonuses**:
-  - Bonuses scale with protection levels (typically 2% per level at higher tiers)
-  - Level 50 provides 200% damage bonus (maximum)
-  - Level 0 provides 0% damage bonus
-- **Vehicle enrollment**: The `vehicles` arrays contain vehicle IDs that are currently enrolled for that country
-  - Empty arrays indicate no vehicles are enrolled, but XP can still be earned with default vehicles
-  - Vehicle IDs correspond to the `id` field from the `/armory-data/overview` endpoint
-- **Universal points**:
-  - Can be spent to increase protection levels without fighting
-  - Separate pools for tanks and aircraft
-  - Accumulated through gameplay and events
-- **Title format**: All titles follow the pattern "Protector of {Country Name}"
-- **XP progression**:
-  - XP requirements increase significantly at higher levels
-  - Fighting for a country with an enrolled vehicle earns XP for that country's protection level
-  - Different battles may provide different XP amounts
-- **Level progress**: The `levelProgress` percentage shows how far through the current level the citizen is (current XP / required XP for next level)
+Countries appear to be sorted by progress, highest first.
+
+**Source:** real request, 2026-11-27; longer example — earlier notes.
+
+---
+
+## Armory actions
+
+`POST /en/military/armory-actions` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Changes your vehicles. `reset` spends a vehicle discharge document, `useWildcardPoints` spends universal points.
+
+One endpoint for four actions.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `action` | string | Yes | See below |
+| `skinId` | number | Yes | [Vehicle ID](#vehicle-overview) |
+| `countryId` | number | Except `assemble` | Country |
+| `amount` | number | `useWildcardPoints` | Universal points to add |
+
+| `action` | Sends | Effect | Client check before sending |
+|----------|-------|--------|-----------------------------|
+| `assemble` | `skinId` | Builds a locked vehicle | `blueprints.current >= required` |
+| `enroll` | `skinId`, `countryId` | Enrolls the vehicle | A country is chosen |
+| `reset` | `skinId`, `countryId` | Discharges it from the country | Confirmation popup |
+| `useWildcardPoints` | `skinId`, `countryId`, `amount` | Adds universal points to that country's level | Below maximum level, points and amount above 0. The slider's limit is the smaller of your points and `requiredXP - xp` |
+
+```bash
+curl 'https://www.erepublik.com/en/military/armory-actions' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw 'action=enroll&skinId=14&countryId=35&_token=YOUR_CSRF_TOKEN'
+```
+
+### Response
+
+```json
+{ "status": true, "message": "Vehicle successfully enrolled" }
+```
+
+The client treats a truthy `status` as success, then reloads the overview.
+
+### Errors
+
+```json
+{ "status": false, "message": "Invalid parameters" }
+```
+
+Earlier notes: returned for an invalid vehicle or country ID, or a vehicle that cannot be enrolled (locked or unavailable). The client shows `message`, and ignores HTTP `403`.
+
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `ArmoryController` and `ArmoryFactory.armoryAction`; examples — earlier notes (`enroll`).
+
+---
+
+## Errors of the data endpoints
+
+A wrong `_token` gives HTTP `200` with a bare JSON string:
+
+```json
+"CSRF attack detected."
+```
+
+**Source:** real request to the overview, 2026-11-27.
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| Method of `armory-data` | Old quick reference: `GET`; old page: `POST` | `POST` | `POST` |
+| Default vehicles | Available to all players at certain division thresholds | Four default tanks enrolled, one default aircraft not enrolled | Unlock rule not settled |
+| `armory-actions` actions | Only `enroll` | Four actions in the client | Code |
+| Enroll limit | Three per country | Help: three tanks and three aircraft | Help |
+| Protectors progress bar | Not described | The client computes `xp / requiredXP`, which differs from `levelProgress` | Response fields |
+| Points per level | Grow sharply with level | No full table | — |
