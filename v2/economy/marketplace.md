@@ -14,6 +14,7 @@ Buying goods on a country's market, and selling your own from the [Storage](inve
 | [Post or change an offer](#post-or-change-an-offer) | POST | `/en/economy/marketplaceActions` | 🔍 From code |
 | [Remove an offer](#remove-an-offer) | POST | `/en/economy/marketplaceActions` | 🔍 From code |
 | [Buy a market license](#buy-a-market-license) | POST | `/en/economy/marketplaceActions` | 🔍 From code |
+| [Shared offer link](#shared-offer-link) | GET | `/en/economy/marketplace/offer/{copylink}` | 🔍 From code |
 
 Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels). Country IDs: [reference](../basics/id-tables.md).
 
@@ -353,6 +354,25 @@ Parameters: `_token`, `sellAction=deleteOffer`, `offerId`. Answer: `error`, `mes
 Parameters: `_token`, `buyLicense=1`, `countryId`. Answer: `error`, `message`, `recommendedPrices` (keyed by country).
 
 **Source:** `SellItemsController.buyLicense`.
+
+---
+
+## Shared offer link
+
+`GET /en/economy/marketplace/offer/{copylink}` · Auth unknown · 🔍 From code
+
+The URL the client copies to the clipboard when you click the copy-link button of an offer (the `copylink` directive). The client does not request it, so what the page shows is not verified.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `copylink` | path | string | Yes | Value the offer row passes to the directive |
+
+```bash
+curl 'https://www.erepublik.com/en/economy/marketplace/offer/OFFER_LINK_ID' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+**Source:** `erpk_angular_directives.js` (version 1795779904).
 
 ---
 

@@ -12,6 +12,7 @@ The **Storage** screen: everything you own, activating boosters and houses, and 
 | [Activate a house](#activate-a-house) | POST | `/en/economy/activateHouse` | 🔍 From code |
 | [Assemble](#assemble) | POST | `/en/main/assemble` | 🔍 From code |
 | [Build a rocket](#build-a-rocket) | POST | `/en/main/build-rocket` | 🔍 From code |
+| [Activate booster (old buy script)](#activate-booster-old-buy-script) | POST | `/en/main/activate-booster/` | 🔍 From code |
 
 Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
@@ -345,6 +346,34 @@ The observed entry builds "Rocket Q2" from Q1–Q6 ammunition, `componentsPerIte
 | `isAjax` | boolean | `true` |
 
 **Source:** `inventory-json` `actionable` data, 2026-11-27; `StorageController.assembleItem`.
+
+---
+
+## Activate booster (old buy script)
+
+`POST /en/main/activate-booster/` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Uses a booster.
+
+Called by `activate_booster` in `buy.js`, an older script; whether any current screen reaches it was not established. Current activation is described in [Activate a booster](#activate-a-booster) and on the [battlefield](../military/battlefield/boosters-bombs-pvp.md#activate-booster).
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `boosterId` | number | Yes | From the element ID `booster_{boosterId}` |
+
+```bash
+curl 'https://www.erepublik.com/en/main/activate-booster/' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-urlencode '_token=YOUR_CSRF_TOKEN' \
+  --data-urlencode 'boosterId=1'
+```
+
+The client reads `error` and `message`.
+
+**Source:** `buy.js` (version 1741941928).
 
 ---
 

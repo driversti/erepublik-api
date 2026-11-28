@@ -9,6 +9,7 @@ The **War** screen shows one war: the two sides, their allies and every battle f
 | [War page](#war-page) | GET | `/en/wars/show/{warId}` | ✅ Verified 2026-11-27 |
 | [Support a resistance war](#support-a-resistance-war) | POST | `/en/military/rw-support` | ❔ Unconfirmed |
 | [Resource wars page](#resource-wars-page) | GET | `/en/main/resource-wars/{country}/{page}` | ❔ Unconfirmed |
+| [Recover health link](#recover-health-link) | GET | `/en/get-gold/health` | ❔ Unconfirmed |
 
 Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
@@ -163,6 +164,24 @@ curl 'https://www.erepublik.com/en/military/rw-support?_nonce=1772438609287' \
 Probably a screen of the Resource Wars feature. `/en/main/resource-wars/Romania/1` returned HTTP `404` on 2026-11-27, so parameters and response are unknown. The current scripts show extra country leaderboards when `erepublik.info.resourceWars` is set, but do not request this path.
 
 **Source:** real request, 2026-11-27; `erpk_angular_controllers.js` (version 1795779904).
+
+---
+
+## Recover health link
+
+`GET /en/get-gold/health` · Auth unknown · ❔ Unconfirmed
+
+> [!CAUTION]
+> The effect is unknown and it may spend resources. It was not requested.
+
+The war page HTML contains a link to it (class `get_health_text energy_bar`) next to a "Recover … more in" timer. It looks like a leftover of an old health widget; current energy refills are on [Energy](../home/energy.md).
+
+```bash
+curl 'https://www.erepublik.com/en/get-gold/health' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+**Source:** HTML of `/en/wars/show/{warId}`, real request 2026-11-28 (the link was not followed).
 
 ---
 

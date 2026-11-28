@@ -164,4 +164,4 @@ A truthy `error` means failure; the client shows `errorMessage`.
 |-------|---------------|------------------|--------------|
 | `SpendEnergy` | Not listed | Present | Live response |
 | Reward ranges | Prestige 6–45, Activity 2–15 | The same | — |
-| `mission-check`, `mission-unlock` | Not described | Called by `missions.js`, which is not loaded on the home page; it also calls `mission-solve` | Not documented |
+| `mission-check`, `mission-unlock` | Not described | Called by `missions.js`, which is not loaded on the home page; it also calls `mission-solve` | [Dormant event code](../events/dormant-code.md#old-mission-calls) |

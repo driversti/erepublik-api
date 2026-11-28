@@ -2,7 +2,7 @@
 
 [API docs](../README.md) › Events › Dormant event code
 
-Calls that are still in the game's JavaScript but belong to events or features with no reachable screen on 2026-11-27: the revival event, two Bitcoin reward features, the Dye Hard event shop and the seasonal popups.
+Calls that are still in the game's JavaScript but belong to events or features with no reachable screen on 2026-11-27: the revival event, two Bitcoin reward features, the Dye Hard event shop, the seasonal popups and the old mission script.
 
 > [!IMPORTANT]
 > Treat everything here as inactive. Only `GET` requests were tried; no `POST` was sent. An answer from the server does not mean the feature works.
@@ -24,6 +24,9 @@ Current event pages: [Black Friday](black-friday.md), [An Amazing Journey](amazi
 | [Dye Hard status](#dye-hard-status) | GET | `/en/main/dyeHard-eventShop/status` | ✅ Verified 2026-11-27 |
 | [Dye Hard spend](#dye-hard-spend) | POST | `/en/main/dyeHard-eventShop/spend/{price}` | 🔍 From code |
 | [Event popups](#event-popups) | GET | `/en/main/{popup}` | See the table |
+| [Check a mission](#old-mission-calls) | GET | `/en/main/mission-check` | 🔍 From code |
+| [Unlock a mission requirement](#old-mission-calls) | GET | `/en/main/mission-unlock` | 🔍 From code |
+| [Awards popup](#awards-popup) | GET | `/en/main/awards-popup` | 🔍 From code |
 
 Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels). Every `POST` below sends the [CSRF token](../guides/requests.md#csrf-token) as `_token`; the parameter tables list only the rest.
 
@@ -409,6 +412,53 @@ The Shadow Booster tooltip: it doubles damage but does not affect Rank Points or
 - `eventPopup.js` shows the popup automatically when the page sets `eventPopupAutoShowName`. It stores the next show time in `localStorage` under `eventPopup.<name>` and `eventGrowl.<name>`.
 - Clicking the "New Event!" growl delays both the growl and the popup by 24 hours. Otherwise the popup repeats after 3 hours, or 24 hours when `erepublik.citizen.isActive()` is true.
 - Event rules are only display text, so reading them means scraping HTML.
+
+---
+
+## Old mission calls
+
+`GET /en/main/mission-check`, `GET /en/main/mission-unlock` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Both are `GET` requests that change state: unlocking can spend Gold, and a finished check leads the client to solve the mission.
+
+From `missions.js`, which was not loaded on the pages read on 2026-11-28.
+
+| Name | Call | Description |
+|------|------|-------------|
+| `missionId` | both | Mission ID |
+| `_token` | both | CSRF token |
+| `requirement` | unlock | Requirement to unlock |
+| `goldCost` | unlock | Price shown to the user |
+
+```bash
+curl 'https://www.erepublik.com/en/main/mission-check?missionId=1&_token=YOUR_CSRF_TOKEN' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+```bash
+curl 'https://www.erepublik.com/en/main/mission-unlock?missionId=1&requirement=REQUIREMENT&goldCost=1&_token=YOUR_CSRF_TOKEN' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+After a check the client reads `isFinished`, and calls `/en/main/mission-solve` when it is true. After an unlock it expects `msg: "success"`, `isFinished` and `gold`.
+
+**Source:** `missions.js` (version 1753347317).
+
+---
+
+## Awards popup
+
+`GET /en/main/awards-popup` · Auth required · 🔍 From code
+
+HTML fragment with new awards, loaded by `missions.js` into `#award_pop_up_ajax`. Not requested: reading it may mark awards as shown.
+
+```bash
+curl 'https://www.erepublik.com/en/main/awards-popup' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+**Source:** `missions.js` (version 1753347317), `awardPopup`.
 
 ---
 

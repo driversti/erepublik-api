@@ -15,6 +15,8 @@
 | [Report content](#report-content) | GET | `/en/main/tickets-report/{id}/{type}` | 🔍 From code |
 | [Outbound links](#outbound-links) | GET | `/en/main/ga_track/{page}` | 🔍 From code |
 | [Facebook sync](#facebook-sync) | POST | `/en/main/facebook-sync` | 🔍 From code |
+| [Facebook account link](#facebook-account-link) | GET | `/en/facebook-register` | 🔍 From code |
+| [Facebook story](#facebook-story) | POST | `/en/main/facebook-stories/` | 🔍 From code |
 | [New-citizenship banner](#new-citizenship-banner) | GET | `/en/main/citizenship-banner` | ✅ Verified 2026-11-27 |
 | [New countries](#new-countries) | POST | `/en/main/citizenship-countries` | 🔍 From code |
 | [Applicant list](#applicant-list) | GET | `/en/main/citizenship-statuslist` | ✅ Verified 2026-11-27 |
@@ -438,6 +440,51 @@ The `response` field of the answer selects the next step: `found_existing_accoun
 No cURL example: the values are objects and credentials produced by Facebook's script, and how the client encodes them was not recorded.
 
 **Source:** `facebook_canvas.js` (version 1793955735), `facebook.sync`.
+
+---
+
+## Facebook account link
+
+`GET /en/facebook-register` · Auth unknown · 🔍 From code
+
+> [!WARNING]
+> Part of linking a Facebook account; its server-side effect is unknown.
+
+`facebook.linkAccount` requests it. On the answer `0` the client goes to `/en/facebook/login`; otherwise it follows the link in `#final_click`.
+
+```bash
+curl 'https://www.erepublik.com/en/facebook-register' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+**Source:** `facebook_canvas.js` (version 1793955735).
+
+---
+
+## Facebook story
+
+`POST /en/main/facebook-stories/` · Auth required · 🔍 From code
+
+Asks for the text of a story before opening Facebook's share dialog (`.post_reward` buttons).
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `storyId` | string | Yes | Button attribute `data-story` |
+| `storyParams` | string | Yes | Button attribute `data-params` |
+
+```bash
+curl 'https://www.erepublik.com/en/main/facebook-stories/' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-urlencode '_token=YOUR_CSRF_TOKEN' \
+  --data-urlencode 'storyId=STORY_ID' \
+  --data-urlencode 'storyParams=STORY_PARAMS'
+```
+
+The client reads `err`, `name`, `caption`, `description` and a link.
+
+**Source:** `global.js` (version 1793955735).
 
 ---
 

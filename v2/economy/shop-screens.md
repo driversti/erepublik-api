@@ -14,6 +14,7 @@ The shop screens around the [main shop](shop.md): the Gold Store, the Supply Sho
 | [Purchase thank-you popup](#purchase-thank-you-popup) | GET | `/en/main/payment-success` | ✅ Verified 2026-11-27 |
 | [Paths that return 404](#paths-that-return-404) | GET | `/en/main/starter-pack`, `/en/main/gold-packs`, `/en/main/gold-pack-payments` | ❔ Unconfirmed |
 | [Paths that return 404](#paths-that-return-404) | ? | `/en/main/shopping` | ❔ Unconfirmed |
+| [Collect daily Gold](#collect-daily-gold) | POST | `/en/main/collect-daily-gold/` | 🔍 From code |
 
 Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
@@ -189,6 +190,32 @@ curl 'https://www.erepublik.com/en/main/payment-success' \
 The client's popup name for it is `paymentSuccess`.
 
 **Source:** real request, 2026-11-27; `erepublik.js` (version 1795779896).
+
+---
+
+## Collect daily Gold
+
+`POST /en/main/collect-daily-gold/` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Claims a reward on your account.
+
+Sent by the Gold Pack button (`.gold_pack_btn`) on the My Companies page; `buy.js` also calls it with a `data-type` attribute on the same button.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+
+```bash
+curl 'https://www.erepublik.com/en/main/collect-daily-gold/' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-urlencode '_token=YOUR_CSRF_TOKEN'
+```
+
+The client reads JSON: with `error` it shows `msg`, otherwise it reloads the page. The extra parameters of the `buy.js` call are not documented.
+
+**Source:** `citizen/myCompanies.js` (version 1760600930).
 
 ---
 
