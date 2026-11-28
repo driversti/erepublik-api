@@ -1,117 +1,145 @@
-# Citizen Profiles
+# Citizen profiles
 
-#erepublik #api #social #profiles #citizens
+[API docs](../README.md) › Social › Citizen profiles
 
-Endpoints for retrieving citizen profile data, including comprehensive profile JSON and lightweight hovercard tooltips.
+The profile screen of a citizen and the hovercard shown over names. The screen is an HTML shell that loads one JSON document; [organizations](organizations.md) use the same endpoints.
 
-[< Back to Social API](README.md)
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Profile page](#profile-page) | GET | `/en/citizen/profile/{citizenId}` | ✅ Verified 2026-11-27 |
+| [Profile data](#profile-data) | GET | `/en/main/citizen-profile-json-global/{citizenId}` | ✅ Verified 2026-11-27 |
+| [Base variant](#base-variant) | GET | `/en/main/citizen-profile-json/{citizenId}` | ✅ Verified 2026-11-27 |
+| [Personal variant](#personal-variant) | GET | `/en/main/citizen-profile-json-personal/{citizenId}` | ✅ Verified 2026-11-27 |
+| [Hovercard](#hovercard) | GET | `/en/main/citizen-hovercard/{citizenId}` | ✅ Verified 2026-11-27 |
+| [Switch strength](#switch-strength) | GET | `/en/main/switch-strength` | 🔍 From code |
 
-**Related:** [Friends](friends.md) | [Search Citizens](search.md) | [Wall Posts](wall.md)
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## Get Citizen Profile (Global JSON)
+## Profile page
 
-**Method:** GET
-**URL:** `/en/main/citizen-profile-json-global/{citizenId}`
-**Auth Required:** No (public endpoint, but works better with session cookie)
+`GET /en/citizen/profile/{citizenId}` · Auth not checked · ✅ Verified 2026-11-27
 
-### Description
+An HTML page driven by `ErpkProfileController`, which fetches the [personal variant](#personal-variant) when logged in and the [global one](#profile-data) otherwise. Only the logged-in page was requested. Pages also link the form `/en/main/citizen/profile/{citizenId}`.
 
-Retrieves comprehensive profile data for a citizen including personal info, location, achievements, military stats, friends list, decorations, and more. This is the main endpoint used by the citizen profile page to load all data.
-
-### Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| citizenId | number | Yes | The unique citizen ID |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | No (enhances response with friendship data) |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| Button or link | Target |
+|----------------|--------|
+| Friend, block | [Friends and blocking](friends.md) |
+| Friend list | `/en/main/citizen-friends/{id}` ([friends](friends.md#friends-page)) |
+| Send message | `/en/main/messages-compose/{id}` ([messages](messages.md#compose)) |
+| Report | [`/en/main/tickets-report/{id}/citizen`](../basics/framework.md#report-content) or `/organization` |
+| Donate money, items | `/en/economy/donate-money/{id}`, `/en/economy/donate-items/{id}` |
+| Switch strength | [Event action](#switch-strength) |
 
 ```bash
-curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/4690052" \
-  -H "X-Requested-With: XMLHttpRequest" \
-  -H "Cookie: erpk=YOUR_SESSION_TOKEN"
+curl 'https://www.erepublik.com/en/citizen/profile/2' -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
 ```
 
-</details>
+**Source:** real request, 2026-11-27, with the page's templates; `erpk_angular_controllers.js` (version 1795779904), `ProfileFactory`.
+
+---
+
+## Profile data
+
+`GET /en/main/citizen-profile-json-global/{citizenId}` · No auth · ✅ Verified 2026-11-27
+
+Everything the profile shows: personal data, location, achievements, military stats, a friend sample, decorations and more. About 50 KB for an active player (earlier notes); about 12 KB for citizen `2`.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `citizenId` | path | number | Yes | Citizen or organization ID |
+
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-profile-json-global/2' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+With a session cookie this variant still answered `isLoggedIn: false`, `loggedIn: []` and `events: []`.
+
+### Response
+
+Shortened:
+
+```json
+{
+  "citizen": { "id": 1234567, "name": "PlayerName", "level": 100, "is_organization": false },
+  "location": { "citizenshipCountry": { "id": 1, "name": "CountryName" } },
+  "military": { "militaryData": { "strength": 1000, "rankNumber": 50 } },
+  "friends": { "number": 100, "list": [], "isFriend": false, "isFriendRequestPending": false },
+  "loggedIn": [],
+  "isLoggedIn": false
+}
+```
 
 <details>
-<summary>Example Response</summary>
+<summary>Full example response (earlier notes; synthetic values)</summary>
 
 ```json
 {
   "citizen": {
-    "id": 4690052,
-    "name": "driver sti",
-    "created_at": "2011-04-12",
+    "id": 1234567,
+    "name": "PlayerName",
+    "created_at": "2010-01-01",
     "is_organization": false,
     "is_alive": true,
     "has_avatar": true,
-    "avatar_version": "fa70b874e2f337186b979af9404828eb",
+    "avatar_version": "HASH",
     "avatar_file": "png",
-    "level": 1690,
+    "level": 100,
     "avatar": "https://cdnt.erepublik.net/.../avatar.png",
-    "profile_url": "//www.erepublik.com/en/citizen/profile/4690052",
+    "profile_url": "//www.erepublik.com/en/citizen/profile/1234567",
     "onlineStatus": true,
     "banStatus": {
       "type": false,
       "reason": false
     },
-    "nextLevelXp": 8330000
+    "nextLevelXp": 101000
   },
   "citizenAttributes": {
-    "citizen_id": 4690052,
-    "experience_points": 8328880,
-    "level": 1690
+    "citizen_id": 1234567,
+    "experience_points": 100000,
+    "level": 100
   },
   "isAdult": true,
   "aboutMe": "Profile description with HTML...",
   "location": {
     "citizenLocationInfo": {
-      "citizen_id": 4690052,
-      "citizenship_country_id": 72,
-      "residence_country_id": 72,
-      "residence_region_id": 663
+      "citizen_id": 1234567,
+      "citizenship_country_id": 1,
+      "residence_country_id": 1,
+      "residence_region_id": 100
     },
     "residenceCountry": {
-      "id": 72,
-      "name": "Lithuania",
-      "permalink": "Lithuania",
+      "id": 1,
+      "name": "CountryName",
+      "permalink": "CountryName",
       "empire": 0
     },
     "citizenshipCountry": {
-      "id": 72,
-      "name": "Lithuania",
-      "permalink": "Lithuania",
+      "id": 1,
+      "name": "CountryName",
+      "permalink": "CountryName",
       "empire": 0
     },
     "residenceRegion": {
-      "id": 663,
-      "name": "Lithuania Minor",
-      "current_owner_country_id": 72,
-      "original_owner_country_id": 72,
-      "permalink": "Lithuania-Minor"
+      "id": 100,
+      "name": "RegionName",
+      "current_owner_country_id": 1,
+      "original_owner_country_id": 1,
+      "permalink": "RegionName"
     }
   },
   "city": {
-    "residenceCityId": 710,
+    "residenceCityId": 100,
     "residenceRoleName": "Resident",
     "residenceCity": {
-      "id": 710,
-      "name": "Klaipeda",
-      "permalink": "Klaipeda",
-      "region_id": 663,
+      "id": 100,
+      "name": "CityName",
+      "permalink": "CityName",
+      "region_id": 100,
       "city_type_id": 2,
-      "country_id": 72
+      "country_id": 1
     }
   },
   "achievements": [
@@ -120,24 +148,24 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
       "img": "achievement_freedomfighter",
       "descriptionBefore": "Liberate occupied regions...",
       "descriptionAfter": "Liberate occupied regions...",
-      "count": 132
+      "count": 1
     }
   ],
   "isAmbassador": false,
-  "isTopPlayer": true,
+  "isTopPlayer": false,
   "isPresident": false,
-  "isCongressman": true,
+  "isCongressman": false,
   "isPartyPresident": false,
   "isPartyMember": true,
   "isDictator": false,
   "isModerator": false,
   "isBanned": false,
   "friends": {
-    "number": 5293,
+    "number": 100,
     "list": [
       {
-        "id": 4630767,
-        "name": "Sercom",
+        "id": 1000002,
+        "name": "FriendName",
         "is_alive": 1,
         "avatar": "https://cdnt.erepublik.net/.../avatar.png"
       }
@@ -147,64 +175,64 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
   },
   "military": {
     "militaryData": {
-      "strength": 412825.469,
-      "temporaryStrength": 412825.469,
+      "strength": 1000,
+      "temporaryStrength": 1000,
       "divisionData": {
         "division": 4,
         "smallBombDamage": 1500000,
         "bazookaBoosterDamage": 40000,
         "battleHeroReward": 5
       },
-      "name": "Legends of Ukraine: Laurentiu L Battalion XX",
-      "stars": 19,
-      "points": 210000000000,
-      "rankNumber": 89,
-      "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/070_legendary.png",
+      "name": "RankName",
+      "stars": 1,
+      "points": 1000000,
+      "rankNumber": 50,
+      "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/RANK_ICON.png",
       "ground": { "...": "ground combat stats" },
       "aircraft": {
-        "name": "Air Commodore ****",
-        "stars": 4,
-        "points": 55043706,
-        "rankNumber": 60
+        "name": "AviationRankName",
+        "stars": 1,
+        "points": 100000,
+        "rankNumber": 30
       }
     },
     "militaryUnit": {
-      "id": 893,
-      "name": "Lithuanian Shadows",
-      "country_id": 72,
-      "member_count": 45
+      "id": 101,
+      "name": "UnitName",
+      "country_id": 1,
+      "member_count": 10
     },
     "bestDamageData": {
-      "damage": 240418879999,
-      "battle_id": 837316,
-      "side_id": 72,
-      "against_country": "Latvia",
-      "region": "Samogitia",
+      "damage": 1000000,
+      "battle_id": 100000,
+      "side_id": 1,
+      "against_country": "OtherCountryName",
+      "region": "RegionName",
       "won": true
     },
     "truePatriot": {
       "hasTruePatriotProgress": true,
-      "progress": 75.31,
-      "currentLevel": 4955100000000,
-      "damage": 4955175310691,
-      "citizenship_id": 72
+      "progress": 50,
+      "currentLevel": 1000000,
+      "damage": 1500000,
+      "citizenship_id": 1
     }
   },
   "nukes": {
-    "bombs": 1782,
-    "nukes": 11358,
+    "bombs": 10,
+    "nukes": 5,
     "last": {
-      "for": { "id": 72, "name": "Lithuania" },
-      "against": { "id": 53, "name": "Portugal" },
-      "day": "6,640",
+      "for": { "id": 1, "name": "CountryName" },
+      "against": { "id": 2, "name": "OtherCountryName" },
+      "day": "1,000",
       "type": "bomb"
     }
   },
   "decorations": [
     {
-      "class": "summerGames2024_SkyHero_Bronze",
-      "icon": "summerGames2024_SkyHero_Bronze.png",
-      "text": "Air Champion - Bronze Medal...",
+      "class": "decorationClass",
+      "icon": "decorationIcon.png",
+      "text": "Decoration description...",
       "amount": 1
     }
   ],
@@ -213,514 +241,112 @@ curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-global/46900
     "division_switch_pack": { "...": "pack details" }
   },
   "newspaper": {
-    "id": 256891,
-    "name": "Know the facts",
-    "stripped_title": "know-the-facts"
+    "id": 100001,
+    "name": "NewspaperName",
+    "stripped_title": "newspapername"
   },
   "partyData": {
-    "id": 3773,
-    "name": "Lietuvos Tevynes Sajunga",
+    "id": 1001,
+    "name": "PartyName",
     "is_party_president": 0
   },
   "nationalRank": {
-    "xp": 14
+    "xp": 1
   },
   "pvpStats": {
     "matches_played": 10,
-    "matches_won": 0,
-    "matches_lost": 10
+    "matches_won": 5,
+    "matches_lost": 5
   },
   "isLoggedIn": false,
   "isBlocked": false,
   "isFallen": false,
-  "activePacksAmount": 3
+  "activePacksAmount": 2
 }
 ```
 
 </details>
-
-### Response Fields
 
 | Field | Type | Description |
 |-------|------|-------------|
-| citizen | object | Basic citizen info (id, name, level, avatar, online status, ban status) |
-| citizenAttributes | object | XP and level data |
-| isAdult | boolean | Whether citizen is an adult player |
-| aboutMe | string | Profile description (HTML encoded) |
-| location | object | Citizenship and residence location data |
-| city | object | City residence information |
-| achievements | array | List of achievements with counts |
-| isAmbassador/isTopPlayer/isPresident/etc | boolean | Various role flags |
-| isAssociateMember | boolean | Whether citizen is an associate member |
-| isDictator | boolean | Whether citizen is currently a dictator |
-| isModerator | boolean | Whether citizen is a game moderator |
-| isBanned | boolean | Whether citizen is banned |
-| isFallen | boolean | Whether citizen account is "fallen" (permanently inactive) |
-| freedomFighter | object | Freedom Fighter progress: `milestone` (array) and `progress` (array) |
-| friends | object | Friend count and sample list |
-| military | object | Military stats, rank, MU, true patriot progress |
-| nukes | object/false | Bomb/nuke usage count and last deployment (`false` if none) |
-| title | array | Earned titles (empty array if none) |
-| decorations | array | Earned decorations and medals |
-| activePacks | object | Active enhancement packs |
-| activePacksAmount | number | Count of currently active packs |
-| newspaper | object/false | Owned newspaper info (`false` if none) |
-| partyData | object | Political party membership |
-| nationalRank | object | National ranking position |
-| pvpStats | object | PvP match statistics |
-| isPlatoFoundationCurrentMember | boolean | Whether citizen is a current Plato Foundation member |
-| isPlatoFoundationFormerMember | boolean | Whether citizen was a former Plato Foundation member |
-| organization | object | **Org accounts only.** Financial balances (see [Organization Accounts](#organization-accounts)) |
+| `citizen` | object | Basic citizen info (id, name, level, avatar, online status, ban status) |
+| `citizenAttributes` | object | XP and level data |
+| `isAdult` | boolean | Whether citizen is an adult player |
+| `aboutMe` | string | Profile description (HTML encoded) |
+| `location` | object | Citizenship and residence location data |
+| `city` | object | City residence information |
+| `achievements` | array | List of achievements with counts |
+| `isAmbassador`, `isTopPlayer`, `isPresident`, … | boolean | Various role flags |
+| `isAssociateMember` | boolean | Whether citizen is an associate member |
+| `isDictator` | boolean | Whether citizen is currently a dictator |
+| `isModerator` | boolean | Whether citizen is a game moderator |
+| `isBanned` | boolean | Whether citizen is banned |
+| `isFallen` | boolean | Whether citizen account is "fallen" (permanently inactive) |
+| `freedomFighter` | object | Freedom Fighter progress: `milestone` (array) and `progress` (array) |
+| `friends` | object | Friend count and sample list |
+| `military` | object | Military stats, rank, MU, true patriot progress |
+| `nukes` | object/false | Bomb/nuke usage count and last deployment (`false` if none) |
+| `title` | array | Earned titles (empty array if none) |
+| `decorations` | array | Earned decorations and medals |
+| `activePacks` | object | Active enhancement packs |
+| `activePacksAmount` | number | Count of currently active packs |
+| `newspaper` | object/false | Owned newspaper info (`false` if none) |
+| `partyData` | object | Political party membership |
+| `nationalRank` | object | National ranking position |
+| `pvpStats` | object | PvP match statistics |
+| `isPlatoFoundationCurrentMember` | boolean | Whether citizen is a current Plato Foundation member |
+| `isPlatoFoundationFormerMember` | boolean | Whether citizen was a former Plato Foundation member |
+| `organization` | object | `accounts[]`: [organization balances](organizations.md#organization-profiles); empty for players |
+| `loggedIn` | array \| object | `[]`, or `hovercardData` in the [personal variant](#personal-variant) |
+| `events` | array \| object | `[]`, or event flags in the personal variant |
+| `isLoggedIn` | boolean | `true` only in the personal variant |
+| `isBlocked` | boolean | Whether you [blocked](friends.md#block-or-unblock) this citizen |
+| `penalties` | | Seen only on your own profile (see below) |
 
-### Organization Accounts
+- `friends.list` is a sample of about 9; the [friend list](friends.md#friend-list-page) has everyone.
+- `aboutMe` is HTML-encoded and may contain `<br />`.
+- `decorations[].amount` can exceed 1.
+- Absent `nukes`, `militaryUnit`, `bestDamageData` and `newspaper` are `false`, not `null`.
+- Military data has separate ground and aircraft ranks.
 
-When `citizen.is_organization` is `true`, the response represents an **organization** (e.g., a national bank or holding company) rather than a player. Organization accounts have a different response shape:
+### Errors
 
-#### Player vs Organization Differences
+An unknown ID gave HTTP `404` with `{"error":true,"message":"404 Not Found","status":false,"code":404}` (checked on the base variant).
 
-| Field | Player Account | Organization Account |
-|-------|---------------|---------------------|
-| `citizen.is_organization` | `false` | `true` |
-| `citizen.level` | Varies (1–2000+) | Always `1` |
-| `citizen.avatar_version` | Hash string | `null` |
-| `citizen.avatar_file` | `"jpg"` / `"png"` | `null` |
-| `citizenAttributes.experience_points` | Varies | `0` |
-| `organization` | Absent | Object with `accounts` array (currency + gold balances) |
-| `military.militaryData.strength` | Varies | `35` (default) |
-| `military.militaryUnit` | Object or `false` | `false` |
-| `military.bestDamageData` | Object or `false` | `false` |
-| `nukes` | Object or `false` | `false` |
-| `newspaper` | Object or `false` | `false` |
-| `partyData` | Object | Absent |
-| `city.residenceCityId` | Number | `null` |
-| `friends.number` | Varies | Typically very low |
-
-#### `organization` Object
-
-Only present when `is_organization: true`. Exposes the org's **publicly visible financial balances**.
-
-```json
-{
-  "organization": {
-    "accounts": [
-      { "type": "currency", "amount": 83049113.96 },
-      { "type": "gold", "amount": 2148.43 }
-    ]
-  }
-}
-```
-
-| Field | Type | Description |
-|-------|------|-------------|
-| accounts | array | List of financial accounts |
-| accounts[].type | string | `"currency"` (local currency) or `"gold"` |
-| accounts[].amount | number | Balance amount (2 decimal places) |
-
-<details>
-<summary>Full Organization Account Example Response (citizen 1442329)</summary>
-
-```json
-{
-  "citizen": {
-    "id": 1442329,
-    "name": "Lietuvos Taupomasis Bankas",
-    "created_at": "2009-04-26",
-    "is_organization": true,
-    "is_alive": true,
-    "has_avatar": true,
-    "avatar_version": null,
-    "avatar_file": null,
-    "level": 1,
-    "avatar": "https://cdnt.erepublik.net/.../avatar.jpg",
-    "profile_url": "//www.erepublik.com/en/citizen/profile/1442329",
-    "onlineStatus": false,
-    "banStatus": { "type": false, "reason": false },
-    "nextLevelXp": 10
-  },
-  "citizenAttributes": {
-    "citizen_id": 1442329,
-    "experience_points": 0,
-    "level": 1
-  },
-  "isAdult": true,
-  "aboutMe": "Į kebabus reikia dėti bulves",
-  "location": {
-    "citizenLocationInfo": {
-      "citizen_id": 1442329,
-      "citizenship_country_id": 72,
-      "residence_country_id": 23,
-      "residence_region_id": 100
-    },
-    "residenceCountry": {
-      "id": 23,
-      "name": "Canada",
-      "permalink": "Canada",
-      "empire": 0
-    },
-    "citizenshipCountry": {
-      "id": 72,
-      "name": "Lithuania",
-      "permalink": "Lithuania",
-      "empire": 0
-    },
-    "residenceRegion": {
-      "id": 100,
-      "name": "Quebec",
-      "current_owner_country_id": 23,
-      "original_owner_country_id": 23,
-      "permalink": "Quebec"
-    }
-  },
-  "city": {
-    "residenceCityId": null,
-    "residenceRoleName": ""
-  },
-  "achievements": [
-    {
-      "name": "Freedom Fighter",
-      "img": "achievement_freedomfighter",
-      "descriptionBefore": "Liberate occupied regions by fighting in Resistance Wars.",
-      "descriptionAfter": "Liberate occupied regions by fighting in Resistance Wars.",
-      "moreInfo": "<a href='/en/main/latest-updates/0/74'><strong>More info</strong></a>",
-      "count": 0
-    }
-  ],
-  "isAmbassador": false,
-  "isTopPlayer": false,
-  "isPresident": false,
-  "isCongressman": false,
-  "isPartyPresident": false,
-  "isPartyMember": false,
-  "isAssociateMember": false,
-  "isDictator": false,
-  "isModerator": false,
-  "isBanned": false,
-  "freedomFighter": {
-    "milestone": [],
-    "progress": []
-  },
-  "friends": {
-    "number": 1,
-    "list": [
-      {
-        "id": 2580095,
-        "name": "Greenday_1989",
-        "created_at": "2010-01-18 03:00:03",
-        "is_alive": 1,
-        "is_organization": 0,
-        "has_avatar": 1,
-        "avatar_version": "afd07d8d1a944e1c3867f2ea89094394",
-        "avatar_file": "jpg",
-        "avatar": "https://cdnt.erepublik.net/.../avatar.jpg?afd07d8d1a944e1c3867f2ea89094394"
-      }
-    ],
-    "isFriend": false,
-    "isFriendRequestPending": false
-  },
-  "military": {
-    "militaryData": {
-      "strength": 35,
-      "temporaryStrength": 35,
-      "divisionData": {
-        "division": 1,
-        "smallBombDamage": 75000,
-        "bazookaBoosterDamage": 10000,
-        "battleHeroReward": 2
-      },
-      "name": "Recruit ",
-      "stars": 0,
-      "points": 0,
-      "rankNumber": 1,
-      "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/001_recruit.png",
-      "nextRankAt": 15,
-      "progress": 0,
-      "ground": {
-        "strength": 35,
-        "temporaryStrength": 35,
-        "divisionData": {
-          "division": 1,
-          "smallBombDamage": 75000,
-          "bazookaBoosterDamage": 10000,
-          "battleHeroReward": 2
-        },
-        "name": "Recruit ",
-        "stars": 0,
-        "points": 0,
-        "rankNumber": 1,
-        "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/001_recruit.png",
-        "nextRankAt": 15,
-        "progress": 0
-      },
-      "aircraft": {
-        "coordination": 0,
-        "divisionData": {
-          "division": 11,
-          "battleHeroReward": 10
-        },
-        "name": "Airman ",
-        "stars": 0,
-        "points": 0,
-        "rankNumber": 1,
-        "icon": "//www.erepublik.net/images/modules/ranks/aircraft/64px/001_airman.png",
-        "nextRankAt": 10,
-        "progress": 0
-      }
-    },
-    "militaryUnit": false,
-    "bestDamageData": false,
-    "bestDamageAchievementProgress": 0,
-    "bestAirDamageAchievementProgress": 0,
-    "truePatriot": {
-      "hasTruePatriotProgress": false,
-      "progress": 0,
-      "currentLevel": 0,
-      "nextLevel": 100000,
-      "damage": 0,
-      "citizenship_id": 72,
-      "history": []
-    }
-  },
-  "nukes": false,
-  "title": [],
-  "decorations": [],
-  "activePacks": [],
-  "isPlatoFoundationCurrentMember": false,
-  "isPlatoFoundationFormerMember": false,
-  "newspaper": false,
-  "loggedIn": [],
-  "pvpStats": {
-    "matches_played": 0,
-    "matches_won": 0
-  },
-  "isFallen": false,
-  "organization": {
-    "accounts": [
-      { "type": "currency", "amount": 83049113.96 },
-      { "type": "gold", "amount": 2148.43 }
-    ]
-  },
-  "isLoggedIn": false,
-  "isBlocked": false,
-  "nationalRank": { "xp": 0 },
-  "events": [],
-  "activePacksAmount": 0
-}
-```
-
-</details>
-
-### Notes
-
-- This is a **public endpoint** - no authentication required, but having a session cookie adds `isFriend` and `isFriendRequestPending` data
-- The `friends.list` array contains only a sample of friends (first ~9), not the complete list
-- `aboutMe` content is HTML-encoded and may contain `<br />` tags
-- Military rank names and icons are included for both ground and aircraft combat
-- `decorations` can have `amount > 1` indicating multiple instances of the same decoration
-- The response is quite large (~50KB) due to the comprehensive data included
-- **Organization accounts** expose financial balances via the `organization.accounts` array — this data is publicly accessible without authentication
-- Fields like `nukes`, `militaryUnit`, `bestDamageData`, and `newspaper` return `false` (not `null`) when absent
+**Source:** real requests with and without a session, 2026-11-27; example and field descriptions — earlier notes.
 
 ---
 
-## Get Citizen Profile (Base JSON / Alias)
+## Base variant
 
-**Method:** GET
-**URL:** `/en/main/citizen-profile-json/{citizenId}`
-**Auth Required:** No (public endpoint, but works better with session cookie)
+`GET /en/main/citizen-profile-json/{citizenId}` · No auth · ✅ Verified 2026-11-27
 
-### Description
-
-The suffix-less base endpoint for citizen profile data. It returns a payload **structurally identical** to the [Global JSON endpoint](#get-citizen-profile-global-json) — the exact same 36 top-level keys (`citizen`, `citizenAttributes`, `location`, `city`, `achievements`, `military`, `nukes`, `decorations`, `activePacks`, `friends`, `organization`, `partyData`, etc.) with the same nesting and types.
-
-In practice this is an alias of the `-global` variant. Use either interchangeably for public profile reads; refer to the [Global JSON](#get-citizen-profile-global-json) section for the full field reference and example response.
-
-### Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| citizenId | number | Yes | The unique citizen ID |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | No (enhances `friends` with `isFriend` / `isFriendRequestPending`) |
-
-<details>
-<summary>Example Request (cURL)</summary>
+The same 36 top-level keys as [profile data](#profile-data), also without a session. No call to it was found in the scripts searched.
 
 ```bash
-curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json/4690052" \
-  -H "X-Requested-With: XMLHttpRequest" \
-  -H "Cookie: erpk=YOUR_SESSION_TOKEN"
+curl 'https://www.erepublik.com/en/main/citizen-profile-json/2' \
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
-
-### Notes
-
-- Verified to return the identical top-level key set as `-global` (diff of both responses showed zero key differences).
-- Same caveats as the Global endpoint apply: `friends.list` is only a ~9-entry sample, `aboutMe` is HTML-encoded, absent objects return `false` rather than `null`, and `organization.accounts` financial balances are publicly exposed.
-- The unsuffixed `loggedIn` field is an empty array `[]` here (same as Global); the [Personal JSON endpoint](#get-citizen-profile-personal-json) populates it with `hovercardData`.
+**Source:** real requests, 2026-11-27.
 
 ---
 
-## Get Citizen Profile (Personal JSON)
+## Personal variant
 
-**Method:** GET
-**URL:** `/en/main/citizen-profile-json-personal/{citizenId}`
-**Auth Required:** Yes
+`GET /en/main/citizen-profile-json-personal/{citizenId}` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-Retrieves extended profile data for a citizen, including hovercard interaction data and event status. This endpoint requires authentication and returns additional data not available in the public global endpoint.
-
-> **Note:** All fields from the [Global JSON endpoint](#get-citizen-profile-global-json) are also present. This documentation covers only the **additional/different fields** unique to the personal endpoint.
-
-### Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| citizenId | number | Yes | The unique citizen ID |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-
-<details>
-<summary>Example Request (cURL)</summary>
+[Profile data](#profile-data) seen by the logged-in citizen: `isLoggedIn: true`, relationship flags, and filled `loggedIn` and `events`.
 
 ```bash
-curl -X GET "https://www.erepublik.com/en/main/citizen-profile-json-personal/4416327" \
-  -H "X-Requested-With: XMLHttpRequest" \
-  -H "Cookie: erpk=YOUR_SESSION_TOKEN"
+curl 'https://www.erepublik.com/en/main/citizen-profile-json-personal/2' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+### Additions
 
-### Additional Response Fields (not in Global endpoint)
-
-#### `loggedIn.hovercardData`
-
-Rich hovercard data for UI rendering. In the global endpoint, `loggedIn` is an empty array `[]`.
-
-<details>
-<summary>loggedIn.hovercardData JSON</summary>
-
-```json
-{
-  "loggedIn": {
-    "hovercardData": {
-      "name": "Artem Kudryavtsev",
-      "avatar": "https://cdnt.erepublik.net/.../avatar.jpg",
-      "level": 114,
-      "born_on": "Feb 05, 2011",
-      "is_dead": false,
-      "is_banned": false,
-      "is_online": false,
-      "number_of_friends": 268,
-      "is_friend": true,
-      "is_self": false,
-      "citizenship": {
-        "id": 40,
-        "name": "Ukraine",
-        "permalink": "Ukraine"
-      },
-      "politicalTitle": "",
-      "is_org": false,
-      "is_adult": true,
-      "badges": [
-        {
-          "type": "militaryRank",
-          "name": "Titan ",
-          "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/066_titan.png"
-        },
-        {
-          "type": "aviationRank",
-          "name": "Wing Commander *****",
-          "icon": "//www.erepublik.net/images/modules/ranks/aircraft/64px/049_wing_commander.png"
-        }
-      ],
-      "activity": [
-        {
-          "type": "residenceCity",
-          "id": 299,
-          "name": "Donetsk",
-          "avatar": "//www.erepublik.net/images/modules/cities/128px/Donetsk.png",
-          "title": "Resident",
-          "permalink": "//www.erepublik.com/en/main/city/Donetsk"
-        },
-        {
-          "type": "politicalParty",
-          "id": 3650,
-          "name": "Republican Union",
-          "avatar": "//cdnt.erepublik.net/.../party.jpg",
-          "title": "Party Member",
-          "economical_orientation": "Far-right",
-          "social_orientation": "Authoritarian",
-          "permalink": "//www.erepublik.com/en/party/3650"
-        },
-        {
-          "type": "militaryUnit",
-          "id": 239,
-          "name": "_UArmy_",
-          "avatar": "//cdnt.erepublik.net/.../mu.jpg",
-          "title": "Soldier",
-          "permalink": "//www.erepublik.com/en/military/military-unit/239"
-        }
-      ],
-      "fighterInfo": {
-        "military": {
-          "rank": 66,
-          "strength": 71295.477,
-          "division": 4
-        },
-        "aviation": {
-          "rank": 49,
-          "perception": 0,
-          "division": 11
-        }
-      },
-      "interactionButtons": [
-        {
-          "type": "viewProfile",
-          "title": "View profile",
-          "enabled": true,
-          "action": "link",
-          "href": "//www.erepublik.com/en/citizen/profile/4416327"
-        },
-        {
-          "type": "sendMessage",
-          "title": "Send message",
-          "enabled": true,
-          "action": "link",
-          "href": "//www.erepublik.com/en/main/messages-compose/4416327"
-        },
-        {
-          "type": "removeFriend",
-          "title": "Remove friend",
-          "enabled": true,
-          "action": "removeFriend",
-          "actionURL": "//www.erepublik.com/en/main/citizen-addRemoveFriend"
-        }
-      ]
-    }
-  }
-}
-```
-
-</details>
-
-#### `events`
-
-Event status flags. In the global endpoint, `events` is an empty array `[]`.
-
-<details>
-<summary>events JSON</summary>
+`events`:
 
 ```json
 {
@@ -738,153 +364,236 @@ Event status flags. In the global endpoint, `events` is an empty array `[]`.
 }
 ```
 
-</details>
-
-### Hovercard Data Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| born_on | string | Formatted registration date (e.g., "Feb 05, 2011") |
-| is_friend | boolean | Whether the logged-in user is friends with this citizen |
-| is_self | boolean | Whether viewing own profile |
-| politicalTitle | string | Current political title (empty if none) |
-| badges | array | Military and aviation rank badges with icons |
-| activity | array | Current affiliations (city, party, military unit) with details |
-| fighterInfo | object | Compact fighter stats for military and aviation |
-| interactionButtons | array | Available UI actions (viewProfile, sendMessage, addFriend/removeFriend) |
-
-### Activity Types
-
-| Type | Description |
-|------|-------------|
-| residenceCity | City where citizen resides |
-| politicalParty | Party membership with orientation info |
-| militaryUnit | Military unit membership |
-
-### Interaction Button Types
-
-| Type | Action | Description |
-|------|--------|-------------|
-| viewProfile | link | Link to full profile page |
-| sendMessage | link | Link to compose message |
-| addFriend | addFriend | AJAX action to add friend |
-| removeFriend | removeFriend | AJAX action to remove friend |
-
-### Notes
-
-- Requires authentication - returns error without valid session cookie
-- `interactionButtons` change based on relationship (addFriend vs removeFriend)
-- `politicalTitle` includes roles like "Country President", "Congressman", etc.
-- `activity[].social_orientation` only appears for politicalParty type
-- Events object keys may vary depending on currently active game events
-
----
-
-## Get Citizen Hovercard
-
-**Method:** GET
-**URL:** `/en/main/citizen-hovercard/{citizenId}`
-**Auth Required:** Yes
-
-### Description
-
-Returns a compact citizen profile used for hover tooltips across the site. Significantly richer than expected -- includes online status, badge/rank icons, political title, party/MU/city memberships, and detailed fighter stats. This endpoint powers the popup that appears when hovering over a citizen's name in the game UI.
-
-### Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| citizenId | number | Yes | The unique citizen ID |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
+The keys depend on the events in the code at the time. `loggedIn.hovercardData` is the [hovercard](#hovercard) with partly different key names: `born_on`, `is_dead`, `is_banned`, `is_online`, `number_of_friends`, `is_friend`, `is_self`, `is_org`, `is_adult` (snake case), but `politicalTitle`, `fighterInfo`, `interactionButtons` (camel case).
 
 <details>
-<summary>Example Request (cURL)</summary>
+<summary>loggedIn.hovercardData (earlier notes; synthetic values)</summary>
 
-```bash
-curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest'
+```json
+{
+  "loggedIn": {
+    "hovercardData": {
+      "name": "PlayerName",
+      "avatar": "https://cdnt.erepublik.net/.../avatar.jpg",
+      "level": 100,
+      "born_on": "Jan 01, 2010",
+      "is_dead": false,
+      "is_banned": false,
+      "is_online": false,
+      "number_of_friends": 100,
+      "is_friend": true,
+      "is_self": false,
+      "citizenship": {
+        "id": 1,
+        "name": "CountryName",
+        "permalink": "CountryName"
+      },
+      "politicalTitle": "",
+      "is_org": false,
+      "is_adult": true,
+      "badges": [
+        {
+          "type": "militaryRank",
+          "name": "RankName",
+          "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/RANK_ICON.png"
+        },
+        {
+          "type": "aviationRank",
+          "name": "AviationRankName",
+          "icon": "//www.erepublik.net/images/modules/ranks/aircraft/64px/AVIATION_RANK_ICON.png"
+        }
+      ],
+      "activity": [
+        {
+          "type": "residenceCity",
+          "id": 100,
+          "name": "CityName",
+          "avatar": "//www.erepublik.net/images/modules/cities/128px/CityName.png",
+          "title": "Resident",
+          "permalink": "//www.erepublik.com/en/main/city/CityName"
+        },
+        {
+          "type": "politicalParty",
+          "id": 1002,
+          "name": "PartyName",
+          "avatar": "//cdnt.erepublik.net/.../party.jpg",
+          "title": "Party Member",
+          "economical_orientation": "EconomicOrientation",
+          "social_orientation": "SocialOrientation",
+          "permalink": "//www.erepublik.com/en/party/1002"
+        },
+        {
+          "type": "militaryUnit",
+          "id": 102,
+          "name": "UnitName",
+          "avatar": "//cdnt.erepublik.net/.../mu.jpg",
+          "title": "Soldier",
+          "permalink": "//www.erepublik.com/en/military/military-unit/102"
+        }
+      ],
+      "fighterInfo": {
+        "military": {
+          "rank": 50,
+          "strength": 1000,
+          "division": 4
+        },
+        "aviation": {
+          "rank": 30,
+          "perception": 0,
+          "division": 11
+        }
+      },
+      "interactionButtons": [
+        {
+          "type": "viewProfile",
+          "title": "View profile",
+          "enabled": true,
+          "action": "link",
+          "href": "//www.erepublik.com/en/citizen/profile/1000001"
+        },
+        {
+          "type": "sendMessage",
+          "title": "Send message",
+          "enabled": true,
+          "action": "link",
+          "href": "//www.erepublik.com/en/main/messages-compose/1000001"
+        },
+        {
+          "type": "removeFriend",
+          "title": "Remove friend",
+          "enabled": true,
+          "action": "removeFriend",
+          "actionURL": "//www.erepublik.com/en/main/citizen-addRemoveFriend"
+        }
+      ]
+    }
+  }
+}
 ```
 
 </details>
 
-<details>
-<summary>Example Response</summary>
+On your own profile these were also seen:
+
+| Field | Description |
+|-------|-------------|
+| `citizen.hasTutorial` | boolean |
+| `citizen.hasPendingCitizenshipApplication`, `pendingCitizenshipApplicationPermalink` | Pending citizenship application |
+| `penalties` | Not present on the other profile read |
+| `partyData` | `id`, `party_id`, `name`, `stripped_title`, `avatar`, `has_avatar`, `created_at`, `economical_orientation`, `is_party_president` |
+
+The client sets `isMyProfile` itself, and shows the block button for others except citizen `2`.
+
+### Errors
+
+Without a session: HTTP `200`, `{"error":"not_authorized"}`.
+
+**Source:** real requests, 2026-11-27; `ProfileFactory.getData`; example — earlier notes.
+
+---
+
+## Hovercard
+
+`GET /en/main/citizen-hovercard/{citizenId}` · Auth required · ✅ Verified 2026-11-27
+
+The compact card shown when the pointer is over a profile link with a `hovercard` attribute. The client caches it per citizen for the page's lifetime.
+
+```bash
+curl 'https://www.erepublik.com/en/main/citizen-hovercard/2' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+### Response
+
+Shortened:
 
 ```json
 {
-  "name": "driver sti",
-  "avatar": "https://cdnt.erepublik.net/.../1907aee62f42c11beba21159840cdc16.png?...",
-  "level": 1730,
-  "bornOn": "Apr 12, 2011",
+  "name": "Plato",
+  "level": 1,
+  "isOnline": false,
+  "isFriend": false,
+  "isSelf": false,
+  "politicalTitle": "Official eRepublik account",
+  "interactionButtons": [
+    { "type": "addFriend", "title": "Add friend", "enabled": true, "action": "addFriend",
+      "actionURL": "//www.erepublik.com/en/main/citizen-addRemoveFriend" }
+  ]
+}
+```
+
+<details>
+<summary>Full example response (earlier notes, own card; synthetic values)</summary>
+
+```json
+{
+  "name": "PlayerName",
+  "avatar": "https://cdnt.erepublik.net/.../HASH.png?...",
+  "level": 100,
+  "bornOn": "Jan 01, 2010",
   "isDead": false,
   "isBanned": false,
   "isOnline": true,
-  "numberOfFriends": 5353,
+  "numberOfFriends": 100,
   "isFriend": false,
   "isSelf": true,
   "citizenship": {
-    "id": 72,
-    "name": "Lithuania",
-    "permalink": "Lithuania"
+    "id": 1,
+    "name": "CountryName",
+    "permalink": "CountryName"
   },
-  "politicalTitle": "Congress Member",
+  "politicalTitle": "",
   "isOrg": false,
   "isAdult": true,
   "badges": [
     {
       "type": "militaryRank",
-      "name": "Legends of Ukraine: Laurentiu L Battalion XX",
-      "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/070_legendary.png"
+      "name": "RankName",
+      "icon": "//www.erepublik.net/images/modules/ranks/tanks/64px/RANK_ICON.png"
     },
     {
       "type": "aviationRank",
-      "name": "Air Commodore *****",
-      "icon": "//www.erepublik.net/images/modules/ranks/aircraft/64px/061_air_commodore.png"
+      "name": "AviationRankName",
+      "icon": "//www.erepublik.net/images/modules/ranks/aircraft/64px/AVIATION_RANK_ICON.png"
     }
   ],
   "activity": [
     {
       "type": "residenceCity",
-      "id": 710,
-      "name": "Klaipeda",
-      "avatar": "//www.erepublik.net/images/modules/cities/128px/Klaipeda.png",
+      "id": 100,
+      "name": "CityName",
+      "avatar": "//www.erepublik.net/images/modules/cities/128px/CityName.png",
       "title": "Resident",
-      "permalink": "//www.erepublik.com/en/main/city/Klaipeda"
+      "permalink": "//www.erepublik.com/en/main/city/CityName"
     },
     {
       "type": "politicalParty",
-      "id": 3773,
-      "name": "Lietuvos Tevynes Sajunga",
-      "avatar": "//cdnt.erepublik.net/.../5c151c2a9b76f9ef26d7e0f0d00c9a89.jpg",
+      "id": 1001,
+      "name": "PartyName",
+      "avatar": "//cdnt.erepublik.net/.../HASH.jpg",
       "title": "Party Member",
-      "economicalOrientation": "Center",
-      "socialOrientation": "Anarchist",
-      "permalink": "//www.erepublik.com/en/party/3773"
+      "economicalOrientation": "EconomicOrientation",
+      "socialOrientation": "SocialOrientation",
+      "permalink": "//www.erepublik.com/en/party/1001"
     },
     {
       "type": "militaryUnit",
-      "id": 893,
-      "name": "Lithuanian Shadows",
-      "avatar": "//cdnt.erepublik.net/.../d56b9fc4b0f1be8871f5e1c40c0067e7.png?...",
+      "id": 101,
+      "name": "UnitName",
+      "avatar": "//cdnt.erepublik.net/.../HASH.png?...",
       "title": "Soldier",
-      "permalink": "//www.erepublik.com/en/military/military-unit/893"
+      "permalink": "//www.erepublik.com/en/military/military-unit/101"
     }
   ],
   "fighterInfo": {
     "military": {
-      "rank": 89,
-      "strength": 414573.469,
+      "rank": 50,
+      "strength": 1000,
       "division": 4
     },
     "aviation": {
-      "rank": 61,
+      "rank": 30,
       "perception": 0,
       "division": 11
     }
@@ -895,14 +604,12 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
 
 </details>
 
-### Response Fields
-
 | Field | Type | Description |
 |-------|------|-------------|
 | `name` | string | Citizen display name |
 | `avatar` | string | Avatar image URL |
 | `level` | number | Experience level |
-| `bornOn` | string | Registration date (e.g., "Apr 12, 2011") |
+| `bornOn` | string | Registration date (e.g., "Jan 01, 2010") |
 | `isDead` | boolean | Whether the citizen account is dead |
 | `isBanned` | boolean | Whether the citizen is banned |
 | `isOnline` | boolean | Whether the citizen is currently online |
@@ -936,34 +643,27 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
 | `interactionButtons[].href` | string | Target URL for `action: "link"` buttons |
 | `interactionButtons[].actionURL` | string | Endpoint URL for non-link actions (e.g., add/remove friend) |
 
-### Notes
-
-- **Lightweight alternative to profile endpoints**: Returns key citizen data in a single compact response, ideal for tooltips or quick lookups
-- **Online status**: The `isOnline` field provides real-time online status -- not available from the profile JSON endpoints
-- **Friendship context**: `isFriend` and `isSelf` are relative to the authenticated session
-- **Error handling**: Returns `{"error": true, "message": "citizen error"}` for invalid citizen IDs or system accounts
-- **Activity array**: Contains up to 3 entries (city, party, MU) -- entries are omitted if the citizen has no membership
-- **Organization accounts**: When `isOrg: true`, the response represents a company/organization rather than a player
-- **Interaction buttons**: Empty (`[]`) when `isSelf: true`. When viewing another citizen, the set adapts to the relationship -- a friend returns `viewProfile`, `sendMessage`, and `removeFriend`; a non-friend would return `addFriend` instead. Example (viewing a friend):
+`badges[].type` can also be `ambassador` or `moderator`. For `isOnline` and the profile data's `citizen.onlineStatus`, see [Open questions](#open-questions).
 
 <details>
-<summary>interactionButtons (viewing a friend)</summary>
+<summary>interactionButtons when viewing a friend (earlier notes)</summary>
 
 ```json
+{
 "interactionButtons": [
   {
     "type": "viewProfile",
     "title": "View profile",
     "enabled": true,
     "action": "link",
-    "href": "//www.erepublik.com/en/citizen/profile/2330404"
+    "href": "//www.erepublik.com/en/citizen/profile/1000001"
   },
   {
     "type": "sendMessage",
     "title": "Send message",
     "enabled": true,
     "action": "link",
-    "href": "//www.erepublik.com/en/main/messages-compose/2330404"
+    "href": "//www.erepublik.com/en/main/messages-compose/1000001"
   },
   {
     "type": "removeFriend",
@@ -973,6 +673,54 @@ curl 'https://www.erepublik.com/en/main/citizen-hovercard/4690052' \
     "actionURL": "//www.erepublik.com/en/main/citizen-addRemoveFriend"
   }
 ]
+}
 ```
 
 </details>
+
+- `interactionButtons` is empty on your own card and on [organizations](organizations.md#organization-profiles); otherwise `viewProfile`, `sendMessage` and `addFriend` or `removeFriend`.
+- `activity` omits memberships the citizen does not have.
+- Clicking a friend button posts to its `actionURL`: [add or remove a friend](friends.md#add-or-remove-a-friend).
+
+### Errors
+
+All with HTTP `200`.
+
+| Response | Cause |
+|----------|-------|
+| `{"error":true,"message":"citizen error"}` | Invalid ID or system account |
+| `{"error":"not_authorized"}` | No session |
+
+**Source:** real requests, 2026-11-27; `HovercardFactory`, `hovercard` directives (version 1795779904); examples — earlier notes.
+
+---
+
+## Switch strength
+
+`GET /en/main/switch-strength?action=offer&counterpart_id={citizenId}` · Auth required · 🔍 From code
+
+> [!WARNING]
+> A `GET` that sends another citizen an offer to switch strength.
+
+An April 1st event action. The button shows only while `events.april1st2017.isActive` is `true` (it was `false` on 2026-11-27) and is enabled by `events.april1st2017.canOfferSwitch`.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `action` | query | string | Yes | `offer`; no other value found |
+| `counterpart_id` | query | number | Yes | Citizen to invite |
+
+The client shows `msg` and, without `error`, disables the button.
+
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `switchStrength`; not requested.
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| Global variant with a cookie | Adds `isFriend`, `isFriendRequestPending` data | Keys present; `isLoggedIn` stays `false` | Live response |
+| Online status | The hovercard's `isOnline` is not available from the profile JSON endpoints | The profile data example has `citizen.onlineStatus`; that both mean the same was not checked | Not settled |
+| Base variant | Alias of `-global` | Same key set | Both |
+| Personal variant without a session | "Returns error" | `not_authorized` | Live response |
+| Revival sponsor button | Not described | `requestToBeRevivalSponsor` in `ProfileFactory` | [Dormant event code](../events/dormant-code.md#request-to-be-a-sponsor) |

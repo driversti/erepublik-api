@@ -1,226 +1,173 @@
-# eRepublik API Documentation
+# eRepublik API documentation
 
-#erepublik #api #documentation
+Unofficial, community documentation of the HTTP and WebSocket API behind [eRepublik](https://www.erepublik.com), a browser-based strategy game. It is written for developers who build tools, bots and userscripts, and is readable straight from GitHub.
 
-Unofficial API documentation for [eRepublik](https://www.erepublik.com), a browser-based strategy MMO. All endpoints have been discovered through reverse engineering of the game's web client.
+> [!WARNING]
+> These endpoints are undocumented by the game's authors, reverse-engineered from the web client, and may change or disappear at any time. Many actions spend real in-game resources. Use at your own risk and respect the game's rules.
 
-> **Disclaimer:** These are unofficial, undocumented endpoints. They may change or break at any time without notice. Use at your own risk.
+## At a glance
 
-**Base URL:** `https://www.erepublik.com`
+| Metric | Value |
+|--------|-------|
+| Endpoints documented | 375 |
+| Topic pages | 60 |
+| Endpoints ✅ Verified / 🔍 From code / ❔ Unconfirmed | 187 / 173 / 15 |
+| Last updated | 2026-11-28 |
 
-> **Note:** Most endpoints require authentication. See [Authentication](auth/README.md) for details.
+## Start here
 
----
+1. [Making requests](guides/requests.md): cookie, CSRF token, headers, status labels.
+2. [Authentication](basics/login.md).
+3. Pick a topic below.
 
-## Modules
+Good to know: the game runs on `America/Los_Angeles` time, with a daily reset at 00:00 and a weekly reset on Tuesday at 00:00. The game day counts days since 2007-11-21. The rate limit is about 3000 requests per hour per account.
 
-| Module | Description | Files |
-|--------|-------------|-------|
-| [Authentication](auth/README.md) | Login flow, sessions, cookies | 1 |
-| [CAPTCHA & Verification](captcha/README.md) | Anti-bot challenges, session verification | 1 |
-| [Homepage](homepage/README.md) | Main dashboard -- citizen state, social feeds, settings | 1 |
-| [World & Travel](world/README.md) | Travel, cities, world map, regions | 3 |
-| [Country](country/README.md) | Society, economy, politics, military, administration pages | 7 |
-| [Military](military/README.md) | Campaigns, battles, deployment, armory, battlefield, websocket | 9 |
-| [Social](social/README.md) | Citizen profiles, friends, wall posts, search | 5 |
-| [Notifications](notifications/README.md) | Alerts and reports | 1 |
-| [Economy](economy/README.md) | Work, marketplace, exchange, companies, inventory | 11 |
-| [Rewards](rewards/README.md) | Daily objectives, missions, weekly challenges, VIP | 4 |
-| [Power Spin](powerspin/README.md) | Wheel of Fortune -- prizes, spins, jackpots | 1 |
-| [Framework Bundle](framework/README.md) | Main JS bundle -- popups, client objects, tournaments, shop | 3 |
-| [Reference Data](reference/README.md) | Country & region ID lookup tables (74 countries, 574 regions) | 2 |
+## Where to find things
 
----
+| Topic | What is inside | Page |
+|-------|----------------|------|
+| Login and sessions | Login, logout, cookies | [login](basics/login.md) |
+| Verification | Session CAPTCHA | [captcha](basics/captcha.md) |
+| Dashboard | Home page data, news | [dashboard](home/dashboard.md) |
+| Daily objectives | Activity chests | [daily objectives](home/daily-objectives.md) |
+| Daily missions | Mission list and claim | [daily missions](home/daily-missions.md) |
+| Weekly challenge | Prestige reward ladder | [weekly challenge](home/weekly-challenge.md) |
+| Energy and food | Refill energy | [energy](home/energy.md) |
+| Power Spin | Wheel of Fortune | [power spin](home/power-spin.md) |
+| Badges and auto-posts | Referral banners, award posts | [badges](home/badges.md) |
+| Campaigns (Wars screen) | Battle lists, filters, presets | [campaigns](military/campaigns.md) |
+| Battlefield: page and entry | Battle state, side, travel, division | [page and entry](military/battlefield/page.md) |
+| Battlefield: live data | Domination, battle console, campaign map | [live data](military/battlefield/live-data.md) |
+| Battlefield: deployment | Automated fighting, fuel | [deployment](military/battlefield/deployment.md) |
+| Battlefield: boosters, bombs, PvP | Boosters, bombs, battle effects, PvP | [boosters, bombs, PvP](military/battlefield/boosters-bombs-pvp.md) |
+| Wars and resistance wars | War page, resistance funding, battle end time | [wars](military/wars.md) |
+| Armory and protectors | Vehicles, enrollment, protector levels | [armory](military/armory.md) |
+| Military units | Unit page, members, finances, management | [military units](military/military-units.md) |
+| Travel | Travel popup, prices, moving | [travel](world/travel.md) |
+| Map and regions | World map data, side panels, region page | [map](world/map.md) |
+| Cities and residence | City panels, search, residence | [cities](world/cities.md) |
+| Country: society and economy | Citizens, regions, treasury, taxes | [society](country/society.md), [economy](country/economy.md) |
+| Country: politics and military | Government, wars, pacts | [politics](country/politics.md), [military](country/military.md) |
+| Government and laws | Administration, citizenship requests, law voting | [administration](country/administration.md), [laws](country/laws.md) |
+| Elections and parties | Results, candidates, voting | [elections](country/elections.md), [parties](country/parties.md) |
+| Alliances | Members, alliance actions | [alliances](country/alliances.md) |
+| Citizen profiles | Profile data, hovercard | [profiles](social/profiles.md) |
+| Friends and blocking | Friend lists, requests, blocklist | [friends](social/friends.md) |
+| Wall and feeds | Posts, comments, reactions | [wall](social/wall.md) |
+| Private messages | Inbox, compose | [messages](social/messages.md) |
+| Notifications | Alerts, reports, pop-ups | [notifications](social/notifications.md) |
+| Search | Search page, citizen search | [search](social/search.md) |
+| Organizations | Organization profiles, money donations | [organizations](social/organizations.md) |
+| Newspapers and articles | Reading, voting, comments, writing, subscriptions | [articles](media/articles.md), [newspapers](media/newspapers.md) |
+| News | News lists and RSS | [news](media/news.md) |
+| Leaderboards | Weekly boards: citizens, units, countries | [leaderboards](rankings/leaderboards.md) |
+| Rankings and updates | Ranking pages, Latest Updates | [rankings](rankings/rankings.md) |
+| Shop | Packs, items, purchases | [shop](economy/shop.md) |
+| Events | Endpoints and data of seasonal events | [An Amazing Journey](events/amazing-journey.md), [Black Friday](events/black-friday.md), [Tournaments](events/tournaments.md), [dormant event code](events/dormant-code.md) |
+| Other shop screens | Gold Store, Supply Shop, gifting, promo popups | [shop screens](economy/shop-screens.md) |
+| VIP and loyalty | VIP points, Loyalty Program, Gold Bonus | [VIP](economy/vip.md) |
+| Work | Job, Work as Manager, overtime | [work](economy/work.md) |
+| Training | Training grounds, upgrades | [training](economy/training.md) |
+| Job market | Offers, apply, resign | [job market](economy/job-market.md) |
+| Employees | Job offer, salaries, staff | [employees](economy/employees.md) |
+| Companies | Companies, holdings, building | [companies](economy/companies.md) |
+| Inventory | Storage, boosters, houses, assembly | [inventory](economy/inventory.md) |
+| Marketplace | Goods, own offers, price snapshot | [marketplace](economy/marketplace.md) |
+| Monetary market | Gold and currency exchange | [monetary market](economy/monetary-market.md) |
+| Game Tokens market | Token offers | [Game Tokens market](economy/game-tokens-market.md) |
+| Client framework | Popups, JavaScript objects, site-wide requests | [framework](basics/framework.md) |
+| Real-time WebSocket | Battle and deployment events | [websocket](basics/websocket.md) |
+| ID tables | Countries and regions | [ID tables](basics/id-tables.md) |
 
-## Quick Reference
+## Looking for a game screen?
 
-### Authentication
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/login` | POST | User login |
+| In the game you want to… | Go to |
+|--------------------------|-------|
+| Deploy in a battle | [Deployment](military/battlefield/deployment.md) |
+| Browse battles (Wars) | [Campaigns](military/campaigns.md) |
+| Manage vehicles (Armory) | [Armory](military/armory.md) |
+| Run your military unit | [Military units](military/military-units.md) |
+| Train | [Training](economy/training.md) |
+| Work | [Work](economy/work.md) |
+| Collect daily rewards | [Daily objectives](home/daily-objectives.md), [daily missions](home/daily-missions.md) |
+| Travel | [Travel](world/travel.md) |
+| Vote | [Elections](country/elections.md#vote) |
+| Donate to a country | [Country economy](country/economy.md#donate-to-the-country) |
+| Buy in the shop | [Shop](economy/shop.md) |
+| Play the anniversary map | [An Amazing Journey](events/amazing-journey.md) |
 
-### CAPTCHA & Verification
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/main/sessionCaptcha` | GET | Get session verification countdown UI |
-| `/en/main/sessionUnlockPopup` | GET | Get CAPTCHA modal popup HTML |
-| `/en/main/sessionGetChallenge` | POST | Get CAPTCHA challenge image and IDs |
-| `/en/main/sessionUnlock` | POST | Submit CAPTCHA solution |
+## How the repository is organised
 
-### Homepage
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en` | GET | Main dashboard page (HTML) |
-
-### World & Travel
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/main/travelData` | POST | Get all countries, regions, and travel costs |
-| `/en/main/travel` | POST | Execute travel to a region |
-| `/en/main/city-data/{cityId}/overview` | GET | Get city overview |
-| `/en/main/city-data/{cityId}/residents` | GET | Get city residents list (paginated) |
-| `/en/main/city-data/{cityId}/properties` | GET | Get citizen's properties in a city |
-| `/en/main/city-search` | GET | Search cities by name, region, or country |
-| `/en/main/city-actions` | POST | Perform city actions (establish residence) |
-| `/en/main/map-data` | GET | Get world map data (regions, ownership, battles) |
-
-### Country
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/country/society/{countryName}` | GET | Country society page (HTML) |
-| `/en/country/economy/{countryName}` | GET | Country economy page (HTML+JS) |
-| `/en/country/politics/{countryName}` | GET | Country politics page (HTML) |
-| `/en/country/military/{countryName}` | GET | Country military page (HTML) |
-| `/en/country-administration/{countryName}/{page}` | GET | Country administration page (HTML) |
-| `/en/{countryName}/new-donation` | POST | Propose treasury donation (Congress) |
-
-### Military
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/military/campaignsJson/list` | GET | List all active campaigns (public) |
-| `/en/military/campaignsJson/countryId/{id}` | GET | Get campaigns for a specific country |
-| `/en/military/campaignsJson/citizen` | GET | Get campaigns for the logged-in citizen |
-| `/en/military/battlefield/{battleId}` | GET | Full battlefield page (HTML) |
-| `/en/military/battle-console` | POST | Get live battle zone stats |
-| `/en/military/battle-stats/{battleId}` | POST | Get battle statistics |
-| `/en/military/deploy-bomb` | POST | Deploy a bomb |
-| `/en/military/fight-activateBooster` | POST | Activate a combat booster |
-| `/en/military/fightDeploy-getInventory` | POST | Get deployment inventory |
-| `/en/military/fightDeploy-startDeploy` | POST | Start automated deployment |
-| `/en/military/fightDeploy-cancelDeploy` | POST | Cancel active deployment |
-| `/en/military/pvp-inventory/` | GET | Get PvP inventory (HTML) |
-| `/en/military/battle-map-status/{battleId}` | POST | Get campaign map division results |
-| `/en/military/armory-data/overview` | GET | Get armory overview data |
-| `/en/military/armory-data/protectors` | GET | Get protectors data |
-| `/en/military/armory-actions` | POST | Enroll vehicle for a country |
-| `/en/main/battlefieldTravel` | POST | Choose side & travel to battle |
-| `/en/main/switch-division` | POST | Switch between divisions |
-| `/en/main/pvp-queue` | POST | Join/leave PvP queue |
-| `/en/main/fight-activateBattleEffect` | POST | Activate seasonal battle effect |
-| `/en/main/fight-listObjectives` | GET | List battle objectives |
-| `/en/main/mercenary-campaign/subscribe/` | POST | Subscribe to mercenary campaign |
-| `/en/main/mercenary-campaign/unsubscribe/` | POST | Unsubscribe from mercenary campaign |
-| `/en/economy/refillEnergy` | POST | Eat food / use energy bars |
-| `/en/economy/energyRefill-getInventory` | POST | Get energy refill inventory |
-| `/en/wars/show/{warId}` | GET | War page — countries, allies, battle history (HTML) |
-| `/en/military/rw-support` | POST | Fund a resistance war |
-| `/en/main/news/military/all/{countryName}/{page}/rss` | GET | Military news RSS feed (per country) |
-
-### Social
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/main/citizen-profile-json-global/{citizenId}` | GET | Get citizen profile (public) |
-| `/en/main/citizen-profile-json-personal/{citizenId}` | GET | Get citizen profile (authenticated) |
-| `/en/main/citizen-addRemoveFriend` | POST | Add or remove friend |
-| `/en/main/citizen-hovercard/{citizenId}` | GET | Get citizen hovercard |
-| `/en/main/citizen-search?name={query}` | GET | Search citizens by name |
-| `/en/main/wall-post/automatic` | POST | Auto-post award/medal to citizen's wall |
-| `/en/main/news/rated/all/all/{page}/rss` | GET | News articles RSS feed |
-
-### Notifications
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/main/notificationsAjax/report/{page}` | GET | Get paginated notifications |
-
-### Economy
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/economy/marketplace` | GET | Marketplace page (HTML) |
-| `/en/main/shopItemsJson` | GET | Get Gold Shop and VIP Shop items |
-| `/en/main/job-data` | GET | Get employment and work status |
-| `/en/economy/job-market-json/{countryId}/{page}/{sort}` | GET | Browse job market offers |
-| `/en/economy/resign` | POST | Resign from current employer |
-| `/en/economy/job-market-apply` | POST | Apply for a job |
-| `/en/economy/workOvertime` | POST | Work overtime |
-| `/en/economy/work` | POST | Work as Manager (WAM) |
-| `/en/main/training-grounds-json` | GET | Get training grounds status |
-| `/en/economy/exchange-market/` | GET | Monetary market page (HTML) |
-| `/en/economy/exchange/retrieve/` | POST | Get exchange offers |
-| `/en/economy/exchange/purchase/` | POST | Buy currency from exchange |
-| `/en/economy/exchange/create/` | POST | Create exchange offer |
-| `/en/economy/exchange/update/` | POST | Update exchange offer |
-| `/en/economy/exchange/delete/` | POST | Delete exchange offer |
-| `/en/economy/myCompanies` | GET | My Companies page (HTML) |
-
-### Rewards
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/main/objective-status` | POST | Get daily objective progress |
-| `/en/main/objective-claim-reward` | POST | Claim daily objective tier reward |
-| `/en/main/daily-missions-data` | POST | Get all daily missions with progress |
-| `/en/main/mission-solve` | POST | Claim mission reward |
-| `/en/main/weekly-challenge-data` | GET | Get weekly challenge progress |
-| `/en/main/weekly-challenge-rewards` | GET | Weekly challenge reward ladder (HTML popup) |
-| `/en/main/weekly-challenge-collect-reward` | POST | Collect weekly challenge reward |
-| `/en/main/weekly-challenge-collect-all` | POST | Collect all unlocked weekly challenge rewards |
-| `/en/main/vip-claim` | POST | Claim daily VIP points |
-| `/en/main/anniversaryQuestData` | GET | Anniversary Quest map, queue and rewards (seasonal) |
-
-### Framework (Popups, Tournaments, Shop)
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/main/geoLocation/countryCode` | GET | IP geolocation country detection |
-| `/en/main/money-donation/{action}/{donationId}` | GET | Accept/reject money donation |
-| `/en/main/countries-tournament-national-rankings/{countryId}` | GET | Tournament national rankings |
-| `/en/main/countries-tournament-world-rankings` | GET | Tournament world rankings |
-| `/en/main/countries-tournament-world-rankings/finalists` | GET | Tournament finalist rankings |
-| `/en/main/epic-soldier-event-citizens-rankings/{countryId}/{divisionId}` | GET | Epic Soldier citizen rankings |
-| `/en/main/epic-soldier-event-countries-rankings` | GET | Epic Soldier country rankings |
-| `/en/main/travelPopup` | GET | Travel dialog popup (HTML) |
-| `/en/main/country-mpp-priority` | GET | MPP priority settings popup (HTML) |
-| `/en/main/league-info` | GET | League of Allies popup (HTML) |
-| `/en/main/terrain-priorities-popup` | GET | Terrain priorities popup (HTML) |
-| `/en/main/preset-popup` | GET | Battle filter presets popup (HTML) |
-| `/en/main/energyRefill-refillPopup` | GET | Energy refill popup (HTML) |
-| `/en/main/manage-organizations-popup` | GET | Manage organizations popup (HTML) |
-| `/en/economy/create-holding-popup` | GET | Create holding company popup (HTML) |
-| `/en/economy/edit-holding-popup` | GET | Edit holding company popup (HTML) |
-| `/en/military/fightDeploy-deployReportPopup` | GET | Deployment report popup (HTML) |
-| `/en/main/special-items` | GET | Gold shop page (navigation) |
-
-### Power Spin
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/en/main/wheeloffortune-build` | POST | Build Wheel of Fortune configuration |
-| `/en/main/wheeloffortune-spin` | POST | Spin the Wheel of Fortune |
-
----
-
-## Common Headers
-
-Most authenticated requests require these headers:
-
-| Header | Description |
-|--------|-------------|
-| `Cookie` | Session cookie (`erpk=...`) |
-| `X-Requested-With` | `XMLHttpRequest` for AJAX calls |
-| `Content-Type` | `application/x-www-form-urlencoded` or `application/json` |
-
----
-
-## Example Request
-
-```bash
-curl 'https://www.erepublik.com/en/main/citizen-profile-json-global/1234567' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest'
+```
+.
+  README.md             you are here
+  guides/               concepts shared by many endpoints
+  basics/               login, CAPTCHA, client framework, WebSocket, IDs
+  home/                 dashboard and daily routine
+  military/
+    battlefield/        one page per battlefield topic
+  economy/              work, companies, markets, shop
+  world/                travel, map, cities
+  country/              society, government, elections, alliances
+  social/               profiles, wall, messages, organizations
+  media/                articles, newspapers, news
+  rankings/             leaderboards and ranking pages
+  events/               seasonal events and tournaments
+  docs/                 design notes
 ```
 
----
+- One folder per game area, matching the topics above.
+- **One page per topic or game screen**; related endpoints are described together.
+- A sub-folder appears only when a topic does not fit on one comfortable page.
+- **Each endpoint is described exactly once**; every other place links to it.
+- In-game menus are mirrored with links, not folders.
+
+Design decisions are recorded in [docs/superpowers/specs](docs/superpowers/specs/) (in Ukrainian).
+
+## How to read a topic page
+
+1. A short intro, often with a flow diagram.
+2. A table of the page's endpoints with method, path and status.
+3. One section per endpoint: request, response, errors, pitfalls and **Source**.
+4. **Open questions**, where sources disagree.
+
+| Status | Meaning |
+|--------|---------|
+| ✅ Verified | Confirmed with a real request on the given date |
+| 🔍 From code | Derived from the game's JavaScript, not confirmed by a request |
+| ❔ Unconfirmed | Origin unknown |
+
+## Reading locally
+
+There is nothing to install or build.
+
+```bash
+git clone https://github.com/driversti/erepublik-api.git
+```
+
+Open the folder in any editor with a Markdown preview. Collapsed examples, diagrams and notes are designed for GitHub, so some editors show them differently.
 
 ## Contributing
 
-Found a new endpoint? Each endpoint should be documented with:
+Found a new endpoint or a mistake? Open a pull request or an issue. New pages follow the [page template](CONTRIBUTING.md).
 
-- HTTP method and URL
-- Required parameters and headers
-- Example request (cURL)
-- Example response (JSON/HTML)
-- Any relevant notes or gotchas
+### Writing rules
 
----
+- English, GitHub-flavored Markdown, relative links.
+- For each endpoint give: method and path, auth, status, purpose, parameters, a short cURL, a shortened response with a field table (full response inside `<details>`), known errors and the source.
+- Link to [Making requests](guides/requests.md) instead of repeating common headers.
+- Put a `> [!WARNING]` above actions that spend resources.
+- Never invent behaviour. If sources disagree, add it to **Open questions**.
+- **Never commit real cookies or tokens**, and set currency and gold balances in examples to `0` (shop prices stay).
 
-## Related Links
+### Branches
 
-- [[eRepublik]] - Main eRepublik notes
-- [eRepublik Official](https://www.erepublik.com)
+Work on a feature branch and open a pull request against `main`; pull requests are squash-merged.
+
+### Before you open a pull request
+
+- [ ] The endpoint is described only once.
+- [ ] Links work in the GitHub preview.
+- [ ] Status and source are filled in.
+- [ ] No secrets or personal balances.
+- [ ] The metrics above are updated.

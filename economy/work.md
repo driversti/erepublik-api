@@ -1,231 +1,230 @@
 # Work
 
-#erepublik #api #economy #work
+[API docs](../README.md) › Economy › Work
 
-[< Back to Economy Overview](README.md)
+The daily job at an employer, overtime, and Work as Manager (WAM) in your own [companies](companies.md). The buttons are on **My Places** (`/en/economy/myCompanies`) and in the dashboard job widget. Each of the daily actions resets with the game day.
 
-Employment and daily work actions -- retrieving job data, working as an employee, overtime work, and working as a manager (WAM) in owned companies.
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Job data](#job-data) | GET | `/en/main/job-data` | ✅ Verified 2026-11-27 |
+| [Work for your employer](#work-for-your-employer) | POST | `/en/economy/work` | 🔍 From code |
+| [Work as Manager](#work-as-manager) | POST | `/en/economy/work` | 🔍 From code |
+| [Work overtime](#work-overtime) | POST | `/en/economy/workOvertime` | 🔍 From code |
+| [Submit a captcha](#submit-a-captcha) | POST | `/en/economy/recaptchaAjax` | 🔍 From code |
 
-**Related:** [Job Market](job-market.md) | [Companies](companies.md) | [Training](training.md)
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels). Leaving a job: [Resign](job-market.md#resign).
 
 ---
 
-## Get Job Data
+## Job data
 
-**Method:** GET
-**URL:** `/en/main/job-data`
-**Auth Required:** Yes
+`GET /en/main/job-data` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-Retrieves the current employment and work status for the authenticated citizen, including employer information, salary details, and overtime availability.
-
-### Parameters
-
-No parameters required.
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-<details>
-<summary>Example Request (cURL)</summary>
+Employer, salary, whether you worked today, and overtime state.
 
 ```bash
 curl 'https://www.erepublik.com/en/main/job-data' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Accept: application/json, text/plain, */*'
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
-
-<details>
-<summary>Example Response</summary>
+### Response
 
 ```json
 {
   "isEmployee": true,
-  "employer": {
-    "id": 2580095,
-    "name": "Greenday_1989",
-    "img": "https://cdnt.erepublik.net/hTXa-zXGxYdBcMT9YtgJ9BDyNUA=/142x142/smart/avatars/Citizens/2010/01/18/ef89175e7f4e51d0e3036e743cee0cb6.jpg?afd07d8d1a944e1c3867f2ea89094394"
-  },
-  "salary": 7500,
-  "tax": 75,
+  "employer": { "id": 1234567, "name": "EmployerName", "img": "https://cdnt.erepublik.net/…" },
+  "salary": 10000,
+  "tax": 100,
   "currency": "LTL",
   "alreadyWorked": true,
-  "playerLevel": 1690,
-  "overTime": {
-    "points": 10342,
-    "nextOverTime": 1769331700,
-    "salary": 15000,
-    "usableEnergy": 8308
-  }
+  "playerLevel": 100,
+  "overTime": { "points": 48, "nextOverTime": 1700000000, "salary": 20000, "usableEnergy": 800 }
 }
 ```
 
-</details>
+| Field | Type | Description |
+|-------|------|-------------|
+| `isEmployee` | boolean | Whether you have a job |
+| `employer` | object | `id` (citizen ID), `name`, `img` |
+| `salary` | number | Gross salary |
+| `tax` | number | Income tax deducted from the salary |
+| `currency` | string | Currency code |
+| `alreadyWorked` | boolean | Worked today |
+| `playerLevel` | number | Your level |
+| `overTime.points` | number | Overtime points collected |
+| `overTime.nextOverTime` | number | Unix time when the overtime cooldown ends |
+| `overTime.salary` | number | Overtime salary (earlier notes: typically double the salary) |
+| `overTime.usableEnergy` | number | Energy available for overtime |
 
-### Notes
+The client draws the overtime button red when `points < 24`, when the cooldown is running and `usableEnergy < 100`, or when `usableEnergy < 10`. With the cooldown running and at least 100 usable energy (and enough points) it is orange, otherwise green. This suggests one overtime shift needs 24 points.
 
-- Returns `isEmployee: true` if the citizen is currently employed
-- `alreadyWorked` indicates if the citizen has already worked today
-- `overTime.nextOverTime` is a Unix timestamp indicating when the next overtime work is available
-- `overTime.points` shows accumulated overtime points
-- `overTime.salary` is the overtime work salary (typically double the regular salary)
-- Currency codes include: LTL (Lithuanian Litas), USD, GOLD, etc.
-- Tax amount is deducted from the gross salary
+**Source:** real request, 2026-11-27; `ErpkMyJobController` in `erpk_angular_controllers.js` (version 1795779904).
 
 ---
 
-## Work as Employee
+## Work for your employer
 
-**Method:** POST
-**URL:** `/en/economy/work`
-**Auth Required:** Yes
+`POST /en/economy/work` · Auth required · 🔍 From code
 
-### Description
-
-Work at the current employer as an employee. This endpoint performs the daily work action, earning salary and contributing to work streak achievements. Can only be executed once per day per citizen.
-
-### Parameters
+> [!WARNING]
+> Performs today's work on your account and spends energy.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| _token | string | Yes | CSRF token for request validation |
-| action_type | string | Yes | Must be set to `work` for employee work |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `action_type` | string | Yes | `work` |
+| `useEnergyBar` | string | No | `yes` to eat energy bars when energy is short |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/economy/work' \
+curl 'https://www.erepublik.com/en/economy/work' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
   --data-raw '_token=YOUR_CSRF_TOKEN&action_type=work'
 ```
 
-</details>
+### Response
 
-<details>
-<summary>Example Response</summary>
+On success `status` and `message` are both `true`, and `result` has the fields of the [overtime result](#overtime-result). Earlier notes, already worked:
 
-**Already worked today:**
 ```json
-{
-  "status": false,
-  "message": "already_worked",
-  "result": ""
-}
+{ "status": false, "message": "already_worked", "result": "" }
 ```
 
-</details>
+The client spends 10 energy as the cost estimate for this action. Messages it handles are in [Result messages](#result-messages).
 
-### Notes
-
-- **Daily Limit:** Can only be executed once per day (resets at eRepublik day change)
-- **Error Messages:**
-  - `already_worked`: Citizen has already performed daily work
-  - Other errors may include: not employed, employer has no funds, etc.
-- **Same Endpoint as WAM:** This uses the same `/en/economy/work` endpoint but with `action_type=work` instead of `action_type=production`
-- **Requirements:** Citizen must be employed to use this endpoint
-- The CSRF `_token` can be obtained from the page source or previous API responses
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `ErpkMyJobController.startWork`; example from earlier notes.
 
 ---
 
-## Work Overtime
+## Work as Manager
 
-**Method:** POST
-**URL:** `/en/economy/workOvertime`
-**Auth Required:** Yes
+`POST /en/economy/work` · Auth required · 🔍 From code
 
-### Description
-
-Performs overtime work at the citizen's current employer. This action grants additional salary, XP, and health in exchange for energy. Overtime work is typically available after regular work has been completed and has a cooldown period.
-
-### Parameters
+> [!WARNING]
+> Produces in the selected companies: spends energy, raw materials and the work tax. Once per company per day.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| _token | string | Yes | CSRF token for request validation |
-| action_type | string | Yes | Must be set to `workOvertime` |
-| useEnergyBar | string | No | Set to `yes` to auto-consume energy bars before working overtime. When omitted, overtime fails if energy is insufficient. |
+| `_token` | string | Yes | CSRF token |
+| `action_type` | string | Yes | `production` |
+| `own_work` | string | Yes | JSON array of [company IDs](companies.md#my-companies-page) to work in yourself, e.g. `[111111,222222]` |
+| `employee_works` | string | Yes | JSON object `{companyId: works}` for employee works; `{}` for none |
+| `cntOwnWork` | number | Yes | Length of `own_work` |
+| `cntEmployeeWork` | number | Yes | Number of keys in `employee_works` |
+| `cntSelected` | number | Yes | Sum of the two counts; the client does not send the request when it is `0` |
+| `useEnergyBar` | string | No | `yes` to eat energy bars |
 
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-<details>
-<summary>Example Request (cURL)</summary>
+The client always sends all counts. `employee_works` values are the **additional** works: the selected number minus `todays_works`.
 
 ```bash
-# Basic overtime (requires sufficient energy)
-curl -X POST 'https://www.erepublik.com/en/economy/workOvertime' \
+curl 'https://www.erepublik.com/en/economy/work' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
-  --data-raw '_token=YOUR_CSRF_TOKEN&action_type=workOvertime'
-
-# With auto energy bar consumption
-curl -X POST 'https://www.erepublik.com/en/economy/workOvertime' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
-  --data-raw '_token=YOUR_CSRF_TOKEN&action_type=workOvertime&useEnergyBar=yes'
+  --data-urlencode 'own_work=[111111,222222]' \
+  --data-urlencode 'employee_works={}' \
+  --data-raw 'cntOwnWork=2&cntEmployeeWork=0&cntSelected=2&action_type=production&_token=YOUR_CSRF_TOKEN'
 ```
 
-</details>
+### Response
 
-<details>
-<summary>Example Response (without energy bar)</summary>
+Shortened (earlier notes):
 
 ```json
 {
   "status": true,
   "message": true,
   "result": {
-    "netSalary": 7425,
-    "grossSalary": 7500,
-    "tax": 75,
-    "currency": "LTL",
-    "days_in_a_row": 3764,
-    "to_achievment": 28,
-    "to_achievment_text": "You have <span id=\"production_to_achievment\">28 days</span> left to work to get the Hardworker medal.",
-    "xp": 2,
-    "health": 100,
-    "consumedSummary": [],
-    "daily_tasks_done": false
+    "production": { "weaponRaw": 119.85, "weapon": { "7": 441.6 }, "totalWeapon": 441 },
+    "resources": { "1": { "name": "Grain", "bonus": 25 } },
+    "xp": 4,
+    "health": 20,
+    "tax": 100
+  }
+}
+```
+
+<details>
+<summary>Full example response (earlier notes, sample numbers)</summary>
+
+```json
+{
+  "status": true,
+  "message": true,
+  "result": {
+    "production": {
+      "foodRaw": 0, "weaponRaw": 119.85, "houseRaw": 0, "airplaneRaw": 0,
+      "food": [], "weapon": { "7": 441.5999999999998 }, "house": [], "airplane": [],
+      "totalFood": 0, "totalWeapon": 441, "totalHouse": 0, "totalAirplane": 0
+    },
+    "resources": {
+      "1": { "name": "Grain", "bonus": 25 }, "2": { "name": "Fish", "bonus": 10 },
+      "3": { "name": "Fruits", "bonus": 15 }, "4": { "name": "Cattle", "bonus": 20 },
+      "5": { "name": "Deer", "bonus": 30 }, "6": { "name": "Iron", "bonus": 10 },
+      "7": { "name": "Saltpeter", "bonus": 0 }, "8": { "name": "Aluminum", "bonus": 15 },
+      "9": { "name": "Oil", "bonus": 20 }, "10": { "name": "Rubber", "bonus": 0 },
+      "11": { "name": "Sand", "bonus": 5 }, "12": { "name": "Clay", "bonus": 0 },
+      "13": { "name": "Wood", "bonus": 7.5 }, "14": { "name": "Limestone", "bonus": 12.5 },
+      "15": { "name": "Granite", "bonus": 0 }, "16": { "name": "Neodymium", "bonus": 30 },
+      "17": { "name": "Magnesium", "bonus": 0 }, "18": { "name": "Cobalt", "bonus": 25 },
+      "19": { "name": "Titanium", "bonus": 0 }, "20": { "name": "Wolfram", "bonus": 0 }
+    },
+    "days_in_a_row": 100,
+    "to_achievment": 20,
+    "to_achievment_text": "You have <span id=\"production_to_achievment\">20 days</span> left to work to get the Hardworker medal.",
+    "xp": 4,
+    "health": 20,
+    "works": 0,
+    "consumed_summary": [],
+    "tax": 100
   }
 }
 ```
 
 </details>
 
-<details>
-<summary>Example Response (with energy bar consumption)</summary>
+| Field | Type | Description |
+|-------|------|-------------|
+| `result.production.*Raw` | number | Raw materials: `foodRaw`, `weaponRaw`, `houseRaw`, `airplaneRaw`. Earlier notes call `weaponRaw` the raw value before bonuses |
+| `result.production.food`, `weapon`, `house`, `airplane` | object \| array | Quality → units; `[]` when empty |
+| `result.production.total*` | number | Whole units per industry |
+| `result.resources` | object | Region resource bonuses in percent. IDs 1–5 food raws, 6–10 weapon, 11–15 house, 16–20 aircraft |
+| `result.days_in_a_row` | number | Work streak |
+| `result.to_achievment` | number | Days to the next Hard Worker medal (spelled so by the game) |
+| `result.xp`, `result.health` | number | Experience gained; energy spent |
+| `result.tax` | number | Work tax in local currency |
+
+Earlier notes: the final production includes the region resource bonuses, and overtime is typically available after the regular daily work.
+
+**Source:** `citizen/myCompanies.js` (version 1760600930), `generateParams` and `produce`; example from earlier notes.
+
+---
+
+## Work overtime
+
+`POST /en/economy/workOvertime` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Spends overtime points and energy: 100 energy while the cooldown is running, otherwise 10.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | CSRF token |
+| `action_type` | string | Yes | `workOvertime` |
+| `useEnergyBar` | string | No | `yes` to eat energy bars first; without it the request fails when energy is short |
+
+```bash
+curl 'https://www.erepublik.com/en/economy/workOvertime' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
+  --data-raw '_token=YOUR_CSRF_TOKEN&action_type=workOvertime'
+```
+
+The cooldown is one hour: the client charges 100 energy when `overTime.nextOverTime` is still in the future.
+
+### Overtime result
+
+Earlier notes, with energy bars used:
 
 ```json
 {
@@ -236,229 +235,77 @@ curl -X POST 'https://www.erepublik.com/en/economy/workOvertime' \
     "grossSalary": 10000,
     "tax": 100,
     "currency": "LTL",
-    "days_in_a_row": 3837,
-    "to_achievment": 15,
-    "to_achievment_text": "You have <span id=\"production_to_achievment\">15 days</span> left to work to get the Hardworker medal.",
+    "days_in_a_row": 100,
+    "to_achievment": 20,
+    "to_achievment_text": "You have <span id=\"production_to_achievment\">20 days</span> left to work to get the Hardworker medal.",
     "xp": 2,
     "health": 100,
-    "consumedSummary": {
-      "13": 2
-    },
+    "consumedSummary": { "13": 2 },
     "daily_tasks_done": false
   }
 }
 ```
 
-</details>
+| Field | Type | Description |
+|-------|------|-------------|
+| `netSalary`, `grossSalary`, `tax` | number | Salary after tax, before tax, and the tax |
+| `xp` | number | Experience gained |
+| `health` | number | Energy; the client shows it as spent. Earlier notes call it restored |
+| `consumedSummary` | object \| array | Item → quantity eaten; `[]` when nothing. Earlier notes: key `13` means energy bars |
+| `daily_tasks_done` | boolean | Daily tasks finished |
 
-### Notes
-
-- **Energy Consumption:**
-  - 10 energy if the overtime cooldown has passed (>1 hour since last overtime)
-  - 100 energy if attempting to work again within the 1-hour cooldown period (anti-spam mechanism)
-- **`useEnergyBar` parameter:**
-  - When set to `yes`, automatically consumes energy bars from inventory to replenish energy before performing overtime
-  - Without this parameter, the request will fail if the citizen doesn't have enough energy
-- `netSalary` is the amount received after tax deduction
-- `days_in_a_row` tracks consecutive work days for achievement progress
-- `to_achievment` shows remaining days needed for the Hardworker medal
-- `xp` indicates experience points gained from this overtime work
-- `health` shows the health points restored (typically 100)
-- **`consumedSummary`:** Map of item type IDs to quantities consumed. Empty array `[]` if nothing consumed; object `{"13": 2}` when energy bars were used (key = item type ID, value = quantity consumed). Item ID `13` corresponds to energy bars.
-- Currency codes include: LTL, USD, EUR, RON, etc.
-- The CSRF `_token` can be obtained from the page source or previous API responses
-- Overtime is typically available after completing regular daily work
+**Source:** `erpk_angular_controllers.js` (version 1795779904), `startWorkOvertime`; examples from earlier notes.
 
 ---
 
-## Work as Manager (WAM)
+## Result messages
 
-**Method:** POST
-**URL:** `/en/economy/work`
-**Auth Required:** Yes
+When `message` is not `true`, the client handles these values:
 
-### Description
+| `message` | Meaning |
+|-----------|---------|
+| `redirect`, `processing` | The client reloads the page |
+| `lock` | A request is already running; ignored |
+| `captcha` | A captcha is needed, see [below](#submit-a-captcha) |
+| `money` | Employer cannot pay, or not enough currency |
+| `tax_money` | Not enough currency for the work tax |
+| `not_enough_health`, `not_enough_health_food` | Not enough energy or food |
+| `not_enough_food_raw`, `not_enough_weapon_raw`, `not_enough_house_raw`, `not_enough_airplane_raw`, `not_enough_raw` | Not enough raw materials |
+| `not_enough_storage` | Storage is full |
+| `not_enough_works`, `work_limit` | Work limits |
+| `nothing_selected` | Raised by the client itself when no company is selected |
 
-Work as Manager (WAM) in own companies. This endpoint allows working in multiple owned companies simultaneously, producing goods based on raw materials and production bonuses. Can only be executed once per day.
+---
 
-### Parameters
+## Submit a captcha
+
+`POST /en/economy/recaptchaAjax` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Performs the work or [training](training.md#train) action named in `action_type`.
+
+Used instead of the normal endpoint when the page variable `has_captcha` is set or the server answers `captcha`. See also [session verification](../basics/captcha.md).
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| own_work | string | No | URL-encoded JSON array of company IDs to work in as owner |
-| employee_works | string | No | URL-encoded JSON object for employee work assignments |
-| cntOwnWork | number | No | Count of own companies selected for work |
-| cntEmployeeWork | number | No | Count of employee companies selected for work |
-| cntSelected | number | Yes | Total count of selected companies |
-| action_type | string | Yes | Must be set to `production` |
-| _token | string | Yes | CSRF token for request validation |
+| `_token` | string | Yes | CSRF token |
+| `action_type` | string | Yes | `work`, `workOvertime`, `production`, `workInGoldMines` or `train` |
+| `g-recaptcha-response` | string | Yes | Captcha solution |
+| other | — | — | The parameters of the original action; `useEnergyBar` if chosen |
 
-### Headers
+`status: false` with `message: false` means the captcha was rejected. A successful answer has the format of the original action.
 
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded; charset=UTF-8` | Yes |
-| Accept | `application/json, text/javascript, */*; q=0.01` | Recommended |
+`workInGoldMines` has its own result popup in the script; no button or URL for it was seen on the page.
 
-<details>
-<summary>Example Request (cURL)</summary>
+**Source:** `citizen/myCompanies.js` (version 1760600930), `submitCaptcha`; `ErpkTrainingGroundController` (version 1795779904).
 
-```bash
-# Work as Manager in 2 companies (IDs: 358462, 3271053)
-curl -X POST 'https://www.erepublik.com/en/economy/work' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
-  -H 'Accept: application/json, text/javascript, */*; q=0.01' \
-  --data-raw 'own_work=%5B358462%2C3271053%5D&employee_works=%7B%7D&cntOwnWork=2&cntEmployeeWork=0&cntSelected=2&action_type=production&_token=YOUR_CSRF_TOKEN'
-```
+---
 
-</details>
+## Open questions
 
-<details>
-<summary>Example Response</summary>
-
-```json
-{
-  "status": true,
-  "message": true,
-  "result": {
-    "production": {
-      "foodRaw": 0,
-      "weaponRaw": 119.85,
-      "houseRaw": 0,
-      "airplaneRaw": 0,
-      "food": [],
-      "weapon": {
-        "7": 441.5999999999998
-      },
-      "house": [],
-      "airplane": [],
-      "totalFood": 0,
-      "totalWeapon": 441,
-      "totalHouse": 0,
-      "totalAirplane": 0
-    },
-    "resources": {
-      "1": {
-        "name": "Grain",
-        "bonus": 25
-      },
-      "2": {
-        "name": "Fish",
-        "bonus": 10
-      },
-      "3": {
-        "name": "Fruits",
-        "bonus": 15
-      },
-      "4": {
-        "name": "Cattle",
-        "bonus": 20
-      },
-      "5": {
-        "name": "Deer",
-        "bonus": 30
-      },
-      "6": {
-        "name": "Iron",
-        "bonus": 10
-      },
-      "7": {
-        "name": "Saltpeter",
-        "bonus": 0
-      },
-      "8": {
-        "name": "Aluminum",
-        "bonus": 15
-      },
-      "9": {
-        "name": "Oil",
-        "bonus": 20
-      },
-      "10": {
-        "name": "Rubber",
-        "bonus": 0
-      },
-      "11": {
-        "name": "Sand",
-        "bonus": 5
-      },
-      "12": {
-        "name": "Clay",
-        "bonus": 0
-      },
-      "13": {
-        "name": "Wood",
-        "bonus": 7.5
-      },
-      "14": {
-        "name": "Limestone",
-        "bonus": 12.5
-      },
-      "15": {
-        "name": "Granite",
-        "bonus": 0
-      },
-      "16": {
-        "name": "Neodymium",
-        "bonus": 30
-      },
-      "17": {
-        "name": "Magnesium",
-        "bonus": 0
-      },
-      "18": {
-        "name": "Cobalt",
-        "bonus": 25
-      },
-      "19": {
-        "name": "Titanium",
-        "bonus": 0
-      },
-      "20": {
-        "name": "Wolfram",
-        "bonus": 0
-      }
-    },
-    "days_in_a_row": 3764,
-    "to_achievment": 28,
-    "to_achievment_text": "You have <span id=\"production_to_achievment\">28 days</span> left to work to get the Hardworker medal.",
-    "xp": 448,
-    "health": 2240,
-    "works": 0,
-    "consumed_summary": [],
-    "tax": 14929.8
-  }
-}
-```
-
-</details>
-
-### Notes
-
-- **Work as Manager (WAM):** This endpoint is specifically for working in companies you own as the manager
-- **Daily Limit:** Can only be executed **once per day** (resets at eRepublik day change)
-- **Company IDs:** Must be URL-encoded JSON array format (e.g., `[358462,3271053]` becomes `%5B358462%2C3271053%5D`)
-- **Production Results:**
-  - `production.weaponRaw` indicates raw production value before applying bonuses
-  - `production.weapon` is a map where keys are quality levels (e.g., `"7"` for Q7 weapons)
-  - Final production includes resource bonuses from territories
-- **Resource Bonuses:**
-  - IDs 1-5: Food raw materials (Grain, Fish, Fruits, Cattle, Deer)
-  - IDs 6-10: Weapon raw materials (Iron, Saltpeter, Aluminum, Oil, Rubber)
-  - IDs 11-15: House raw materials (Sand, Clay, Wood, Limestone, Granite)
-  - IDs 16-20: Airplane raw materials (Neodymium, Magnesium, Cobalt, Titanium, Wolfram)
-  - `bonus` represents the percentage production bonus from controlled territories
-- **Work Streak:**
-  - `days_in_a_row` tracks consecutive days of work for achievements
-  - `to_achievment` shows remaining days needed for the Hardworker medal
-- **Rewards:**
-  - `xp` indicates total experience points gained
-  - `health` shows total health points restored
-  - `tax` is the total tax paid on production (based on country tax rates)
-- The CSRF `_token` can be obtained from the page source or previous API responses
-- For WAM operations, `employee_works` should be empty: `employee_works=%7B%7D` (empty JSON object)
-- The `own_work` array contains all company IDs where you want to work as manager
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| `useEnergyBar` | Overtime only | Sent by work, production and training too | Code |
+| `health` in results | Energy restored | Shown as `-N` | Code |
+| Work response | Only the `already_worked` error | `already_worked` is not handled by name | Both listed |
+| Production counts | Optional except `cntSelected` | Client always sends them | Code |

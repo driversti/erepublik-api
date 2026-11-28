@@ -1,344 +1,245 @@
-# Wars
+# Wars and resistance wars
 
-#erepublik #api #military #wars #resistance
+[API docs](../README.md) › Military › Wars and resistance wars
 
-[< Back to Military Module](README.md)
+The **War** screen shows one war: the two sides, their allies and every battle fought in it. A resistance war is a war started to liberate an occupied region. This page also covers funding one and finding out when a battle ended.
 
-Endpoints and research related to war support and battle timing.
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [War page](#war-page) | GET | `/en/wars/show/{warId}` | ✅ Verified 2026-11-27 |
+| [Support a resistance war](#support-a-resistance-war) | POST | `/en/military/rw-support` | ❔ Unconfirmed |
+| [Resource wars page](#resource-wars-page) | GET | `/en/main/resource-wars/{country}/{page}` | ❔ Unconfirmed |
+| [Recover health link](#recover-health-link) | GET | `/en/get-gold/health` | ❔ Unconfirmed |
 
-**Related:** [campaigns.md](campaigns.md) | [battle-info.md](battle-info.md) | [battlefield.md](battlefield.md)
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## War Page
+## War page
 
-**Method:** GET
-**URL:** `/en/wars/show/{warId}`
-**Auth Required:** Yes (authenticated view includes citizen data; unauthenticated behavior unknown)
+`GET /en/wars/show/{warId}` · Public · ✅ Verified 2026-11-27
 
-### Description
+An HTML page; no JSON variant is known. All battles are listed at once, without pagination: a war running since 2019 had 2766 rows in about 1.4 MB. Without a cookie the page still answers, but active battles have no **Join** link.
 
-Displays the full war page between two countries. Shows the war header (countries, allies, start date, status), a warning message about the next expected attack, and a chronological list of all battle rounds with their outcomes (region contested, winner, battlefield link).
+### Request
 
-### Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `warId` | number | Yes | War ID (e.g., `219946`) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `warId` | path | number | Yes | War ID: `war_id` in the [battle list](campaigns.md#list-battles) |
 
 ```bash
-curl 'https://www.erepublik.com/en/wars/show/219946' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+curl 'https://www.erepublik.com/en/wars/show/219946'
 ```
 
-</details>
+### Response
 
-### Response (HTML)
+#### Header (`.war_list_header`)
 
-The page is rendered HTML (not JSON). Key data is embedded in the DOM structure:
+| Selector | Description |
+|----------|-------------|
+| `.country.left_side h3`, `.country.right_side h3` | Side names (see below) |
+| `.country img` | Flag, `/images/flags_png/L/{Country}.png`; `Resistance.png` for a resistance force |
+| `.country a[href*="country/society"]` | Country link; `javascript:;` for a resistance force |
+| `a.show_allies` | Number of allies; `.allies_tooltip li` holds flag and name of each |
+| `a.none` | "no allies". The `id="defender_allies"` it carries appears on **both** sides |
+| `.vs small` | `24 Oct 2026 - Still active`, or `24 Aug 2009 - 18 Oct 2010` for an ended war |
 
-#### War Header (`.war_list_header`)
+| War type | Left side | Right side |
+|----------|-----------|------------|
+| Direct | Country | Country |
+| Resistance | `Resistance Force of {Country}` (`h3.resistance`, no allies element) | Occupying country |
+| Civil war (dictatorship) | `Civil War of {Country}` | The same country |
 
-| Element | Description |
-|---------|-------------|
-| `.country.left_side h3` | Defender country name |
-| `.country.left_side img` | Defender flag (`/images/flags_png/L/{Country}.png`) |
-| `#defender_allies` | Defender allies list (or "no allies") |
-| `.country.right_side h3` | Attacker country name |
-| `.show_allies .allies_tooltip li` | Attacker allies (flag + name per `<li>`) |
-| `.vs small` | War date range (e.g., `24 Mar 2025 - Still active`) |
+In the active battles checked (one direct, two resistance), the left side was the `inv` country of the [battle list](campaigns.md#list-battles). [Earlier notes](#open-questions) call it the defender.
 
-#### Warning Message (`table.warning_message`)
+#### Status message
 
-Shows the next expected action, e.g., `"Latvia is about to attack."`.
+At most one of these tables is present; many active wars have neither.
 
-#### Battle Listings (`.listing.done`)
+| Selector | Observed text |
+|----------|---------------|
+| `table.info_message` | `This war is no longer active.` |
+| `table.warning_message` | `Peru is about to attack.` |
 
-Each completed battle round is a `<div class="listing done">` containing:
+#### Battle rows (`.listing`)
 
-| Element | Description |
-|---------|-------------|
-| `small` (first) | Battle date (e.g., `27 Mar 2026`) |
-| `a.region` | Region name with link to `/en/main/region/{regionName}` |
-| `a[href*=battlefield]` | Link to battlefield page (`/en/military/battlefield/{battleId}`) |
-| `a small` | Result text (e.g., `Secured by Latvia`) with winner flag |
+| Row | Class | Content |
+|-----|-------|---------|
+| Active | `listing` | `a.join` → `/en/military/battlefield/{battleId}`; `a.region`; `small` with `started on 27 November 2026, 07:25` (game time) |
+| Active resistance war | `listing resistance` | `strong` region name (no link, no date); `a.join` and `a.reversed`, both → [choose side link](battlefield/page.md#choose-side-link) |
+| Finished | `listing done` | `small` date (`25 Nov 2026`); `a.region`; battlefield link with the result text and the winner's flag |
+
+Result texts observed: `Secured by {Country}`, `Conquered by {Country}`, `Liberated by {Country}`.
+
+`a.region` points to the [region page](../world/map.md#region-page).
 
 <details>
-<summary>Example Battle Listing (HTML)</summary>
+<summary>Example rows (active, resistance, finished)</summary>
 
 ```html
+<div class="listing">
+    <a href="//www.erepublik.com/en/military/battlefield/959046" class="join" title="Join"><span>Join</span></a>
+    <a class="region" href="/en/main/region/North-Caucasus">North Caucasus</a>
+    <small> started on 27 November 2026, 07:25</small>
+</div>
+
+<div class="listing resistance">
+    <a href="//www.erepublik.com/en/military/battlefield-choose-side/958793/13" class="join" title="Join Resistance"><span>Join Resistance</span></a>
+    <strong>Central Hungary</strong>
+    <a href="//www.erepublik.com/en/military/battlefield-choose-side/958793/65" class="reversed" title="Fight for Serbia"><span>Fight for Serbia</span></a>
+</div>
+
 <div class="listing done">
-    <small>27 Mar 2026</small>
-    <a class="region" href="/en/main/region/Pacifica">Pacifica</a>
-    <a href="//www.erepublik.com/en/military/battlefield/883049">
-        <small>Secured by Latvia
-            <img src="//www.erepublik.net/images/flags_png/M/Latvia.png" alt="" />
-        </small>
+    <small>25 Nov 2026</small>
+    <a class="region" href="/en/main/region/Hrodzienskaya">Hrodzienskaya</a>
+    <a href="//www.erepublik.com/en/military/battlefield/958418">
+        <small>Secured by Belarus <img src="//www.erepublik.net/images/flags_png/M/Belarus.png" alt=""></small>
     </a>
 </div>
 ```
 
 </details>
 
-### Embedded JavaScript Data
+The page also carries the standard `erepublik` and `SERVER_DATA` globals; no war-specific JSON object was found.
 
-The page includes the standard `erepublik` global object and `SERVER_DATA` (same structure as other pages). No war-specific JSON object was found embedded in the page.
+### Errors
 
-### Notes
+An unknown `warId` returns HTTP `404` with an HTML page.
 
-- **HTML-only endpoint** — no JSON variant is known for war history
-- **All rounds listed** — the page displays every battle round for the war (324 listings observed for a year-long war), with no pagination
-- **Battle status classes** — `.listing.done` for completed rounds; active battles may use a different class (not observed on this war)
-- **Allies display** — allies are shown in a tooltip popup, with flag and country name
-- **War date range** — shows start date and either `"Still active"` or the end date
-- **Warning message** — appears when one side is expected to initiate the next battle
-- **Related endpoints:**
-  - [Battlefield Page](battlefield.md) — individual battle details
-  - [Campaigns JSON](campaigns.md) — active campaigns with live data
-  - [Military News RSS](wars.md#military-news-rss-feed) — RSS feed of military events per country
+### Where war IDs come from
+
+- `war_id` in the [battle list](campaigns.md#list-battles).
+- Links on the [country military page](../country/military.md), which also lists a country's active resistance wars.
+- Links in the [military news RSS feed](../media/news.md#military-news-rss).
+
+**Source:** real requests, 2026-11-27 (direct, resistance, civil and ended wars).
 
 ---
 
-## Support Resistance War (Fund)
+## Support a resistance war
 
-**Method:** POST
-**URL:** `/en/military/rw-support?_nonce={nonce}`
-**Auth Required:** Yes
+`POST /en/military/rw-support` · Auth required · ❔ Unconfirmed
 
-### Description
+> [!WARNING]
+> Spends gold: funds a resistance war in an occupied region.
 
-Funds a resistance war (RW) in an occupied region. Citizens contribute gold to reach the funding threshold required to start the resistance war, which allows the occupied country's citizens to fight for liberation of the region.
+Citizens contribute until the funding threshold is reached and the resistance war starts. This section comes from earlier notes: the request was not repeated, and no caller was found in the current scripts.
 
-### Query Parameters
+### Request
 
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `_nonce` | number | Yes | Client-generated timestamp nonce (e.g., `1772438609287`) |
-
-### Body Parameters (form-encoded)
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `type` | string | Yes | Type of support action. Known value: `fund` |
-| `regionId` | number | Yes | ID of the occupied region to fund the RW in |
-| `_token` | string | Yes | CSRF token (from page or session) |
-| `captcha-response` | string | Yes | Turnstile captcha response token |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded; charset=UTF-8` | Yes |
-
-<details>
-<summary>Example Request (cURL)</summary>
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `_nonce` | query | number | Yes | Timestamp in milliseconds, generated by the client |
+| `type` | body | string | Yes | `fund` is the only known value |
+| `regionId` | body | number | Yes | Occupied region |
+| `_token` | body | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `captcha-response` | body | string | Yes | Cloudflare Turnstile response |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/military/rw-support?_nonce=1772438609287' \
-  -H 'Content-Type: application/x-www-form-urlencoded; charset=UTF-8' \
-  -H 'X-Requested-With: XMLHttpRequest' \
+curl 'https://www.erepublik.com/en/military/rw-support?_nonce=1772438609287' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest' \
   --data-raw 'type=fund&regionId=114&_token=YOUR_CSRF_TOKEN&captcha-response=YOUR_CAPTCHA_RESPONSE'
 ```
 
-</details>
-
-<details>
-<summary>Example Response</summary>
+### Response
 
 ```json
-{
-  "error": false,
-  "message": "SUCCESS"
-}
+{ "error": false, "message": "SUCCESS" }
 ```
-
-</details>
-
-### Notes
-
-- `type=fund` is the only observed value; other types may exist (e.g., for endorsing or voting on an RW)
-- Requires Turnstile captcha -- cannot be fully automated without captcha solving
-- The `_nonce` appears to be a client-generated timestamp (milliseconds since epoch)
-- The region must be occupied by a foreign country for the RW option to be available
-- See also: [Country Military Page](../country/military.md) (`/en/country/military/{countryName}`) which lists active resistance wars and determination levels
-
----
-
-## Military News RSS Feed
-
-**Method:** GET
-**URL:** `/en/main/news/military/all/{countryName}/{page}/rss`
-**Auth Required:** No
-
-### Description
-
-Returns an RSS/XML feed of automated military events for a specific country. Unlike the [player-written news RSS](../social/news.md), this feed contains game-generated events: battles started, regions secured, resistance wars, and congressional actions.
-
-### Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| `countryName` | string | Yes | Country name (e.g., `Lithuania`, `USA`, `Poland`) or `all` for global feed |
-| `page` | number | Yes | Page number (1–5). Page 0 is an alias for page 1. Pages 6+ return 404 |
-
-> **Note:** The first `all` segment (between `military` and the country name) is fixed and required.
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | No |
-
-<details>
-<summary>Example Request (cURL)</summary>
-
-```bash
-curl 'https://www.erepublik.com/en/main/news/military/all/Lithuania/1/rss'
-```
-
-</details>
-
-<details>
-<summary>Example Response</summary>
-
-```xml
-<?xml version="1.0" encoding="utf-8"?>
-<rss version="2.0"
-  xmlns:content="//purl.org/rss/1.0/modules/content/"
-  xmlns:wfw="//wellformedweb.org/CommentAPI/">
-  <channel>
-    <title><![CDATA[eRepublik News from Lithuania]]></title>
-    <link>https://erepublik.com/en/main/news/military/all/Lithuania/1/rss</link>
-    <description><![CDATA[eRepublik News from Lithuania]]></description>
-    <language>en-us</language>
-    <pubDate>Fri, 27 Mar 2026 09:49:07 -0700</pubDate>
-    <item>
-      <title><![CDATA[Military Feed]]></title>
-      <link>https://www.erepublik.com/en/wars/show/219946</link>
-      <pubDate>Fri, 27 Mar 2026 08:52:04 -0700</pubDate>
-      <description><![CDATA[<a href="//www.erepublik.com/en/wars/show/219946">Pacifica was secured by Latvia in the war versus Lithuania</a>]]></description>
-    </item>
-    <item>
-      <title><![CDATA[Military Feed]]></title>
-      <link>https://www.erepublik.com/en/military/battlefield/883261</link>
-      <pubDate>Fri, 27 Mar 2026 02:08:25 -0700</pubDate>
-      <description><![CDATA[<a href="//www.erepublik.com/en/military/battlefield/883261">Portugal attacked Gulf of Mexico, Lithuania</a>]]></description>
-    </item>
-  </channel>
-</rss>
-```
-
-</details>
-
-### Response Fields (per `<item>`)
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `title` | string | Always `Military Feed` |
-| `link` | string | URL to the war page (`/en/wars/show/{warId}`) or battlefield (`/en/military/battlefield/{battleId}`) |
-| `pubDate` | string | RFC 2822 event timestamp |
-| `description` | string | HTML link with event text (CDATA-wrapped) |
+| `error` | boolean | `false` on success |
+| `message` | string | `SUCCESS` |
 
-### Known Event Types
-
-| Event | Link Pattern | Description Example |
-|-------|-------------|---------------------|
-| Region secured | `/en/wars/show/{warId}` | "Pacifica was secured by Latvia in the war versus Lithuania" |
-| Attack launched | `/en/military/battlefield/{battleId}` | "Portugal attacked Gulf of Mexico, Lithuania" |
-| Congressional action | `/en/main/law/{countryName}/{lawId}` | "A congress donation to X was proposed" |
-
-### Notes
-
-- **Public endpoint** — works without authentication
-- **Global or country-specific** — use `all` for countryName to get events from all countries, or a specific country name to filter. Title changes: `"eRepublik News"` (global) vs `"eRepublik News from Lithuania"` (country-specific)
-- **Pagination** — 5 pages of unique content (1–5). Page 0 is an alias for page 1. Pages 6+ return 404
-- **No `<guid>` element** — items lack a unique identifier (unlike article RSS items)
-- **All titles are `Military Feed`** — differentiation is only in the description text
-- **Related:** See [News RSS Feed](../social/news.md) for the player-written article RSS variant
+**Source:** earlier notes.
 
 ---
 
-## Determining Battle Finish Time
+## Resource wars page
 
-There is **no known endpoint** that returns an explicit "battle finished at" timestamp for a completed campaign. Live testing (Feb 2026) confirmed this gap and eliminated several hypotheses.
+`GET /en/main/resource-wars/{country}/{page}` · ❔ Unconfirmed
 
-### Available Timing Data
+Probably a screen of the Resource Wars feature. `/en/main/resource-wars/Romania/1` returned HTTP `404` on 2026-11-27, so parameters and response are unknown. The current scripts show extra country leaderboards when `erepublik.info.resourceWars` is set, but do not request this path.
 
-| Source | Field | Type | Behavior When Finished | Contains Finish Time? |
-|--------|-------|------|----------------------|----------------------|
-| [`campaignsJson/list`](campaigns.md#list-active-campaigns) | `div.*.end` | Unix timestamp | Per-division finish timestamp | Yes -- but battle disappears from endpoint after finishing |
-| [`battleConsole`](battle-info.md#get-battle-console-data) | `battle_time` | Seconds | Keeps ticking (`= serverTime - start_unix`) | No |
-| [`battleConsole`](battle-info.md#get-battle-console-data) | `serverTime` | Unix timestamp | Current server time | No |
-| [Battlefield page](battlefield.md#get-battlefield-page) | `battle_start_at` | Date string | Preserved (campaign start time) | No (start only) |
-| [Battlefield page](battlefield.md#get-battlefield-page) | `battleFinished` | `0` / `1` | `1` when finished | No -- flag only, no timestamp |
-| [Battlefield page](battlefield.md#get-battlefield-page) | `zoneElapsedTime` | `"H:M:S"` | Keeps ticking (approx. `battle_time`) | No |
-| [`warHistory`](battle-info.md#get-war-history-previous-rounds) | *(same as battleConsole)* | -- | Identical to battleConsole response | No |
+**Source:** real request, 2026-11-27; `erpk_angular_controllers.js` (version 1795779904).
 
-### Disproven: `battle_time` Is NOT Frozen for Finished Battles
+---
 
-Initial hypothesis: `battle_time` freezes at the final value when a battle finishes, enabling `finish_time = battle_start_at + battle_time`.
+## Recover health link
 
-**Live test results (battle 864000, finished):**
+`GET /en/get-gold/health` · Auth unknown · ❔ Unconfirmed
 
-| Call | `battle_time` | `serverTime` | `serverTime - battle_time` |
-|------|--------------|-------------|--------------------------|
-| Call 1 | 1,551,813 | 1,771,042,657 | **1,769,490,844** |
-| Call 2 (19s later) | 1,551,832 | 1,771,042,676 | **1,769,490,844** |
+> [!CAUTION]
+> The effect is unknown and it may spend resources. It was not requested.
 
-`battle_time` increased by exactly 19 seconds between calls. The constant `serverTime - battle_time = 1,769,490,844` equals the campaign start time (Mon, 26 Jan 2026 21:14:04 -0800), confirmed against the page's `battle_start_at`.
+The war page HTML contains a link to it (class `get_health_text energy_bar`) next to a "Recover … more in" timer. It looks like a leftover of an old health widget; current energy refills are on [Energy](../home/energy.md).
 
-**Conclusion:** `battle_time` is always computed as `serverTime - campaign_start_unix`. It never freezes.
-
-> **Useful side-effect:** `battle_time` provides `battle_start_at` as a Unix timestamp: `start_unix = serverTime - battle_time`. This avoids parsing the date string.
-
-### Disproven: `warHistory` Does Not Contain Round Timestamps
-
-Initial hypothesis: `action=warHistory` returns per-round historical data with timestamps.
-
-**Live test results:** The response is structurally and content-wise **identical** to `action=battleConsole`. It shows the current round's state plus cumulative `totalPointsByDivision` -- no per-round breakdown, no timestamps. The `zoneId` parameter is also ignored. See [Get War History](battle-info.md#get-war-history-previous-rounds) for full details.
-
-### Only Working Approach: Capture `div.*.end` While Battle Is Active
-
-The `campaignsJson/list` endpoint provides per-division `end` timestamps (Unix) as each division finishes within a round. The **last** division to report `division_end: true` in the final round effectively marks the campaign's conclusion:
-
-```
-finish_time = max(div.*.end for all divisions where division_end == true)
+```bash
+curl 'https://www.erepublik.com/en/get-gold/health' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
 ```
 
-**Example** from battle 863509 (captured while still active):
-```json
-{ "div": 1, "end": 1769344144, "division_end": true },
-{ "div": 2, "end": 1769342524, "division_end": true },
-{ "div": 3, "end": 1769342524, "division_end": true },
-{ "div": 4, "end": 1769342645, "division_end": true },
-{ "div": 11, "end": 1769342645, "division_end": true }
+**Source:** HTML of `/en/wars/show/{warId}`, real request 2026-11-28 (the link was not followed).
+
+---
+
+## When did a battle end?
+
+The [war history](battlefield/live-data.md#war-history) action (`warList`) returns `result.end`, such as `2026-11-26 03:29:04`, for earlier battles of a war. This is the way to get finish times afterwards. Its time zone is not confirmed.
+
+Earlier notes (February 2026) found no such source: they tested `warHistory`, not `warList`.
+
+| Source | Field | After the battle ends | Gives the finish time? |
+|--------|-------|-----------------------|------------------------|
+| [War history](battlefield/live-data.md#war-history) | `list[].result.end` | Preserved | Yes |
+| [Battle list](campaigns.md#list-battles) | `div.*.end` (Unix) | The battle disappears from the list | Yes, if captured before that |
+| [War page](#war-page) | Date of a finished row | Preserved | Day only (❔ which moment the date marks) |
+| [Battle console](battlefield/live-data.md#current-battle-zone) | `battle_time` (seconds) | Keeps growing | No |
+| [Battle console](battlefield/live-data.md#current-battle-zone) | `serverTime` | Current time | No |
+| [Battlefield page](battlefield/page.md#battlefield-page) | `battle_start_at` | Preserved | No, start only |
+| [Battlefield page](battlefield/page.md#battlefield-page) | `battleFinished` (`0`/`1`) | `1` | No, flag only |
+| [Battlefield page](battlefield/page.md#battlefield-page) | `zoneElapsedTime` (`H:M:S`) | Keeps growing | No |
+
+### Division end times while the battle is listed
+
+The last division to get `division_end: true` in the final round marks the end of the campaign:
+
 ```
--> `max(end) = 1769344144` (Div 1 finished last)
+finish_time = max(div.*.end where division_end == true)
+```
 
-**Limitations:**
-- **Ephemeral**: Once the campaign finishes completely, it disappears from `campaignsJson/list`. You must capture this data while the battle is still listed
-- **Requires polling**: Best suited for bots or monitoring systems that periodically check active battles
-- **Not retrospective**: Cannot determine finish time for battles that already ended without having cached data
-- **Per-round only**: Shows the current round's division finish times, not previous rounds
+Example, battle 863509, captured while still listed: divisions 1, 2, 3, 4 and 11 ended at `1769344144`, `1769342524`, `1769342524`, `1769342645` and `1769342645`, so the maximum is division 1's.
 
-### Summary
+- This requires polling the list; it does not work for battles you did not capture (use war history for those).
+- `end` covers the current round only, not earlier rounds.
 
-| Approach | Status | Works Retrospectively? |
-|----------|--------|----------------------|
-| Capture `max(div.*.end)` from `campaignsJson/list` | **Only working method** | No -- must capture during battle |
-| Compute from `battle_start_at + battle_time` | **Disproven** -- `battle_time` never freezes | N/A |
-| Extract from `warHistory` response | **Disproven** -- identical to `battleConsole` | N/A |
+### What does not work
 
-> **Open question:** There may be undiscovered endpoints (e.g., war history pages, citizen fight logs, or admin APIs) that contain historical battle timing data. The public-facing API currently provides no way to retrospectively determine when a battle finished.
+**`battle_time` does not freeze.** Two calls for finished battle 864000, 19 seconds apart:
+
+| Call | `battle_time` | `serverTime` | Difference |
+|------|---------------|--------------|------------|
+| 1 | 1551813 | 1771042657 | 1769490844 |
+| 2 | 1551832 | 1771042676 | 1769490844 |
+
+The difference is the campaign start (26 Jan 2026 21:14:04 -0800, matching `battle_start_at`), so `battle_time = serverTime - start`. This also gives the start as a Unix timestamp without parsing a date string.
+
+**`action=warHistory` has no round timestamps.** Its response was identical to `battleConsole`, and `zoneId` was ignored.
+
+**Source:** `warList` — real request described on [live data](battlefield/live-data.md#war-history), 2026-11-27; the rest — earlier notes (live tests, February 2026).
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed 2026-11-27 | Page follows |
+|-------|---------------|---------------------|--------------|
+| Left side of the header | Defender | Matched `inv` in three active battles | Observation; the role over a whole war is unclear |
+| Pagination | None (324 rows) | None (up to 2766 rows) | Both |
+| Resistance funding | `POST rw-support` with Turnstile | No button or caller found on the war page, region page or in the main scripts | Earlier notes |
+| Finish time of an ended battle | No endpoint returns it | `warList` returns `result.end` | Observation |
+| Time zone of `result.end` | — | Not confirmed | Unknown |
+| Other `type` values of `rw-support` | May exist | — | Unknown |
+| Resource wars page | Not described | HTTP `404` | Unconfirmed |

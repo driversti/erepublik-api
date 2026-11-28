@@ -1,104 +1,151 @@
-# Cities
+# Cities and residence
 
-#erepublik #api #world #cities
+[API docs](../README.md) › World and travel › Cities and residence
 
-City endpoints for retrieving city data, residents, properties, searching, widget sub-endpoints, and establishing residence.
+The city page of every region (Overview, Residents, My properties) and the residence you can establish there. The page is an Angular app (`ErpkResidenceController`) that loads each panel as JSON.
 
-See also: [Travel](travel.md) | [Map & Regions](map.md) | [Overview](README.md)
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [City page](#city-page) | GET | `/en/main/city/{permalink}/{panel}` | ✅ Verified 2026-11-27 |
+| [My residence](#my-residence) | GET | `/en/main/myResidence` | ✅ Verified 2026-11-27 |
+| [City overview](#city-overview) | GET | `/en/main/city-data/{cityId}/overview` | ✅ Verified 2026-11-27 |
+| [Residents](#residents) | GET | `/en/main/city-data/{cityId}/residents` | ✅ Verified 2026-11-27 |
+| [My properties](#my-properties) | GET | `/en/main/city-data/{cityId}/properties` | ✅ Verified 2026-11-27 |
+| [Single widget](#single-widget) | GET | `/en/main/city-data/{cityId}/{panel}/{widget}` | ✅ Verified 2026-11-27 |
+| [Search cities](#search-cities) | GET | `/en/main/city-search` | ✅ Verified 2026-11-27 |
+| [Establish residence](#establish-residence) | POST | `/en/main/city-actions` | 🔍 From code |
+| [Help popup](#help-popup) | GET | `/en/main/city-help-popup` | ✅ Verified 2026-11-27 |
+
+Activating a house from the properties panel calls `/en/economy/activateHouse`, described with the [boosters](../economy/inventory.md#activate-a-house).
+
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## Get City Overview Data
+## City page
 
-**Method:** GET
-**URL:** `/en/main/city-data/{cityId}/overview`
-**Auth Required:** Yes
+`GET /en/main/city/{permalink}/{panel}` · Auth not required · ✅ Verified 2026-11-27
 
-### Description
+HTML shell of the page; the data comes from [city data](#city-overview).
 
-Retrieves comprehensive information about a specific city including citizen residence status, city statistics (population, budget, GDP), region details, and available widgets for the city interface. This endpoint provides the data for the city overview page, showing residence bonuses, city government, and regional information.
-
-### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| cityId | number | Yes | The ID of the city to retrieve data for (path parameter) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `permalink` | path | string | Yes | City permalink, for example `Warsaw` |
+| `panel` | path | string | No | `overview`, `residents` or `properties` |
 
 ```bash
-curl 'https://www.erepublik.com/en/main/city-data/710/overview' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Accept: application/json, text/plain, */*'
+curl 'https://www.erepublik.com/en/main/city/Warsaw/residents' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
 ```
 
-</details>
+The chosen panel appears in the page as `initialPanel: 'residents'`. An unknown city returns `404`. The page also answers `200` without a session. When the client switches tabs it only rewrites the browser address to this form.
 
-### Example Response
+**Source:** real requests, 2026-11-27; `ErpkResidenceController` in `erpk_angular_controllers.js` (version 1795779904).
+
+---
+
+## My residence
+
+`GET /en/main/myResidence` · Auth required · ✅ Verified 2026-11-27
+
+The menu link to your residence. It lands on `/en/main/city/{permalink}/overview` of your residence city.
+
+```bash
+curl -L 'https://www.erepublik.com/en/main/myResidence' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+The behaviour without a residence was not checked. Inside the city page, "my residence" does not call this: it reloads [city data](#city-overview) for your residence city ID.
+
+**Source:** real request in a browser (final URL), 2026-11-27.
+
+---
+
+## City overview
+
+`GET /en/main/city-data/{cityId}/overview` · Auth not required · ✅ Verified 2026-11-27
+
+City statistics, the region, and the cost and bonuses of establishing residence.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `cityId` | path | number | Yes | City ID |
+
+```bash
+curl 'https://www.erepublik.com/en/main/city-data/231/overview' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+All three panels answer `200` without a session, with `citizenInfo.isLoggedIn: 0` and zeroed bonuses.
+
+### Response
+
+Shortened:
+
+```json
+{
+  "citizenInfo": { "isLoggedIn": 1, "isResident": 0, "...": "..." },
+  "cityInfo": { "id": 231, "name": "Warsaw", "regionId": 424, "countryId": 35, "numResidents": 78 },
+  "panelId": "overview",
+  "panelUrl": "//www.erepublik.com/en/city/231/overview",
+  "widgets": { "searchCity": {}, "regionInfo": {}, "residence": {}, "government": {} }
+}
+```
 
 <details>
-<summary>JSON Response</summary>
+<summary>Full example response (structure of 2026-11-27; edited)</summary>
+
+The city budget is `0`. Timers, house counts and the establishment cost are made up, and `CUR` stands for the currency code.
 
 ```json
 {
   "citizenInfo": {
     "isLoggedIn": 1,
     "residenceCityId": 0,
-    "isResident": 1,
-    "isLocatedInResidence": 1,
+    "isResident": 0,
+    "isLocatedInResidence": 0,
     "residentialBonuses": {
       "hasResidence": 1,
-      "isInResidence": 1,
-      "validUntil": 0,
-      "timeRemaining": 0,
+      "isInResidence": 0,
+      "validUntil": 2000000000,
+      "timeRemaining": 1000,
       "numHouses": 1,
       "energyBonus": 50,
       "recoveryBonus": 2,
-      "description": "Residence bonuses available"
+      "description": "Residence bonuses partially available. Energy Pool bonus expires in:"
     }
   },
   "cityInfo": {
-    "id": 710,
-    "name": "Klaipeda",
-    "permalink": "Klaipeda",
-    "regionId": 663,
+    "id": 231,
+    "name": "Warsaw",
+    "permalink": "Warsaw",
+    "regionId": 424,
     "cityTypeId": 2,
-    "regionName": "Lithuania Minor",
-    "regionPermalink": "Lithuania-Minor",
-    "countryId": 72,
-    "countryName": "Lithuania",
-    "countryPermalink": "Lithuania",
-    "avatar": "//www.erepublik.net/images/modules/cities/128px/Klaipeda.png",
-    "countryCapital": 1,
-    "countryHistoricalCapital": 0,
+    "regionName": "Mazovia",
+    "regionPermalink": "Mazovia",
+    "countryId": 35,
+    "countryName": "Poland",
+    "countryPermalink": "Poland",
+    "avatar": "//www.erepublik.net/images/modules/cities/128px/Warsaw.png",
+    "countryCapital": 0,
+    "countryHistoricalCapital": 1,
     "citySize": "Large Town",
-    "numResidents": 54,
+    "numResidents": 78,
     "numVoters": 0,
     "buildingTax": 2,
     "buildingBonus": 10,
-    "numVisitors": 68,
-    "cityBudget": 20852463,
-    "grossDomesticProduct": 2230462,
+    "numVisitors": 78,
+    "cityBudget": 0,
+    "grossDomesticProduct": 17942636,
     "cityCouncilSeats": 0,
-    "regionUrl": "//www.erepublik.com/en/main/region/Lithuania-Minor",
-    "countryUrl": "//www.erepublik.com/en/country/society/Lithuania",
-    "nationalRank": 1,
-    "globalRank": 42
+    "regionUrl": "//www.erepublik.com/en/main/region/Mazovia",
+    "countryUrl": "//www.erepublik.com/en/country/society/Poland",
+    "nationalRank": 2,
+    "globalRank": 21
   },
   "panelId": "overview",
-  "panelUrl": "//www.erepublik.com/en/city/710/overview",
+  "panelUrl": "//www.erepublik.com/en/city/231/overview",
   "widgets": {
     "searchCity": {
       "actionUrl": "//www.erepublik.com/en/main/city-search",
@@ -106,82 +153,39 @@ curl 'https://www.erepublik.com/en/main/city-data/710/overview' \
       "widgetId": "searchCity"
     },
     "regionInfo": {
-      "regionId": 663,
-      "regionName": "Lithuania Minor",
-      "regionPermalink": "Lithuania-Minor",
-      "regionUrl": "//www.erepublik.com/en/main/region/Lithuania-Minor",
-      "regionOf": {
-        "countryId": 72,
-        "countryName": "Lithuania",
-        "countryPermalink": "Lithuania"
-      },
+      "regionId": 424,
+      "regionName": "Mazovia",
+      "regionPermalink": "Mazovia",
+      "regionUrl": "//www.erepublik.com/en/main/region/Mazovia",
+      "regionOf": { "countryId": 35, "countryName": "Poland", "countryPermalink": "Poland" },
       "underOccupation": 0,
-      "underOccupationBy": {
-        "countryId": null,
-        "countryName": null,
-        "countryPermalink": null
-      },
-      "underOccupationSince": "Day 5,627",
-      "liberatedSince": "Day 5,630",
+      "underOccupationBy": { "countryId": null, "countryName": null, "countryPermalink": null },
+      "underOccupationSince": "Day 6,802",
+      "liberatedSince": "Day 6,804",
       "resources": [
-        {
-          "id": 6,
-          "regionId": 663,
-          "name": "Iron",
-          "mtype": "weapon",
-          "rarity": "very common",
-          "bonus": 10
-        },
-        {
-          "id": 8,
-          "regionId": 663,
-          "name": "Aluminum",
-          "mtype": "weapon",
-          "rarity": "common",
-          "bonus": 15
-        },
-        {
-          "id": 9,
-          "regionId": 663,
-          "name": "Oil",
-          "mtype": "weapon",
-          "rarity": "uncommon",
-          "bonus": 20
-        }
+        { "id": 11, "regionId": 424, "name": "Sand", "mtype": "house", "rarity": "very common", "bonus": 10 },
+        { "id": 12, "regionId": 424, "name": "Clay", "mtype": "house", "rarity": "uncommon", "bonus": 20 },
+        { "id": 13, "regionId": 424, "name": "Wood", "mtype": "house", "rarity": "common", "bonus": 15 },
+        { "id": 15, "regionId": 424, "name": "Granite", "mtype": "house", "rarity": "very rare", "bonus": 30 }
       ],
       "productivityBonus": {
-        "byToken": {
-          "FOOD": 0,
-          "WEAPON": 45,
-          "HOUSE": 0,
-          "AIRCRAFT": 0
-        },
-        "byId": {
-          "1": 0,
-          "2": 45,
-          "4": 0,
-          "23": 0
-        }
+        "byToken": { "FOOD": 0, "WEAPON": 0, "HOUSE": 75, "AIRCRAFT": 0 },
+        "byId": { "1": 0, "2": 0, "4": 75, "23": 0 }
       },
       "buildingTax": "2%",
-      "residentialTax": "200 LTL",
-      "gdp": "2,230,462 LTL"
+      "residentialTax": "200 CUR",
+      "gdp": "17,942,636 CUR"
     },
     "residence": {
-      "isResident": 1,
-      "canEstablishResidence": 1,
+      "isResident": 0,
+      "canEstablishResidence": 0,
       "citizenResidenceCityId": 0,
       "establishResidenceCost": {
         "residentialTax": 200,
-        "propertiesTransfer": {
-          "houses": {
-            "1": 658.84
-          },
-          "total": 658.84
-        },
-        "total": 858.84
+        "propertiesTransfer": { "houses": { "1": 1000 }, "total": 1000 },
+        "total": 1200
       },
-      "establishResidenceConfirmation": "Are you sure you want to pay 858.84 LTL in local taxes and establish your residence in Klaipeda?",
+      "establishResidenceConfirmation": "Are you sure you want to pay 1200 CUR in local taxes and establish your residence in Warsaw?",
       "bonuses": {
         "houseDurability": 10,
         "energyBonus": 100,
@@ -195,13 +199,13 @@ curl 'https://www.erepublik.com/en/main/city-data/710/overview' \
       },
       "actionUrl": "//www.erepublik.com/en/main/city-actions",
       "action": "establishResidence",
-      "widgetUrl": "//www.erepublik.com/en/main/city-data/710/overview/residence",
+      "widgetUrl": "//www.erepublik.com/en/main/city-data/231/overview/residence",
       "widgetId": "residence"
     },
     "government": {
       "mayor": [],
       "numCityCouncilors": "-",
-      "widgetUrl": "//www.erepublik.com/en/main/city-data/710/overview/government",
+      "widgetUrl": "//www.erepublik.com/en/main/city-data/231/overview/government",
       "widgetId": "government"
     }
   }
@@ -210,614 +214,285 @@ curl 'https://www.erepublik.com/en/main/city-data/710/overview' \
 
 </details>
 
-### Response Fields
+### Common fields
 
-#### citizenInfo Object
-- `isLoggedIn` - Whether the user is logged in (1 = yes, 0 = no)
-- `residenceCityId` - ID of the city where citizen has residence (0 if none)
-- `isResident` - Whether citizen is a resident of this city
-- `isLocatedInResidence` - Whether citizen is currently in their residence city
-- `residentialBonuses` - Object containing residence bonus details:
-  - `hasResidence` - Whether citizen has a residence established
-  - `isInResidence` - Whether citizen is currently in residence city
-  - `validUntil` - Unix timestamp when bonuses expire (0 if permanent/active)
-  - `timeRemaining` - Seconds remaining on bonus (0 if in residence)
-  - `numHouses` - Number of houses owned
-  - `energyBonus` - Energy pool bonus amount
-  - `recoveryBonus` - Energy recovery bonus per 6 minutes
-  - `description` - Human-readable status description
+Every panel returns `citizenInfo`, `cityInfo`, `panelId`, `panelUrl` and `widgets`.
 
-> **Home/abroad detection (added 2026-07-17):** `isLocatedInResidence` (and `residentialBonuses.isInResidence`) is the game's own answer to "is this account home?" — prefer it over comparing `residenceCityId` against a current location yourself, since residence is per-**city** while travel is per-**region**. `validUntil` / `timeRemaining` count down the **energy pool** bonus only (30 min from departure); the **recovery** bonus is lost immediately on leaving, which is why the away-state `description` reads *"partially available"*. Mechanics + wiki quotes: `~/KnowledgeBase/Erepublik/Residence.md`. Field-level caveats: [travel.md](travel.md#interpreting-these-fields-added-2026-07-17).
+| Field | Type | Description |
+|-------|------|-------------|
+| `citizenInfo.isLoggedIn` | number | `1` / `0` |
+| `citizenInfo.residenceCityId` | number | `0` in all observed responses, including accounts with a residence |
+| `citizenInfo.isResident` | number | You are a resident of this city |
+| `citizenInfo.isLocatedInResidence` | number | You are in your residence |
+| `citizenInfo.residentialBonuses` | object | See [residence bonus fields](travel.md#residence-bonus-fields) |
+| `cityInfo.cityTypeId`, `citySize` | | City type and size name, for example "Large Town" |
+| `cityInfo.countryCapital`, `countryHistoricalCapital` | number | Current / historical capital |
+| `cityInfo.numResidents`, `numVoters`, `numVisitors` | number | Population counters |
+| `cityInfo.buildingTax`, `buildingBonus` | number | Percent |
+| `cityInfo.cityBudget`, `grossDomesticProduct` | number | In local currency |
+| `cityInfo.cityCouncilSeats` | number | Council seats |
+| `cityInfo.nationalRank`, `globalRank` | number | City ranks |
 
-#### cityInfo Object
-- `id` - City ID
-- `name` - City display name
-- `permalink` - URL-friendly city name
-- `regionId` - ID of the region containing this city
-- `cityTypeId` - Type of city (1 = small, 2 = large, etc.)
-- `regionName` / `regionPermalink` - Region name and URL slug
-- `countryId` / `countryName` / `countryPermalink` - Country information
-- `avatar` - URL to city image/icon
-- `countryCapital` - Whether this is the current capital (1 = yes)
-- `countryHistoricalCapital` - Whether this was a historical capital
-- `citySize` - Human-readable size description (e.g., "Large Town")
-- `numResidents` - Number of citizens with residence in this city
-- `numVoters` - Number of voters in city elections
-- `buildingTax` - Tax percentage for building companies
-- `buildingBonus` - Production bonus percentage
-- `numVisitors` - Number of current visitors
-- `cityBudget` - Total city budget in local currency
-- `grossDomesticProduct` - City GDP in local currency
-- `cityCouncilSeats` - Number of city council seats (0 if no council)
-- `nationalRank` - Rank among cities in the country
-- `globalRank` - Global city rank
+### Overview widgets
 
-#### widgets Object
-Contains configuration and data for various city page widgets:
+| Field | Description |
+|-------|-------------|
+| `regionInfo.regionOf` | Original owner of the region |
+| `regionInfo.underOccupation`, `underOccupationBy` | Occupation state |
+| `regionInfo.underOccupationSince`, `liberatedSince` | Game days; present even when not occupied |
+| `regionInfo.resources[]` | `id`, `name`, `mtype`, `rarity`, `bonus` |
+| `regionInfo.productivityBonus` | `byToken` and `byId` (industry ID) |
+| `residence.canEstablishResidence` | `1` when the button is available |
+| `residence.establishResidenceCost` | `residentialTax`, `propertiesTransfer` (by house quality), `total` |
+| `residence.bonuses` | Bonuses of living here. `cityBonuxText` is spelled that way |
+| `government.mayor` | Array; empty without a mayor |
+| `government.numCityCouncilors` | Number, or `"-"` |
 
-**searchCity Widget**
-- Provides city search functionality
-
-**regionInfo Widget**
-- `resources` - Array of natural resources in the region with rarity and production bonuses
-- `productivityBonus` - Production bonuses by product type (FOOD, WEAPON, HOUSE, AIRCRAFT)
-- `underOccupation` - Whether region is occupied (0 = no, 1 = yes)
-- `underOccupationBy` - Occupying country information if applicable
-- `buildingTax` / `residentialTax` - Local tax rates
-- `gdp` - Regional GDP
-
-**residence Widget**
-- `canEstablishResidence` - Whether citizen can establish residence here
-- `establishResidenceCost` - Breakdown of costs to establish residence:
-  - `residentialTax` - One-time tax payment
-  - `propertiesTransfer` - Cost to transfer properties (houses, etc.)
-  - `total` - Total cost
-- `bonuses` - Available residence bonuses (energy pool, recovery, house durability)
-- `actionUrl` - Endpoint to establish residence
-
-**government Widget**
-- `mayor` - Array of mayor information (empty if no mayor)
-- `numCityCouncilors` - Number of city council members
-
-### Notes
-
-- This endpoint provides the complete data for rendering the city overview page
-- Citizen must be logged in to see personalized information (residence status, bonuses)
-- City statistics (budget, GDP, residents) are real-time values
-- Resources and productivity bonuses are crucial for company/factory placement decisions
-- Residence bonuses apply only when citizen is physically in their residence city
-- `cityTypeId` affects available building slots and city mechanics
-- Capital cities (countryCapital = 1) may have special bonuses or restrictions
-- The response includes widget configuration URLs for lazy-loading additional data
-- City rankings (national/global) are based on multiple factors including GDP, population, activity
+**Source:** real request, 2026-11-27.
 
 ---
 
-## Get City Residents List
+## Residents
 
-**Method:** GET
-**URL:** `/en/main/city-data/{cityId}/residents`
-**Auth Required:** Yes
+`GET /en/main/city-data/{cityId}/residents` · Auth not required · ✅ Verified 2026-11-27
 
-### Description
+Residents of a city, 10 per page.
 
-Retrieves a paginated list of citizens who have established residence in a specific city. This endpoint provides detailed information about each resident including their profile, holdings (companies), houses owned, government roles (mayor, council member), and citizenship status. The data is used to display the city's residents page.
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `cityId` | path | number | Yes | City ID |
+| `currentPage` | query | number | No | Page, from 1 |
+| `search` | query | string | No | Filter by resident name |
 
-### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| cityId | number | Yes | The ID of the city to retrieve residents for (path parameter) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+The response names both query parameters itself (`pageParam`, `searchParam`).
 
 ```bash
-curl 'https://www.erepublik.com/en/main/city-data/710/residents' \
+curl 'https://www.erepublik.com/en/main/city-data/231/residents?currentPage=2' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Accept: application/json, text/plain, */*'
+  -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+### Response
 
-### Example Response
-
-<details>
-<summary>JSON Response</summary>
+`widgets`, shortened to one resident. The resident, counts and totals are made up:
 
 ```json
 {
-  "citizenInfo": {
-    "isLoggedIn": 1,
-    "residenceCityId": 0,
-    "isResident": 1,
-    "isLocatedInResidence": 1,
-    "residentialBonuses": {
-      "hasResidence": 1,
-      "isInResidence": 1,
-      "validUntil": 0,
-      "timeRemaining": 0,
-      "numHouses": 1,
-      "energyBonus": 50,
-      "recoveryBonus": 2,
-      "description": "Residence bonuses available"
-    }
-  },
-  "cityInfo": {
-    "id": 710,
-    "name": "Klaipeda",
-    "permalink": "Klaipeda",
-    "regionId": 663,
-    "cityTypeId": 2,
-    "regionName": "Lithuania Minor",
-    "regionPermalink": "Lithuania-Minor",
-    "countryId": 72,
-    "countryName": "Lithuania",
-    "countryPermalink": "Lithuania",
-    "avatar": "//www.erepublik.net/images/modules/cities/128px/Klaipeda.png",
-    "countryCapital": 1,
-    "countryHistoricalCapital": 0,
-    "citySize": "Large Town",
-    "numResidents": 54,
-    "numVoters": 0,
-    "buildingTax": 2,
-    "buildingBonus": 10,
-    "numVisitors": 68,
-    "cityBudget": 20852463,
-    "grossDomesticProduct": 2230462,
-    "cityCouncilSeats": 0,
-    "regionUrl": "//www.erepublik.com/en/main/region/Lithuania-Minor",
-    "countryUrl": "//www.erepublik.com/en/country/society/Lithuania",
-    "nationalRank": 1,
-    "globalRank": 42
-  },
-  "panelId": "residents",
-  "panelUrl": "//www.erepublik.com/en/city/710/residents",
-  "widgets": {
-    "searchCity": {
-      "actionUrl": "//www.erepublik.com/en/main/city-search",
-      "action": "searchCity",
-      "widgetId": "searchCity"
-    },
-    "residents": {
-      "residents": [
-        {
-          "citizenId": 4222252,
-          "citizenName": "resetas1",
-          "hasAvatar": 1,
-          "residentSince": "Day 4,016",
-          "isMayor": 0,
-          "isCouncilMember": 0,
-          "isRegisteredVoter": 0,
-          "countryId": 72,
-          "countryName": "Lithuania",
-          "countryPermalink": "Lithuania",
-          "hasHolding": 1,
-          "holdingName": "Resetas LLC",
-          "numFactories": 378,
-          "numHouses": 5,
-          "activeHouses": ["q1", "q2", "q3", "q4", "q5"],
-          "roleId": 1,
-          "roleName": "Resident",
-          "avatar": "https://cdnt.erepublik.net/.../avatar.jpg",
-          "holdingAvatar": null
-        }
-      ],
-      "numResults": 274,
-      "searchParam": "search",
-      "pageParam": "currentPage"
-    }
+  "searchCity": { "...": "..." },
+  "residents": {
+    "residents": [
+      {
+        "citizenId": 1234567,
+        "citizenName": "CITIZEN_NAME",
+        "hasAvatar": 1,
+        "residentSince": "Day 1,000",
+        "isMayor": 0,
+        "isCouncilMember": 0,
+        "isRegisteredVoter": 0,
+        "countryId": 35,
+        "countryName": "Poland",
+        "countryPermalink": "Poland",
+        "hasHolding": 1,
+        "holdingName": "HOLDING_NAME",
+        "numFactories": 1,
+        "numHouses": 1,
+        "activeHouses": ["q1"],
+        "roleId": 1,
+        "roleName": "Resident",
+        "avatar": "AVATAR_URL",
+        "holdingAvatar": null
+      }
+    ],
+    "numResults": 78,
+    "searchParam": "search",
+    "pageParam": "currentPage"
   }
 }
 ```
 
-</details>
+| Field | Type | Description |
+|-------|------|-------------|
+| `numResults` | number | Matching residents, for pagination; `0` when the search finds nobody |
+| `residentSince` | string | Game day |
+| `countryId`, `countryName` | | Citizenship, may differ from the city's country |
+| `numFactories`, `numHouses` | number | The resident's factories and houses here |
+| `activeHouses` | string[] | Qualities of active houses |
+| `roleId`, `roleName` | | `1` = Resident |
 
-### Response Fields
+The client numbers the rows itself: `index + 1 + 10 * (currentPage - 1)`.
 
-#### citizenInfo Object
-Same structure as in [Get City Overview Data](#get-city-overview-data) endpoint - contains current user's residence status and bonuses.
-
-#### cityInfo Object
-Same structure as in [Get City Overview Data](#get-city-overview-data) endpoint - contains basic city information and statistics.
-
-#### widgets.residents Object
-- `residents` - Array of resident citizen objects (see below)
-- `numResults` - Total number of residents in this city (for pagination)
-- `searchParam` - Parameter name for search functionality
-- `pageParam` - Parameter name for pagination
-
-#### Resident Object (in residents array)
-- `citizenId` - Unique citizen ID
-- `citizenName` - Display name of the citizen
-- `hasAvatar` - Whether citizen has a custom avatar (1 = yes, 0 = no)
-- `residentSince` - Game day when residence was established (e.g., "Day 4,016")
-- `isMayor` - Whether this citizen is the city's mayor (1 = yes, 0 = no)
-- `isCouncilMember` - Whether citizen is on city council (1 = yes, 0 = no)
-- `isRegisteredVoter` - Whether citizen is registered to vote in this city (1 = yes, 0 = no)
-- `countryId` / `countryName` / `countryPermalink` - Citizen's citizenship country
-- `hasHolding` - Whether citizen has a holding company (1 = yes, 0 = no)
-- `holdingName` - Name of the citizen's holding company (if any)
-- `numFactories` - Number of factories owned in this city
-- `numHouses` - Number of houses owned in this city
-- `activeHouses` - Array of house quality levels owned (e.g., ["q1", "q2", "q3"])
-- `roleId` / `roleName` - Role in the city (1 = "Resident", possibly other values for mayor/council)
-- `avatar` - URL to citizen's avatar image
-- `holdingAvatar` - URL to holding company avatar (if applicable)
-
-### Notes
-
-- Response includes the first page of residents (default pagination, typically 10-20 citizens per page)
-- Total resident count available in `numResults` field (useful for pagination UI)
-- Residents can have different citizenship than the city's country (foreign residents)
-- `residentSince` uses in-game day format, not real-world dates
-- Citizens with holdings typically have significant economic presence in the city
-- `activeHouses` quality levels: q1 (basic) through q5 (luxury)
-- Government roles (mayor, council member) are highlighted with boolean flags
-- This endpoint likely supports query parameters for pagination and search (e.g., `?currentPage=2&search=username`), though not shown in this example
-- The `numFactories` count includes all company buildings owned by the citizen in this city
-- Large cities with many residents will require pagination to view all residents
+**Source:** real requests (first page, second page, empty search), 2026-11-27; `ErpkResidenceFactory.getPanelData` (version 1795779904).
 
 ---
 
-## Get City Properties
+## My properties
 
-**Method:** GET
-**URL:** `/en/main/city-data/{cityId}/properties`
-**Auth Required:** Yes
+`GET /en/main/city-data/{cityId}/properties` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-Retrieves information about the logged-in citizen's properties in a specific city, including houses owned (with quality levels, energy bonuses, activation status, and costs) and holding company details (factories owned and their types). This endpoint provides the data for the city properties management page.
-
-### Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| cityId | number | Yes | The ID of the city to retrieve properties for (path parameter) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+Your houses and holding company. The client disables the tab when you are logged out.
 
 ```bash
-curl 'https://www.erepublik.com/en/main/city-data/710/properties' \
+curl 'https://www.erepublik.com/en/main/city-data/231/properties' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Accept: application/json, text/plain, */*'
-```
-
-</details>
-
-### Example Response
-
-<details>
-<summary>JSON Response</summary>
-
-```json
-{
-  "citizenInfo": {
-    "isLoggedIn": 1,
-    "residenceCityId": 0,
-    "isResident": 1,
-    "isLocatedInResidence": 1,
-    "residentialBonuses": {
-      "hasResidence": 1,
-      "isInResidence": 1,
-      "validUntil": 0,
-      "timeRemaining": 0,
-      "numHouses": 1,
-      "energyBonus": 50,
-      "recoveryBonus": 2,
-      "description": "Residence bonuses available"
-    }
-  },
-  "cityInfo": {
-    "id": 710,
-    "name": "Klaipeda",
-    "permalink": "Klaipeda",
-    "regionId": 663,
-    "cityTypeId": 2,
-    "regionName": "Lithuania Minor",
-    "countryId": 72,
-    "countryName": "Lithuania",
-    "avatar": "//www.erepublik.net/images/modules/cities/128px/Klaipeda.png",
-    "citySize": "Large Town",
-    "numResidents": 54,
-    "buildingTax": 2,
-    "buildingBonus": 10,
-    "cityBudget": 20852463,
-    "grossDomesticProduct": 2230462
-  },
-  "panelId": "properties",
-  "panelUrl": "//www.erepublik.com/en/city/710/properties",
-  "widgets": {
-    "searchCity": {
-      "actionUrl": "//www.erepublik.com/en/main/city-search",
-      "action": "searchCity",
-      "widgetId": "searchCity"
-    },
-    "houses": {
-      "list": [
-        {
-          "isDefault": 1,
-          "energyBonus": 100,
-          "energyBooster": 2,
-          "effectsActive": 1,
-          "name": "Central Park"
-        },
-        {
-          "quality": 1,
-          "energyBonus": 100,
-          "energyBooster": 2,
-          "overtimePoints": 1,
-          "effectsActive": 1,
-          "activeTimeRemaining": 486880,
-          "inventory": 24,
-          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/1",
-          "buttonText": "Extend",
-          "activationMessage": "Extension successful",
-          "activationData": {
-            "params": {
-              "action": "activate",
-              "quality": 1,
-              "cityId": 710,
-              "cityWidget": "L2VuL21haW4vY2l0eS1kYXRhLzcxMC9wcm9wZXJ0aWVzL2hvdXNlcw=="
-            },
-            "url": "/en/economy/activateHouse"
-          },
-          "confirmationMessage": "The city of Klaipeda charges 681.11 LTL for this action. Continue?"
-        },
-        {
-          "quality": 2,
-          "energyBonus": 160,
-          "energyBooster": 2,
-          "overtimePoints": 1,
-          "effectsActive": 0,
-          "activeTimeRemaining": 0,
-          "inventory": 0,
-          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/2",
-          "buttonText": "Buy",
-          "activationMessage": ""
-        },
-        {
-          "quality": 3,
-          "energyBonus": 200,
-          "energyBooster": 2,
-          "overtimePoints": 1,
-          "effectsActive": 0,
-          "activeTimeRemaining": 0,
-          "inventory": 0,
-          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/3",
-          "buttonText": "Buy",
-          "activationMessage": ""
-        },
-        {
-          "quality": 4,
-          "energyBonus": 300,
-          "energyBooster": 2,
-          "overtimePoints": 1,
-          "effectsActive": 0,
-          "activeTimeRemaining": 0,
-          "inventory": 0,
-          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/4",
-          "buttonText": "Buy",
-          "activationMessage": ""
-        },
-        {
-          "quality": 5,
-          "energyBonus": 400,
-          "energyBooster": 2,
-          "overtimePoints": 1,
-          "effectsActive": 0,
-          "activeTimeRemaining": 0,
-          "inventory": 0,
-          "marketUrl": "//www.erepublik.com/en/economy/marketplace#72/4/5",
-          "buttonText": "Use",
-          "activationMessage": "You now have a house in Klaipeda",
-          "activationData": {
-            "params": {
-              "action": "activate",
-              "quality": 5,
-              "cityId": 710,
-              "cityWidget": "L2VuL21haW4vY2l0eS1kYXRhLzcxMC9wcm9wZXJ0aWVzL2hvdXNlcw=="
-            },
-            "url": "/en/economy/activateHouse"
-          },
-          "confirmationMessage": "The city of Klaipeda charges 0 LTL for this action. Continue?"
-        }
-      ],
-      "currency": 7120147,
-      "widgetUrl": "/en/main/city-data/710/properties/houses",
-      "widgetId": "houses"
-    },
-    "holdingCompany": {
-      "list": {
-        "ownerId": 4690052,
-        "ownerEntityType": "citizen",
-        "regionId": 663,
-        "name": "Hail Lithuania",
-        "createdAt": 1675322000,
-        "numFactories": 224,
-        "avatar": "https://www.erepublik.net/images/default_avatars/holding_100x100.png",
-        "buttonText": "Manage",
-        "buttonUrl": "//www.erepublik.com/en/economy/myCompanies"
-      },
-      "factoriesList": [
-        {
-          "industryId": 2,
-          "quality": 7,
-          "name": "Weapons Q7",
-          "isRaw": 0,
-          "numFactories": 24,
-          "maxEmployees": 240,
-          "icon": "//www.erepublik.net/images/modules/manager/factory_buildings/2_7.png"
-        },
-        {
-          "industryId": 16,
-          "quality": 1,
-          "name": "Rubber",
-          "isRaw": 1,
-          "numFactories": 200,
-          "maxEmployees": 800,
-          "icon": "//www.erepublik.net/images/modules/manager/factory_buildings/16.png"
-        }
-      ],
-      "widgetUrl": "/en/main/city-data/710/properties/holdingCompany",
-      "widgetId": "holdingCompany"
-    }
-  },
-  "hasPropertiesInCity": 1
-}
-```
-
-</details>
-
-### Response Fields
-
-#### citizenInfo Object
-Same structure as in [Get City Overview Data](#get-city-overview-data) endpoint - contains current user's residence status and bonuses.
-
-#### cityInfo Object
-Same structure as in [Get City Overview Data](#get-city-overview-data) endpoint - contains basic city information and statistics.
-
-#### hasPropertiesInCity
-- Boolean (1 = yes, 0 = no) indicating whether the citizen has any properties in this city
-
-#### widgets.houses Object
-- `list` - Array of house objects (see below)
-- `currency` - Citizen's balance in the city's local currency
-- `widgetUrl` / `widgetId` - Widget configuration
-
-#### House Object (in houses.list array)
-**Default/Central Park (free energy source):**
-- `isDefault` - Indicates this is the default Central Park (1 = yes)
-- `name` - Name of the free energy source (e.g., "Central Park")
-- `energyBonus` - Energy pool bonus provided
-- `energyBooster` - Energy recovery per 6 minutes
-- `effectsActive` - Whether the bonus is currently active (1 = yes, 0 = no)
-
-**Regular Houses (Q1-Q5):**
-- `quality` - House quality level (1-5)
-- `energyBonus` - Energy pool bonus (100 for Q1, up to 400 for Q5)
-- `energyBooster` - Energy recovery per 6 minutes (typically 2)
-- `overtimePoints` - Overtime points granted (typically 1)
-- `effectsActive` - Whether house is currently active (1 = yes, 0 = no)
-- `activeTimeRemaining` - Seconds until house expires (if active)
-- `inventory` - Number of houses in inventory
-- `marketUrl` - URL to marketplace for buying more houses
-- `buttonText` - Action button label ("Extend", "Buy", "Use")
-- `activationMessage` - Message shown after activation
-- `activationData` - Object containing activation endpoint and parameters:
-  - `params.action` - Action type (e.g., "activate")
-  - `params.quality` - House quality being activated
-  - `params.cityId` - City ID
-  - `params.cityWidget` - Base64-encoded widget URL
-  - `url` - Activation endpoint (`/en/economy/activateHouse`)
-- `confirmationMessage` - Message shown before activation (includes cost)
-
-#### widgets.holdingCompany Object
-- `list` - Holding company information object:
-  - `ownerId` - Citizen ID of the holding owner
-  - `ownerEntityType` - Entity type (typically "citizen")
-  - `regionId` - Region where holding is based
-  - `name` - Holding company name
-  - `createdAt` - Unix timestamp of creation
-  - `numFactories` - Total number of factories in this city
-  - `avatar` - URL to holding company logo
-  - `buttonText` / `buttonUrl` - Management button configuration
-- `factoriesList` - Array of factory type objects:
-  - `industryId` - Industry type ID
-  - `quality` - Factory quality level (1-7)
-  - `name` - Factory type name (e.g., "Weapons Q7", "Rubber")
-  - `isRaw` - Whether this is a raw material factory (1 = yes, 0 = no)
-  - `numFactories` - Number of factories of this type
-  - `maxEmployees` - Maximum employees across all factories of this type
-  - `icon` - URL to factory icon image
-
-### Notes
-
-- This endpoint returns **only the logged-in citizen's properties** in the specified city
-- Central Park is always available in every city (free default energy source)
-- House quality levels (Q1-Q5) provide increasing energy bonuses:
-  - Q1: +100 energy pool
-  - Q2: +160 energy pool
-  - Q3: +200 energy pool
-  - Q4: +300 energy pool
-  - Q5: +400 energy pool
-- Houses must be activated to provide bonuses, with activation costs paid in local currency
-- `activeTimeRemaining` shows seconds until house expires (typically 7 days duration)
-- Only one house quality can be active at a time in a city
-- `inventory` count shows how many houses of that quality the citizen owns
-- The list always includes all 5 quality levels plus Central Park, regardless of ownership
-- Button text indicates available action: "Use" (activate from inventory or reward), "Buy" (need to purchase from marketplace), "Extend" (renew currently active house)
-- Houses with `buttonText: "Use"` at 0 cost may come from weekly challenges or other reward sources
-- Holding company data shows factory distribution in the city
-- `isRaw` factories produce raw materials (oil, rubber, iron, etc.), others produce finished goods
-- `maxEmployees` = `numFactories` x workers per factory (varies by industry and quality)
-- The `activationData.params.cityWidget` is a base64-encoded callback URL for refreshing the widget after activation
-- Activation costs include city's residential tax
-
----
-
-## Search Cities
-
-**Method:** GET
-**URL:** `/en/main/city-search?search={query}`
-**Auth Required:** No
-
-### Description
-
-Searches for cities by name, region name, or country name. This is the autocomplete/search endpoint used by the city search widget on city pages. It performs a **case-insensitive substring match** across city name, region name, and country name fields.
-
-### Query Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| search | string | Yes | Search query (minimum 2 characters) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| X-Requested-With | `XMLHttpRequest` | Yes |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
-
-```bash
-curl 'https://www.erepublik.com/en/main/city-search?search=War' \
   -H 'X-Requested-With: XMLHttpRequest'
 ```
 
-</details>
+### Response
 
-### Example Response
+`widgets` for a city where the account does not live. Names, IDs, times and counts are made up:
+
+```json
+{
+  "houses": {
+    "list": [],
+    "currency": 0,
+    "widgetUrl": "/en/main/city-data/231/properties/houses",
+    "widgetId": "houses"
+  },
+  "holdingCompany": {
+    "list": {
+      "ownerId": 1234567,
+      "ownerEntityType": "citizen",
+      "regionId": 424,
+      "name": "HOLDING_NAME",
+      "createdAt": 1000000000,
+      "numFactories": 1,
+      "avatar": "AVATAR_URL",
+      "buttonText": "Manage",
+      "buttonUrl": "//www.erepublik.com/en/economy/myCompanies"
+    },
+    "factoriesList": [
+      {
+        "industryId": 4, "quality": 5, "name": "House Q5", "isRaw": 0,
+        "numFactories": 1, "maxEmployees": 10,
+        "icon": "//www.erepublik.net/images/modules/manager/factory_buildings/4_5.png"
+      }
+    ],
+    "widgetUrl": "/en/main/city-data/231/properties/holdingCompany",
+    "widgetId": "holdingCompany"
+  }
+}
+```
+
+The top level also has `hasPropertiesInCity`.
 
 <details>
-<summary>JSON Response</summary>
+<summary>House list in the residence city (earlier notes, one entry per kind; edited)</summary>
+
+The city, currency, times, counts and charge are placeholders.
+
+```json
+[
+  { "isDefault": 1, "name": "Central Park", "energyBonus": 100, "energyBooster": 2, "effectsActive": 1 },
+  {
+    "quality": 1,
+    "energyBonus": 100,
+    "energyBooster": 2,
+    "overtimePoints": 1,
+    "effectsActive": 1,
+    "activeTimeRemaining": 1000,
+    "inventory": 1,
+    "marketUrl": "//www.erepublik.com/en/economy/marketplace#1/4/1",
+    "buttonText": "Extend",
+    "activationMessage": "Extension successful",
+    "activationData": {
+      "params": {
+        "action": "activate",
+        "quality": 1,
+        "cityId": 1,
+        "cityWidget": "L2VuL21haW4vY2l0eS1kYXRhLzEvcHJvcGVydGllcy9ob3VzZXM="
+      },
+      "url": "/en/economy/activateHouse"
+    },
+    "confirmationMessage": "The city of CITY_NAME charges 100 CUR for this action. Continue?"
+  }
+]
+```
+
+</details>
+
+| Field | Description |
+|-------|-------------|
+| `houses.list[]` | Central Park (`isDefault`) and houses Q1–Q5 |
+| `energyBonus`, `energyBooster` | Energy pool and recovery per 6 minutes. Earlier notes: pool 100 / 160 / 200 / 300 / 400 for Q1–Q5 |
+| `effectsActive`, `activeTimeRemaining` | Active state and seconds left |
+| `inventory` | Houses of this quality you own |
+| `buttonText` | `Use`, `Extend` or `Buy` |
+| `activationData` | `url` and `params` to post for activation; `cityWidget` is the Base64 widget path |
+| `confirmationMessage` | Shows the charge before activating |
+| `houses.currency` | Your balance in the city's currency |
+| `holdingCompany.list` | The holding; `createdAt` is a Unix time |
+| `factoriesList[]` | Factories here by type: `industryId`, `quality`, `isRaw`, `numFactories`, `maxEmployees` |
+
+Earlier notes (❔ Unconfirmed):
+
+- Central Park is in every city; the list holds it plus all five qualities, owned or not.
+- Only one house quality can be active at a time in a city; a house lasts about 7 days.
+- Activation is paid in local currency and includes the city's residential tax. A `Use` house costing 0 may come from rewards.
+- The endpoint returns only your own properties. `maxEmployees` is `numFactories` times the workers per factory.
+
+**Source:** real request, 2026-11-27 (empty house list); house entries — earlier notes; `activateHouse` handling in `ErpkResidenceController` (version 1795779904).
+
+---
+
+## Single widget
+
+`GET /en/main/city-data/{cityId}/{panel}/{widget}` · Auth unknown · ✅ Verified 2026-11-27 (overview widgets)
+
+Returns one widget object, the same as inside the panel response. Each widget gives its own `widgetUrl`.
+
+| Path | Status |
+|------|--------|
+| `…/overview/residence` | ✅ Verified 2026-11-27 |
+| `…/overview/government` | ✅ Verified 2026-11-27 |
+| `…/properties/houses` | Listed in `widgetUrl`, not requested |
+| `…/properties/holdingCompany` | Listed in `widgetUrl`, not requested |
+
+```bash
+curl 'https://www.erepublik.com/en/main/city-data/231/overview/government' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+```json
+{
+  "mayor": [],
+  "numCityCouncilors": "-",
+  "widgetUrl": "//www.erepublik.com/en/main/city-data/231/overview/government",
+  "widgetId": "government"
+}
+```
+
+### Errors
+
+| Response | When |
+|----------|------|
+| `200` `{"status":false,"message":"Invalid City","error":true}` | Unknown city ID (checked on a panel) |
+| `404` `{"error":true,"message":"404 Not Found","status":false,"code":404}` | Unknown widget path, for example `…/residents/residents` |
+
+**Source:** real requests, 2026-11-27.
+
+---
+
+## Search cities
+
+`GET /en/main/city-search` · Auth not required · ✅ Verified 2026-11-27
+
+The city search box of the city page. Works without a session.
+
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `search` | query | string | Yes | At least 2 characters |
+| `action` | query | string | No | The client sends `searchCity` |
+
+```bash
+curl 'https://www.erepublik.com/en/main/city-search?action=searchCity&search=War' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+### Response
+
+Shortened:
 
 ```json
 {
@@ -831,251 +506,90 @@ curl 'https://www.erepublik.com/en/main/city-search?search=War' \
       "countryName": "Poland",
       "avatar": "//www.erepublik.net/images/modules/cities/128px/Warsaw.png",
       "url": "//www.erepublik.com/en/main/city/Warsaw"
-    },
-    {
-      "id": 500,
-      "name": "Bhubaneswar",
-      "permalink": "Bhubaneswar",
-      "regionName": "Orissa",
-      "countryName": "India",
-      "avatar": "//www.erepublik.net/images/modules/cities/128px/Bhubaneswar.png",
-      "url": "//www.erepublik.com/en/main/city/Bhubaneswar"
-    },
-    {
-      "id": 537,
-      "name": "Peshawar",
-      "permalink": "Peshawar",
-      "regionName": "North-West Frontier Province",
-      "countryName": "Pakistan",
-      "avatar": "//www.erepublik.net/images/modules/cities/128px/Peshawar.png",
-      "url": "//www.erepublik.com/en/main/city/Peshawar"
     }
   ],
   "error": false
 }
 ```
 
-</details>
+One character or no match returns `"data": []` with `status: true`.
 
-<details>
-<summary>JSON Response (No Results)</summary>
+Earlier notes: matching is a case-insensitive substring over city, region and country name; there is no pagination; `countryName` is the current holder of the region.
 
-```json
-{
-  "status": true,
-  "data": [],
-  "error": false
-}
-```
-
-</details>
-
-### Response Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| status | boolean | Always `true` for valid requests |
-| data | array | Array of matching city objects |
-| error | boolean | Always `false` for valid requests |
-
-#### City Object (in data array)
-
-| Field | Type | Description |
-|-------|------|-------------|
-| id | number | City ID |
-| name | string | City display name |
-| permalink | string | URL-friendly city name |
-| regionName | string | Region containing the city |
-| countryName | string | Country currently controlling the region |
-| avatar | string | URL to city image/icon |
-| url | string | URL to the city page |
-
-### Notes
-
-- **No authentication required** -- works without session cookie
-- **Minimum 2 characters** -- queries with 0 or 1 character return an empty `data` array
-- **Case-insensitive** -- "bu" and "Bu" return the same results
-- **Substring matching** -- matches anywhere in city name, region name, or country name (e.g., "bu" matches "Bucharest", "Hamburg", "Istanbul", "Burgundy")
-- **No pagination** -- all matching results are returned in a single response
-- Search for a country name (e.g., "Lithuania") returns all cities in that country -- useful for listing a country's cities
-- The `countryName` reflects the **current controller** of the region, not the original owner (e.g., Budapest may show "Bulgaria" as country if Bulgaria conquered Central Hungary)
+**Source:** real requests, 2026-11-27; `ErpkResidenceFactory.searchForCities` (version 1795779904).
 
 ---
 
-## City Overview Widget Sub-endpoints
+## Establish residence
 
-The city overview endpoint returns widget data inline, but each widget also has its own lazy-loading URL that returns just the widget portion. These are useful for refreshing individual widgets without reloading the full overview.
+`POST /en/main/city-actions` · Auth required · 🔍 From code
 
-### Get Residence Widget
-
-**Method:** GET
-**URL:** `/en/main/city-data/{cityId}/overview/residence`
-**Auth Required:** Yes
-
-Returns just the `widgets.residence` object from the [City Overview](#get-city-overview-data) response.
-
-<details>
-<summary>cURL Example</summary>
-
-```bash
-curl 'https://www.erepublik.com/en/main/city-data/710/overview/residence' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest'
-```
-
-</details>
-
-<details>
-<summary>JSON Response</summary>
-
-```json
-{
-  "isResident": 1,
-  "canEstablishResidence": 1,
-  "citizenResidenceCityId": 0,
-  "establishResidenceCost": {
-    "residentialTax": 200,
-    "propertiesTransfer": {
-      "houses": { "1": 498.67 },
-      "total": 498.67
-    },
-    "total": 698.67
-  },
-  "establishResidenceConfirmation": "Are you sure you want to pay 698.67 LTL in local taxes and establish your residence in Klaipeda?",
-  "bonuses": {
-    "houseDurability": 10,
-    "energyBonus": 100,
-    "recoveryBonus": 2,
-    "numHouses": 1,
-    "parkEnergyBonus": 100,
-    "parkRecoveryBonus": 2,
-    "cityBonuxText": "<b>+10%</b> House durability",
-    "housesBonusText": "<b>+2</b> Energy / 6 minutes, <b>+100</b> Energy pool",
-    "parkBonusText": "<b>+2</b> Energy / 6 minutes, <b>+100</b> Energy pool"
-  },
-  "actionUrl": "//www.erepublik.com/en/main/city-actions",
-  "action": "establishResidence",
-  "widgetUrl": "//www.erepublik.com/en/main/city-data/710/overview/residence",
-  "widgetId": "residence"
-}
-```
-
-</details>
-
-### Get Government Widget
-
-**Method:** GET
-**URL:** `/en/main/city-data/{cityId}/overview/government`
-**Auth Required:** Yes
-
-Returns just the `widgets.government` object from the [City Overview](#get-city-overview-data) response.
-
-<details>
-<summary>cURL Example</summary>
-
-```bash
-curl 'https://www.erepublik.com/en/main/city-data/710/overview/government' \
-  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
-  -H 'X-Requested-With: XMLHttpRequest'
-```
-
-</details>
-
-<details>
-<summary>JSON Response</summary>
-
-```json
-{
-  "mayor": [],
-  "numCityCouncilors": "-",
-  "widgetUrl": "//www.erepublik.com/en/main/city-data/710/overview/government",
-  "widgetId": "government"
-}
-```
-
-</details>
-
-### Notes
-
-- These are the same data objects returned inline within the full overview response
-- Useful for refreshing a single widget without re-fetching the entire city overview
-- The `widgetUrl` in each widget's response points back to itself (self-referential)
-- The properties panel has similar sub-endpoints: `/en/main/city-data/{cityId}/properties/houses` and `/en/main/city-data/{cityId}/properties/holdingCompany`
-
----
-
-## Establish Residence (City Actions)
-
-**Method:** POST
-**URL:** `/en/main/city-actions`
-**Auth Required:** Yes
-
-### Description
-
-Performs city-related actions such as establishing residence. This is the action endpoint referenced by the residence widget's `actionUrl`. Establishing residence in a city costs local currency (residential tax + property transfer fees).
-
-### Request Parameters
+> [!WARNING]
+> Makes this city your residence and charges the residential tax and property transfer cost in local currency. The game's help says you cannot return to having no residence.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| action | string | Yes | Action type (e.g., `establishResidence`) |
-| cityId | number | Yes | Target city ID |
-| _token | string | Yes | CSRF token for request validation |
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `action` | string | Yes | `establishResidence` |
+| `cityId` | number | Yes | City |
 
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+The client also posts `url`, `widget` (`residence`) and `panel` (the current panel), taken from the [residence widget](#overview-widgets).
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/main/city-actions' \
+curl 'https://www.erepublik.com/en/main/city-actions' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  --data-raw 'action=establishResidence&cityId=710&_token=YOUR_CSRF_TOKEN'
+  --data-raw 'action=establishResidence&cityId=231&_token=YOUR_CSRF_TOKEN'
 ```
 
-</details>
+### Response
 
-### Example Response (Error - Invalid City)
+The client reads `status`, `message` and `currency` (the new balance). On success it reloads the panel, and the whole page for your first residence.
 
-<details>
-<summary>JSON Response</summary>
+### Errors
 
-```json
-{
-  "status": false,
-  "message": "Invalid City",
-  "error": true
-}
-```
+| Response | When |
+|----------|------|
+| `{"status":false,"message":"Invalid City","error":true}` | Missing or unknown `cityId` (earlier notes) |
+| `"CSRF attack detected."` | Missing `_token` (earlier notes). The client compares with `CSRF attack detected3.` |
 
-</details>
-
-### Example Response (Error - CSRF)
-
-```
-"CSRF attack detected."
-```
-
-### Notes
-
-- **Modifying action** -- this endpoint changes game state (establishes residence, costs currency)
-- Requires valid CSRF token obtained from the page context
-- The total cost is shown in the residence widget's `establishResidenceCost.total` field
-- Without `_token`, returns "CSRF attack detected" error
-- Without valid `cityId`, returns "Invalid City" error
-- Cost breakdown: residential tax (fixed per city) + property transfer fees (depends on houses owned)
-- The residence widget's `establishResidenceConfirmation` field provides a pre-formatted confirmation message
+**Source:** `ErpkResidenceController.establishResidence` (version 1795779904); errors — earlier notes.
 
 ---
 
-**Tags:** #erepublik #api #world #cities #residence #properties
+## Help popup
+
+`GET /en/main/city-help-popup` · Auth required · ✅ Verified 2026-11-27
+
+HTML walkthrough of cities and residence. The city page opens it once for citizens without a residence.
+
+```bash
+curl 'https://www.erepublik.com/en/main/city-help-popup' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+Without a session: `{"error":"not_authorized"}`.
+
+Rules it states:
+
+- Cities have five size tiers by number of residents; size sets the residential and property taxes and the house durability bonus.
+- To become a resident you travel to the city, then pay the residential tax and the prorated property tax of your active houses.
+- Property tax is set by the mayor and city council.
+- Residence gives +2 energy per 6 minutes and +50 energy pool, on top of the house bonuses, while you stay in the city. After leaving, the recovery bonus stops and the extra pool lasts 30 minutes.
+- A resident's houses cannot be paused.
+
+**Source:** real request, 2026-11-27; `launchHelpPopup` (version 1795779904).
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| `citizenInfo.residenceCityId` | Your residence city, `0` if none | `0` although the account has a residence; `residence.citizenResidenceCityId` is `0` too | Not settled |
+| `hasPropertiesInCity` | Whether you have any properties there | `0` while the holding widget listed factories | Not settled; may count houses only |
+| `regionInfo.regionOf` | Country information | Called "original owner" here from the field's role next to `underOccupationBy`; only an unoccupied region was read | Inference |
+| `cityTypeId` | 1 = small, 2 = large | `2` for a "Large Town" | Not settled |
+| Search and city page auth | Search needs none | Panels, search and page answer without a session | Live response |
+| Energy bonus of a residence | +50 pool in one place, +100 in another | Help popup says +50; widget texts say +100 | Both reported |

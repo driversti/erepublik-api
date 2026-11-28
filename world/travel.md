@@ -1,502 +1,344 @@
 # Travel
 
-#erepublik #api #world #travel
+[API docs](../README.md) › World and travel › Travel
 
-Travel endpoints for retrieving travel data, filtering by country, and executing travel actions.
+The travel popup ("Change location"): pick a country and a region, see distance and price, move. It opens from the main menu, the [world map](map.md), a [city page](cities.md) and holdings. Travelling from a battlefield also has its own endpoint, [Travel to battle](../military/battlefield/page.md#travel-to-battle).
 
-See also: [Cities](cities.md) | [Map & Regions](map.md) | [Overview](README.md)
+```mermaid
+flowchart LR
+    A[Travel popup] --> B[travelData: countries]
+    B -->|country chosen| C[travelData: getCountryRegions]
+    C -->|region chosen, canMove| D[travel]
+    D --> E[page reload]
+```
+
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Travel popup](#travel-popup) | GET | `/en/main/travelPopup` | ✅ Verified 2026-11-27 |
+| [Travel data](#travel-data) | POST | `/en/main/travelData` | ✅ Verified 2026-11-27 |
+| [Regions of a country](#regions-of-a-country) | POST | `/en/main/travelData` | ✅ Verified 2026-11-27 |
+| [Move](#move) | POST | `/en/main/travel` | 🔍 From code |
+
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels).
 
 ---
 
-## Get Travel Data
+## Travel popup
 
-**Method:** POST
-**URL:** `/en/main/travelData`
-**Auth Required:** Yes
+`GET /en/main/travelPopup` · Auth required · ✅ Verified 2026-11-27
 
-### Description
+The HTML of the popup (an Angular template for `ErpkTravelController`). It carries no travel data; the controller loads that with [travelData](#travel-data).
 
-Retrieves comprehensive travel information including all countries, regions, distances, travel costs, and current citizen location. This endpoint provides the data needed for the travel interface, showing where a citizen can travel, costs in currency/tickets, and distance calculations.
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `regionId` | query | number | No | Preselected region |
+| `holdingId` | query | number | No | Travel to a holding |
+| `battleId` | query | number | No | Travel to a battle; the popup then shows both sides |
 
-### Parameters
+```bash
+curl 'https://www.erepublik.com/en/main/travelPopup?regionId=424' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
+  -H 'X-Requested-With: XMLHttpRequest'
+```
+
+The parameters are written back into an inline script, which the controller reads:
+
+```javascript
+$j.extend(erepublik.settings, { travelIds: { 'holding': 0, 'region': 424, 'battle': 0 } });
+```
+
+The same script defines the texts of the four travel methods: `ticketOnly`, `currencyOnly`, `preferCurrency`, `preferTicket`. Without a session the request is redirected to the front page.
+
+**Source:** real request with `regionId`, 2026-11-27; `launchTravelPopup` in `erepublik.js` (version 1795779896). Only `regionId` was sent live.
+
+---
+
+## Travel data
+
+`POST /en/main/travelData` · Auth required · ✅ Verified 2026-11-27
+
+All countries, your location and residence, and, when a region or holding is targeted, the travel price to every other region. Read-only.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| _token | string | Yes | CSRF token for the request |
-| holdingId | number | No | Holding company ID (use 0 if not applicable) |
-| battleId | number | No | Battle ID if traveling for battle (use 0 if not applicable) |
-| regionId | number | Yes | Target region ID to get travel data for |
+| `_token` | string | Yes | [CSRF token](../guides/requests.md#csrf-token) |
+| `holdingId` | number | Yes* | `0` when not travelling to a holding |
+| `battleId` | number | Yes* | `0` when not travelling to a battle |
+| `regionId` | number | Yes* | `0` for no target region |
 
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+\* The client always sends all three.
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/main/travelData' \
+curl 'https://www.erepublik.com/en/main/travelData' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
-  --data-raw '_token=YOUR_CSRF_TOKEN&holdingId=0&battleId=0&regionId=663'
+  --data-raw '_token=YOUR_CSRF_TOKEN&holdingId=0&battleId=0&regionId=424'
 ```
 
-</details>
+### Variants
 
-### Example Response
+| Request | `regions` | Size | `preselect*` | `alreadyInRegion` |
+|---------|-----------|------|--------------|-------------------|
+| `regionId=0` | Empty array | ~20 KB | `false`, `false` | `""` |
+| `regionId` = another region | Object with all regions except your current one (573) | ~205 KB | IDs of the target | `false` |
+| `regionId` = your current region | Same as above | | Numbers | `"You are already in <region>."` |
 
-<details>
-<summary>JSON Response</summary>
+With `regionId=0` each country also has `currentRegions` and `regionsOccupiedByOthers` (see [Country object](#country-object)).
+
+When `alreadyInRegion` is set, the client shows the text, resets the targets to `0` and requests the data again.
+
+### Response
+
+Shortened (`regionId=424`):
 
 ```json
 {
-  "alreadyInRegion": false,
-  "battleInfo": {
-    "battleInfoText": "",
-    "travelRequired": false,
-    "travelData": false
-  },
-  "citizen": {
-    "id": 123456,
-    "citizenship": 72,
-    "residence": {
-      "hasResidence": 1,
-      "cityId": 710,
-      "regionId": 663,
-      "countryId": 72,
-      "bonuses": {
-        "hasResidence": 1,
-        "isInResidence": 0,
-        "validUntil": 1769355117,
-        "timeRemaining": 1777,
-        "numHouses": 1,
-        "energyBonus": 100,
-        "recoveryBonus": 4,
-        "description": "Residence bonuses partially available. Energy Pool bonus expires in:"
-      },
-      "cityInfo": {
-        "id": 710,
-        "name": "Klaipeda",
-        "permalink": "Klaipeda",
-        "regionId": 663,
-        "cityTypeId": 2,
-        "regionName": "Lithuania Minor",
-        "regionPermalink": "Lithuania-Minor",
-        "countryId": 72,
-        "countryName": "Lithuania",
-        "countryPermalink": "Lithuania"
-      }
-    }
-  },
-  "preselectCountryId": 72,
-  "preselectRegionId": 663,
   "countries": {
-    "167": {
-      "id": 167,
-      "name": "Albania",
-      "permalink": "Albania",
-      "hasRegionsFromOthers": true,
-      "hasRegionsOccupiedByOthers": true,
-      "regions": [626, 746, 745, 744]
+    "35": {
+      "id": 35, "name": "Poland", "permalink": "Poland",
+      "hasRegionsFromOthers": true, "hasRegionsOccupiedByOthers": true,
+      "regions": [424, 423, 425]
     }
   },
   "regions": {
-    "626": {
-      "id": 626,
-      "name": "Istria and Kvarner",
-      "permalink": "Istria-Kvarner",
-      "zoneName": "B3",
-      "distanceInZones": 2,
-      "distanceInKm": 1306,
-      "isConquered": true,
-      "isConqueredFrom": 63,
-      "isConqueredBy": 167,
-      "countryId": 167,
-      "cityId": 666,
-      "cityName": "Rijeka",
-      "cost": 130,
-      "ticket": 5,
-      "ticketAmount": 1,
-      "canMove": true,
-      "isAlly": false,
-      "isDiscounted": false,
-      "isFree": false
+    "424": {
+      "id": 424, "name": "Mazovia", "permalink": "Mazovia",
+      "zoneName": "A3", "distanceInZones": 1, "distanceInKm": 100,
+      "isConquered": false, "isConqueredFrom": 0, "isConqueredBy": 0,
+      "countryId": 35, "cityId": 231, "cityName": "Warsaw",
+      "cost": 100, "ticket": 5, "ticketAmount": 1,
+      "canMove": true, "isAlly": false, "isDiscounted": false, "isFree": false
     }
-  }
+  },
+  "preselectCountryId": 35,
+  "preselectRegionId": 424,
+  "alreadyInRegion": false,
+  "battleInfo": { "battleInfoText": "", "travelRequired": false, "travelData": false },
+  "citizen": { "...": "see below" }
+}
+```
+
+<details>
+<summary>The citizen object (edited)</summary>
+
+Citizenship, location and timers are placeholders; the residence city is only an example. Distance and price in the example above are made up too.
+
+```json
+{
+  "country": { "id": 1, "name": "COUNTRY_NAME", "permalink": "COUNTRY_PERMALINK" },
+  "region": { "id": 1, "name": "REGION_NAME", "permalink": "REGION_PERMALINK" },
+  "city": { "id": 0, "name": "CITY_NAME" },
+  "residence": {
+    "hasResidence": 1,
+    "cityId": 231,
+    "regionId": 424,
+    "countryId": 35,
+    "bonuses": {
+      "hasResidence": 1,
+      "isInResidence": 0,
+      "validUntil": 2000000000,
+      "timeRemaining": 1000,
+      "numHouses": 1,
+      "energyBonus": 100,
+      "recoveryBonus": 4,
+      "description": "Residence bonuses partially available. Energy Pool bonus expires in:"
+    },
+    "cityInfo": {
+      "id": 231, "name": "Warsaw", "permalink": "Warsaw", "cityTypeId": 2,
+      "regionId": 424, "regionName": "Mazovia", "regionPermalink": "Mazovia",
+      "countryId": 35, "countryName": "Poland", "countryPermalink": "Poland"
+    }
+  },
+  "travelMethod": "preferCurrency"
 }
 ```
 
 </details>
 
-### Response Fields
+| Field | Type | Description |
+|-------|------|-------------|
+| `countries` | object | Keyed by country ID; 74 countries |
+| `regions` | object or `[]` | Keyed by region ID; see [Region object](#region-object) |
+| `preselectCountryId`, `preselectRegionId` | number or `false` | What the popup selects |
+| `alreadyInRegion` | string or `false` | A message when the target is your current region |
+| `battleInfo` | object | `battleInfoText`, `travelRequired`, `travelData`. The popup also reads `popupTitle`, `infoText`, and `travelData.{countryId}.inRegionId` for each battle side |
+| `citizen.country`, `.region`, `.city` | object | Citizenship and current location |
+| `citizen.residence` | object | `hasResidence`, `cityId`, `regionId`, `countryId`, `bonuses`, `cityInfo` |
+| `citizen.travelMethod` | string | Your preferred method, see [Payment](#payment) |
 
-#### Top Level
-- `alreadyInRegion` - Boolean indicating if citizen is already in the target region
-- `battleInfo` - Object containing battle-related travel requirements
-- `citizen` - Current citizen information including residence and bonuses
-- `preselectCountryId` - Country ID to preselect in UI
-- `preselectRegionId` - Region ID to preselect in UI
-- `countries` - Object mapping country IDs to country data (74 countries total)
-- `regions` - Object mapping region IDs to region data with travel details (573+ regions)
+### Country object
 
-#### Region Object
-- `distanceInZones` - Distance in zone jumps (affects cost)
-- `distanceInKm` - Visual distance in kilometers
-- `cost` - Travel cost in local currency
-- `ticket` - Required ticket type ID (Q1-Q5)
-- `ticketAmount` - Number of tickets required
-- `canMove` - Whether travel is possible
-- `isConquered` - Whether region is occupied
-- `isConqueredFrom` / `isConqueredBy` - Original/occupying country IDs
-- `isAlly` - Whether target is in an allied country
-- `isDiscounted` - Travel cost discount applied
-- `isFree` - Whether travel is free (e.g., to residence)
+| Field | Type | Description |
+|-------|------|-------------|
+| `id`, `name`, `permalink` | | Country |
+| `regions` | number[] | Region IDs listed under this country: the ones it holds and its own regions held by others |
+| `hasRegionsFromOthers` | boolean | Holds regions of other countries |
+| `hasRegionsOccupiedByOthers` | boolean | Has regions held by others |
+| `currentRegions` | string | Only with `regionId=0`: comma-separated IDs it currently holds |
+| `regionsOccupiedByOthers` | | Only with `regionId=0`. In the observed countries a single region ID; the format with several regions is not confirmed |
 
-#### Residence Bonuses
-- `energyBonus` - Energy pool bonus (default 100)
-- `recoveryBonus` - Energy recovery bonus per 6 minutes
-- `validUntil` - Unix timestamp when bonus expires
-- `timeRemaining` - Seconds remaining on bonus
-- `numHouses` - Number of houses owned
-- `isInResidence` - `1` = citizen is currently in their residence, `0` = away
-- `description` - The game's own verdict string, e.g. `"Residence bonuses available"` (home) vs `"Residence bonuses partially available. Energy Pool bonus expires in:"` (away)
+### Region object
 
-##### Interpreting these fields (added 2026-07-17)
+| Field | Type | Description |
+|-------|------|-------------|
+| `id`, `name`, `permalink` | | Region; `permalink` works in the [region page](map.md#region-page) URL |
+| `countryId` | number | Current owner |
+| `cityId`, `cityName` | | The region's [city](cities.md) |
+| `zoneName` | string | Zone code, for example `A3` or `C5` |
+| `distanceInZones` | number | `1`–`5` seen |
+| `distanceInKm` | number | Distance from your location |
+| `cost` | number | Price in local currency |
+| `ticket` | number | Travel ticket quality; always `5` on 2026-11-27 |
+| `ticketAmount` | number | Tickets needed; `1`–`4` seen |
+| `canMove` | boolean | Travel is possible; when `false` the client says you do not have enough money |
+| `isConquered` | boolean | Held by a country other than its original owner |
+| `isConqueredFrom`, `isConqueredBy` | number | Original and occupying country, `0` if not conquered |
+| `isAlly`, `isDiscounted`, `isFree` | boolean | All `false` in the observed responses |
 
-Game mechanics live in `~/KnowledgeBase/Erepublik/Residence.md`; this is only what the fields mean for a client.
+Price grows with distance, and ranges overlap between neighbouring zone distances: one zone cost from about 20 to 290, five zones from about 870 to 1750 (one account, 2026-11-27).
 
-- **`validUntil` / `timeRemaining` track the ENERGY POOL bonus only.** Per the [Residence](https://wiki.erepublik.com/index.php/Residence) wiki page, the *recovery* bonus is lost the instant the citizen leaves ("the recoverable energy bonus is not available"), with no grace period; only the pool bonus survives **30 minutes from the moment of departure**. That is why the away-state `description` says **"partially"**. The sample above (`timeRemaining: 1777`) is ~23s into an apparent 1800s (30-min) budget.
-- **Home state:** `validUntil: 0`, `timeRemaining: 0` — these are *not* a countdown while in residence.
-- ⚠️ **`recoveryBonus` is NOT gated by location.** In the sample above it still reports `4` while `isInResidence: 0` — i.e. the numeric fields describe the citizen's *potential* bonuses, not what is currently in effect. A client that renders `recoveryBonus` while away will claim a bonus the citizen does not have. **Gate on `isInResidence` / `description`, not on the number being non-zero.** (Observation from this captured sample; not confirmed against a live account.)
-- ⚠️ **Prefer `isInResidence` over comparing IDs yourself.** Residence is established per **city** (`residence.cityId`) while travel is per **region** (`residence.regionId`); the wiki does not state whether a different city in the same region keeps the bonus. Let the server answer.
-- ⚠️ `energyBonus` values in captured samples are inconsistent (`50` in `cities.md`'s `residentialBonuses` vs `100` here and in the residence widget), and the two wiki pages disagree by exactly 2×. Do not size anything off the docs — read live.
+### Residence bonus fields
 
-### Notes
+| Field | Description |
+|-------|-------------|
+| `isInResidence` | The game's own answer to "am I home?" |
+| `validUntil`, `timeRemaining` | Countdown of the extra energy **pool** after leaving; `0` at home |
+| `energyBonus`, `recoveryBonus` | Energy pool and recovery per 6 minutes |
+| `numHouses` | Number of houses |
+| `description` | Status text shown by the game |
 
-- Response includes ALL countries and regions in the game (200KB+ of data)
-- Travel costs calculated based on distance zones from current location
-- Residence bonuses only apply when in residence region
-- `_token` must be a valid CSRF token obtained from the page
-- Region conquests shown via `isConquered`, `isConqueredFrom`, `isConqueredBy` fields
-- Free travel available to: residence location, battles (if applicable), ally countries (sometimes)
-- Distance zones (A, B1, B2, B3, etc.) determine base travel cost multiplier
+- When you leave the city, the recovery bonus stops at once and the extra pool lasts 30 minutes (the game's [city help popup](cities.md#help-popup)).
+- `recoveryBonus` stays non-zero while you are away. Use `isInResidence`, not the numbers.
+- Residence belongs to a **city**, travel targets a **region**. Prefer `isInResidence` to comparing IDs.
+- `energyBonus` differs between responses: `100` here, `50` in `residentialBonuses` of the same account's [city data](cities.md#city-overview). Do not hard-code it.
+
+**Source:** real requests, 2026-11-27 (`regionId` = `0`, another region, current region); `ErpkTravelController` in `erpk_angular_controllers.js` (version 1795779904). `holdingId` and `battleId` were sent only as `0`.
 
 ---
 
-## Get Travel Data (Filter by Country)
+## Regions of a country
 
-**Method:** POST
-**URL:** `/en/main/travelData`
-**Auth Required:** Yes
+`POST /en/main/travelData` · Auth required · ✅ Verified 2026-11-27
 
-### Description
-
-Retrieves travel data filtered by a specific country, showing all regions belonging to or occupied by that country. This variant uses the `check=getCountryRegions` parameter to filter results by `countryId`, returning a subset of regions instead of the full world map. Useful for building country-specific travel interfaces or displaying regions within a particular nation.
-
-### Parameters
+With `check=getCountryRegions` the response holds only the regions of one country. The client calls it when you change the country list. Read-only.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| check | string | Yes | Action type, must be `getCountryRegions` for this variant |
-| countryId | number | Yes | Country ID to filter regions by |
-| _token | string | Yes | CSRF token for the request |
-| holdingId | number | No | Holding company ID (use 0 if not applicable) |
-| regionId | number | No | Current/reference region ID (use 0 if not applicable) |
+| `_token` | string | Yes | CSRF token |
+| `check` | string | Yes | `getCountryRegions` |
+| `countryId` | number | Yes | Country |
+| `holdingId` | number | Yes* | `0` when not used |
+| `regionId` | number | Yes* | `0`, or the region to preselect |
 
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+\* Always sent by the client. It does not send `battleId` here.
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/main/travelData' \
+curl 'https://www.erepublik.com/en/main/travelData' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
-  --data-raw 'check=getCountryRegions&countryId=72&_token=YOUR_CSRF_TOKEN&holdingId=0&regionId=0'
+  --data-raw '_token=YOUR_CSRF_TOKEN&check=getCountryRegions&countryId=35&holdingId=0&regionId=0'
 ```
 
-</details>
+### Response
 
-### Example Response
-
-<details>
-<summary>JSON Response</summary>
+Same structure as [Travel data](#travel-data) (about 10 KB). For Poland: 21 [regions](#region-object) and 15 [countries](#country-object), the requested one plus those that share a region with it.
 
 ```json
 {
   "countries": {
-    "49": {
-      "id": 49,
-      "name": "Indonesia",
-      "permalink": "Indonesia",
-      "hasRegionsFromOthers": true,
-      "hasRegionsOccupiedByOthers": false,
-      "regions": [667]
-    },
-    "72": {
-      "id": 72,
-      "name": "Lithuania",
-      "permalink": "Lithuania",
-      "hasRegionsFromOthers": true,
-      "hasRegionsOccupiedByOthers": true,
-      "regions": [667, 664, 665, 478, 387, 372, 64, 43, 763, 120, 692, 333, 666]
-    },
-    "56": {
-      "id": 56,
-      "name": "Iran",
-      "permalink": "Iran",
-      "hasRegionsFromOthers": false,
-      "hasRegionsOccupiedByOthers": true,
-      "regions": [478]
+    "12": {
+      "id": 12, "name": "Germany", "permalink": "Germany",
+      "hasRegionsFromOthers": false, "hasRegionsOccupiedByOthers": true,
+      "regions": [246]
     }
   },
-  "regions": {
-    "667": {
-      "id": 667,
-      "name": "Sudovia",
-      "permalink": "Sudovia",
-      "zoneName": "A3",
-      "distanceInZones": 1,
-      "distanceInKm": 190,
-      "isConquered": true,
-      "isConqueredFrom": 72,
-      "isConqueredBy": 49,
-      "countryId": 49,
-      "cityId": 714,
-      "cityName": "Marijampole",
-      "cost": 20,
-      "ticket": 5,
-      "ticketAmount": 1,
-      "canMove": true,
-      "isAlly": false,
-      "isDiscounted": false,
-      "isFree": false
-    },
-    "664": {
-      "id": 664,
-      "name": "Samogitia",
-      "permalink": "Samogitia",
-      "zoneName": "A3",
-      "distanceInZones": 1,
-      "distanceInKm": 77,
-      "isConquered": false,
-      "isConqueredFrom": 0,
-      "isConqueredBy": 0,
-      "countryId": 72,
-      "cityId": 711,
-      "cityName": "Telsiai",
-      "cost": 20,
-      "ticket": 5,
-      "ticketAmount": 1,
-      "canMove": true,
-      "isAlly": false,
-      "isDiscounted": false,
-      "isFree": false
-    }
-  },
-  "preselectCountryId": 72,
+  "regions": { "424": { "...": "region object" } },
+  "preselectCountryId": 35,
   "preselectRegionId": false,
   "alreadyInRegion": "",
-  "battleInfo": {
-    "battleInfoText": "",
-    "travelRequired": false,
-    "travelData": false
-  },
-  "citizen": {
-    "country": {
-      "id": 72,
-      "name": "Lithuania",
-      "permalink": "Lithuania"
-    },
-    "region": {
-      "id": 663,
-      "name": "Lithuania Minor",
-      "permalink": "Lithuania-Minor"
-    },
-    "city": {
-      "id": 710,
-      "name": "Klaipeda"
-    },
-    "residence": {
-      "hasResidence": 1,
-      "cityId": 710,
-      "regionId": 663,
-      "countryId": 72,
-      "bonuses": {
-        "hasResidence": 1,
-        "isInResidence": 1,
-        "validUntil": 0,
-        "timeRemaining": 0,
-        "numHouses": 1,
-        "energyBonus": 100,
-        "recoveryBonus": 4,
-        "description": "Residence bonuses available"
-      },
-      "cityInfo": {
-        "id": 710,
-        "name": "Klaipeda",
-        "permalink": "Klaipeda",
-        "regionId": 663,
-        "cityTypeId": 2,
-        "regionName": "Lithuania Minor",
-        "regionPermalink": "Lithuania-Minor",
-        "countryId": 72,
-        "countryName": "Lithuania",
-        "countryPermalink": "Lithuania"
-      }
-    },
-    "travelMethod": "preferCurrency"
-  }
+  "battleInfo": { "battleInfoText": "", "travelRequired": false, "travelData": false },
+  "citizen": { "...": "as above" }
 }
 ```
 
-</details>
+On an `error` field the client shows `message`.
 
-### Response Fields
+If the chosen region was conquered from the selected country (`isConqueredFrom` equals it), the popup switches the country to `isConqueredBy` and requests its regions.
 
-#### Top Level (Filtered Response)
-- `countries` - Object mapping country IDs to country data (only countries related to the specified `countryId`)
-- `regions` - Object mapping region IDs to region data (only regions owned/occupied by the specified country)
-- `preselectCountryId` - The requested country ID (echoed back)
-- `preselectRegionId` - Region to preselect (false if not specified)
-- `alreadyInRegion` - Empty string or region ID if citizen is already in target
-- `battleInfo` - Battle-related travel requirements (if applicable)
-- `citizen` - Current citizen information including country, region, city, and residence
-
-#### Country Object (Filtered View)
-- `hasRegionsFromOthers` - Whether this country has conquered regions from other nations
-- `hasRegionsOccupiedByOthers` - Whether this country has regions occupied by other nations
-- `regions` - Array of region IDs belonging to (or occupied by) this country
-
-#### Region Object
-Same structure as "Get Travel Data" endpoint - includes distance, cost, conquest status, etc.
-
-#### Citizen Object
-- `country` - Citizen's citizenship country (id, name, permalink)
-- `region` - Current region location
-- `city` - Current city location
-- `residence` - Residence details including bonuses and city info
-- `travelMethod` - Preferred payment method for travel ("preferCurrency" or "preferTicket")
-
-### Notes
-
-- This variant filters results to show only regions related to the specified `countryId`
-- Returns regions **owned by** the country (original regions)
-- Returns regions **occupied by** the country (conquered from others)
-- Returns regions **occupied from** the country (original regions now held by enemies)
-- Useful for building country-specific travel dropdowns or region selectors
-- Response is significantly smaller than the full world map variant (fewer countries/regions)
-- The `check=getCountryRegions` parameter is required to trigger this filtering behavior
-- `preselectRegionId` is `false` instead of a number when no specific region is targeted
-- All travel costs, distances, and conquest information are still included per region
-- Example shows Lithuania (country 72) with 13 regions including occupied territories across multiple continents
+**Source:** real request, 2026-11-27; `ErpkTravelController.changeCountry`, `changeRegion` (version 1795779904).
 
 ---
 
-## Travel to Region
+## Move
 
-**Method:** POST
-**URL:** `/en/main/travel`
-**Auth Required:** Yes
+`POST /en/main/travel` · Auth required · 🔍 From code
 
-### Description
-
-Executes the actual travel action to move the citizen to a different region. This endpoint performs the travel after the user has selected a destination, using either currency or travel tickets as payment based on the `travelMethod` parameter.
-
-### Parameters
+> [!WARNING]
+> Moves your citizen and spends currency or travel tickets.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| check | string | Yes | Action type, always `moveAction` for travel |
-| _token | string | Yes | CSRF token for the request |
-| travelMethod | string | Yes | Payment method: `preferCurrency` or `preferTicket` |
-| inRegionId | number | Yes | Destination region ID to travel to |
-| toCountryId | number | Yes | Destination country ID (country containing the region) |
-
-### Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| Cookie | `erpk=YOUR_SESSION_TOKEN` | Yes |
-| X-Requested-With | `XMLHttpRequest` | Yes |
-| Content-Type | `application/x-www-form-urlencoded` | Yes |
-| Accept | `application/json, text/plain, */*` | Recommended |
-
-### Example Request
-
-<details>
-<summary>cURL Example</summary>
+| `_token` | string | Yes | CSRF token |
+| `check` | string | Yes | `moveAction` (the map omits it, see below) |
+| `travelMethod` | string | Yes | See [Payment](#payment) (the map omits it) |
+| `inRegionId` | number | When a region is chosen | Destination region |
+| `toCountryId` | number | "Move to location" | Country selected in the popup |
+| `sideCountryId` | number | "Fight for …" buttons | Battle side; sent instead of `toCountryId` |
+| `battleId` | number | On a battlefield | Current battle |
 
 ```bash
-curl -X POST 'https://www.erepublik.com/en/main/travel' \
+curl 'https://www.erepublik.com/en/main/travel' \
   -H 'Cookie: erpk=YOUR_SESSION_TOKEN' \
   -H 'X-Requested-With: XMLHttpRequest' \
-  -H 'Content-Type: application/x-www-form-urlencoded' \
-  -H 'Accept: application/json, text/plain, */*' \
-  --data-raw 'check=moveAction&_token=YOUR_CSRF_TOKEN&travelMethod=preferCurrency&inRegionId=664&toCountryId=72'
+  --data-raw 'check=moveAction&_token=YOUR_CSRF_TOKEN&travelMethod=preferCurrency&inRegionId=424&toCountryId=35'
 ```
 
-</details>
+The [world map](map.md#world-map) uses a shorter form, to `/en/main/travel/` with a trailing slash:
 
-### Example Response
+```text
+battleId=0&_token=YOUR_CSRF_TOKEN&toCountryId=35&inRegionId=424
+```
 
-<details>
-<summary>JSON Response (Success)</summary>
+### Response
+
+Earlier notes:
 
 ```json
-{
-  "error": 0,
-  "message": "success"
-}
+{ "error": 0, "message": "success" }
 ```
 
-</details>
+A truthy `error` means failure and the client shows `message`; otherwise it reloads the page.
 
-<details>
-<summary>JSON Response (Error - insufficient funds/tickets)</summary>
+### Errors
 
-```json
-{
-  "error": 1,
-  "message": "You don't have enough currency/tickets to travel"
-}
-```
+| Message (earlier notes) | When |
+|-------------------------|------|
+| `You don't have enough currency/tickets to travel` | Cannot pay |
 
-</details>
-
-### Notes
-
-- This endpoint actually performs the travel and deducts payment (currency or tickets)
-- Call `travelData` endpoint first to get region IDs, costs, and validate travel is possible
-- `travelMethod` determines payment preference:
-  - `preferCurrency` - Use local currency if available, fallback to tickets
-  - `preferTicket` - Use travel tickets if available, fallback to currency
-- Travel cost depends on distance zones (calculated in `travelData` endpoint)
-- Free travel scenarios: to residence, during battles (if applicable), ally countries (sometimes)
-- The `check=moveAction` parameter is required for the server to process the travel
-- After successful travel, citizen's current location is updated server-side
-- May fail if citizen is in a battle cooldown or has other travel restrictions
+**Source:** `ErpkTravelController.moveAction`, `ErpkTravelFactory.moveAction` (version 1795779904); `mapTravel` in `js/cmp/map.js`; response examples — earlier notes.
 
 ---
 
-**Tags:** #erepublik #api #world #travel #regions #countries #geography
+## Payment
+
+| `travelMethod` | Client behaviour |
+|----------------|------------------|
+| `preferCurrency` | Shows the currency price while your currency is above `cost`, otherwise a ticket |
+| `preferTicket` | Shows a ticket |
+| `currencyOnly` | Never uses tickets |
+| `ticketOnly` | Shows a ticket |
+
+The preferred method is stored in your game options (`/en/main/citizen-edit/edit_game_options`) and returned as `citizen.travelMethod`.
+
+---
+
+## Open questions
+
+| Topic | Earlier notes | Observed or code | Page follows |
+|-------|---------------|------------------|--------------|
+| `regionId` in travel data | Required, target region | `0` is valid and returns no regions | Live response |
+| `ticket` | Ticket type Q1–Q5 | Always `5` for every region | Live response |
+| `alreadyInRegion` | Empty string or region ID | A message, `false` or `""` | Live response |
+| `travelMethod` | Two values, each falling back to the other | Client names four values; the fallback happens server-side and was not tested | Code |
+| Free travel | To residence, battles, allies | No region had `isFree`, `isDiscounted` or `isAlly` | Not settled |
+| Move restrictions | May fail during a battle cooldown | Not tested | — |

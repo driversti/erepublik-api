@@ -1,282 +1,216 @@
-# Country Administration Page
+# Government administration
 
-#erepublik #api #country #administration
+[API docs](../README.md) › Country and politics › Government administration
 
-[< Back to Country Overview](README.md)
+The **Administration** tab of a country (military priorities, organizations, law proposals) and the related government screens: citizenship applications and Congress membership. Most buttons work only for the president or Congress.
+
+| Action | Method | Path | Status |
+|--------|--------|------|--------|
+| [Administration page](#administration-page) | GET | `/en/country-administration/{country}/{page}` | ✅ Verified 2026-11-27 |
+| [Campaign of the Day](#campaign-of-the-day) | POST | `/en/mark-battle` | 🔍 From code |
+| [Citizenship applications](#citizenship-applications) | GET | `/en/country/{country}/citizenship/applications/{page}` | ✅ Verified 2026-11-27 |
+| [Approved applications](#approved-applications) | GET | `/en/country/{country}/citizenship/applications/approved/{page}` | ✅ Verified 2026-11-27 |
+| [Accept an application](#accept-an-application) | POST | URL from the page | 🔍 From code |
+| [Cancel an application](#cancel-an-application) | GET | URL from the page | 🔍 From code |
+| [Resign from Congress](#resign-from-congress) | POST | `/en/{country}/resign-congress` | ❔ Unconfirmed |
+
+Headers, cookie and `_token`: see [Making requests](../guides/requests.md#common-headers). Status labels are explained [there too](../guides/requests.md#status-labels). Path rules and page header: [Society](society.md#common-to-all-country-pages).
+
+Related: [Congress proposals and laws](laws.md) · [Allied forces popup](military.md#allied-forces-popup)
 
 ---
 
-Retrieves the country administration page as HTML. This is the **5th tab** of the country pages and uses a **different URL pattern** from the other four tabs (`/en/country-administration/` instead of `/en/country/{tab}/`). The page shows military priorities (Campaign of the Day / deploy allied forces) and a paginated history of law proposals.
+## Administration page
 
-**Method:** GET
-**URL:** `/en/country-administration/{countryName}/{page}`
-**Auth Required:** No
+`GET /en/country-administration/{country}/{page}` · No auth (earlier notes) · ✅ Verified 2026-11-27
 
-## Path Parameters
-
-| Name | Type | Required | Description |
-|------|------|----------|-------------|
-| countryName | string | Yes | The country permalink name (e.g., `USA`, `Lithuania`, `Republic-of-Moldova`) |
-| page | integer | Yes | Page number for law proposals pagination (starts at `1`) |
-
-## Headers
-
-| Header | Value | Required |
-|--------|-------|----------|
-| User-Agent | `Mozilla/5.0 ...` | Recommended (Cloudflare may challenge bot-like requests) |
-
-## Example Request (cURL)
-
-<details>
-<summary>cURL example</summary>
+| Name | In | Type | Required | Description |
+|------|----|------|----------|-------------|
+| `country` | path | string | Yes | Permalink |
+| `page` | path | number | Yes | Law list page, from `1`; required even for the first page |
 
 ```bash
-curl -X GET 'https://www.erepublik.com/en/country-administration/USA/1' \
-  -H 'User-Agent: Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36'
+curl 'https://www.erepublik.com/en/country-administration/Poland/1' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
 ```
 
-</details>
+Earlier notes: readable without a session, with the same reduced view.
 
-## Example Response
+### Access message
 
-Returns a full HTML page (`<title>eRepublik Country Administration | USA</title>`) with two main sections.
+`.infoholder`: `You are not a president or a congress member in this country.` Earlier notes expect extra controls for those roles; they have not been seen.
 
-## Page Sections (parsed from HTML)
-
-### 1. Access Message
-
-A message indicating the viewer's access level:
-
-<details>
-<summary>HTML example</summary>
-
-```html
-<div class="holder bordersep">
-    <p class="infoholder">
-        <span class="rightpadded">You are not a president or a congress member in this country.</span>
-        <a href="//wiki.erepublik.com/index.php/USA" target="_blank">
-            <img src="//www.erepublik.net/images/parts/btn_icon-wiki.gif" title="Open Wiki page" class="flag" alt="wiki">
-        </a>
-    </p>
-</div>
-```
-
-</details>
-
-> **Note:** When logged in as the Country President or a Congress member, this area likely shows additional controls (e.g., propose law buttons). The message text changes based on the viewer's role.
-
-### 2. Military Priorities
-
-Under `<h2 class="section">Military Priorities</h2>` inside `div#militaryPriorities`:
-
-<details>
-<summary>HTML example</summary>
+### Military priorities
 
 ```html
 <div class="holder" id="militaryPriorities">
-    <h2 class="section">Military Priorities</h2>
-    <div class="adminaction">
-        <div class="goleft padded">
-            <a class="std_global_btn smallSize orangeColor mppPriorities disabled"
-               id="mppPriorityTrigger" title="Deploy allied forces" tipsy>
-                <span>Deploy allied forces</span>
-            </a>
-        </div>
-    </div>
+  <h2 class="section">Military Priorities</h2>
+  <a class="std_global_btn smallSize orangeColor mppPriorities disabled" id="mppPriorityTrigger"><span>Deploy allied forces</span></a>
 </div>
-```
-
-</details>
-
-| Data | CSS Selector | Notes |
-|------|-------------|-------|
-| Deploy allied forces button | `a#mppPriorityTrigger` | Has class `disabled` when viewer is not president |
-| Button text | `a#mppPriorityTrigger span` | `Deploy allied forces` |
-
-> **Note:** The "Deploy allied forces" button has class `disabled` for non-president viewers. When the Country President is logged in, this button opens the MPP priority popup (handled by `generalPopup.renderPopup('mppPriority')` in JS). There may also be a "Campaign of the Day" feature (see JS variables below).
-
-### 2b. Manage Organizations
-
-Under `<h2 class="section">Manage Organizations</h2>` inside `div#manageOrganizations`. This section appears **after** Military Priorities:
-
-<details>
-<summary>HTML example</summary>
-
-```html
 <div class="holder" id="manageOrganizations">
-    <h2 class="section">Manage Organizations</h2>
-    <div class="adminaction">
-        <div class="goleft padded">
-            <a class="std_global_btn smallSize orangeColor mppPriorities disabled"
-               id="manageOrganizationsTrigger" title="Manage Organizations" tipsy>
-                <span>Manage Organizations</span>
-            </a>
-        </div>
-    </div>
+  <h2 class="section">Manage Organizations</h2>
+  <a class="std_global_btn smallSize orangeColor mppPriorities disabled" id="manageOrganizationsTrigger"><span>Manage Organizations</span></a>
 </div>
 ```
 
-</details>
+| Button | `disabled` when | Opens |
+|--------|-----------------|-------|
+| `#mppPriorityTrigger` | Viewer is not the president | [Allied forces popup](military.md#allied-forces-popup) |
+| `#manageOrganizationsTrigger` | Viewer is not the president | [Manage organizations popup](../social/organizations.md#manage-organizations-popup) |
 
-| Data | CSS Selector | Notes |
-|------|-------------|-------|
-| Manage Organizations button | `a#manageOrganizationsTrigger` | Has class `disabled` when viewer is not president |
-| Button text | `a#manageOrganizationsTrigger span` | `Manage Organizations` |
+### Law proposals
 
-> **Note:** Like the "Deploy allied forces" button, the "Manage Organizations" button has class `disabled` for non-president viewers. When the Country President is logged in, this button likely opens a popup to manage country organizations. Note the CSS class `mppPriorities` is reused from the Military Priorities section (likely a copy-paste from the original code).
-
-### 3. Law Proposals
-
-Under `<h2 class="section">Law proposals</h2>`. Contains a table listing recent law proposals with their status:
-
-<details>
-<summary>HTML example</summary>
+`table.laws.lawDescription.largepadded`, with `ul.pager` below.
 
 ```html
-<div class="holder">
-    <h2 class="section">Law proposals</h2>
-    <div class="indent">
-        <table class="laws lawDescription largepadded">
-            <!-- Law entry (repeated for each proposal) -->
-            <tr>
-                <td width="250" class="first">
-                    <a href="//www.erepublik.com/en/main/law/USA/327910"
-                       title="" class="dotted taxStyle Donate">
-                        Donate
-                        <span class="lawIco"></span>
-                    </a>
-                </td>
-                <td width="150" class="first">
-                    Day 6,653, 21:35 <br><small>(6 hours ago)</small>
-                </td>
-                <td width="140" class="first">
-                    <img src="//www.erepublik.net/images/parts/icon-law_empty.gif"
-                         alt="Pending" class="icon">Pending
-                </td>
-                <td width="60" class="first">
-                    <a href="//www.erepublik.com/en/main/law/USA/327910"
-                       class="std_global_btn tinySize blueColor">
-                        <span>Details</span>
-                    </a>
-                </td>
-            </tr>
-            <!-- More law entries... -->
-        </table>
-        <ul class="pager">
-            <!-- Pagination links when multiple pages exist -->
-        </ul>
-    </div>
-</div>
+<tr>
+  <td><a href="//www.erepublik.com/en/main/law/Poland/344511" class="dotted taxStyle Donate">Donate <span class="lawIco"></span></a></td>
+  <td>Day 6,946, 12:48 <br><small>(21 hours ago)</small></td>
+  <td><img src="//www.erepublik.net/images/parts/icon-law_empty.gif" alt="Pending" class="icon">Pending</td>
+  <td><a href="//www.erepublik.com/en/main/law/Poland/344511" class="std_global_btn tinySize blueColor"><span>Details</span></a></td>
+</tr>
 ```
 
-</details>
+| Data | Selector |
+|------|----------|
+| Law type | Class after `taxStyle` on `a.dotted` (see [law types](laws.md#law-types)) |
+| Law ID | Last segment of the link to the [law page](laws.md#law-page) |
+| Date | Second cell |
+| Status | `img.icon[alt]` or cell text |
 
-**Law entry CSS selectors for parsing:**
+| Status | Icon |
+|--------|------|
+| `Pending` | `icon-law_empty.gif` |
+| `Accepted` | `icon-law_valid.gif` |
+| `Rejected` | `icon-law_invalid.gif` |
 
-| Data | CSS Selector | Example |
-|------|-------------|---------|
-| Law type + link | `table.laws a.dotted` | text: `Donate`, href: `/en/main/law/USA/327910` |
-| Law type CSS class | `table.laws a.dotted` class attr | `taxStyle Donate`, `taxStyle NaturalEnemy` |
-| Law icon | `table.laws span.lawIco` | Empty span, styled via CSS based on parent class |
-| Date/time | `table.laws td:nth-child(2)` | `Day 6,653, 21:35` with `<small>(6 hours ago)</small>` |
-| Status icon | `table.laws td:nth-child(3) img.icon` | `alt` attr: `Pending` or `Accepted` |
-| Status text | `table.laws td:nth-child(3)` | `Pending` or `Accepted` |
-| Details link | `table.laws a.std_global_btn` | href: `/en/main/law/{countryName}/{lawId}` |
-| Law ID | Extract from details link | Integer from URL (e.g., `327910`) |
-| Pagination | `ul.pager` | Contains page links when more than one page of laws |
+Earlier notes: other statuses may exist (for example Expired), with their own icons.
 
-**Law types discovered (from CSS classes):**
+Law IDs are one sequence for all countries. The first row's cells carry `class="first"` (styling only).
 
-| CSS Class | Law Type | Description |
-|-----------|----------|-------------|
-| `taxStyle Donate` | Donate | Treasury donation proposal |
-| `taxStyle NaturalEnemy` | Natural Enemy | Declare/remove natural enemy |
-| `taxStyle Airstrike` | Airstrike | Launch an airstrike against a non-bordering country |
-| `taxStyle DeclareWar` | Declare War | Declare war on a bordering country |
-| `taxStyle ResourceConcession` | Resource Concession | Lease a region's resource to/from another country in exchange for a % of daily industry GDP |
-| `taxStyle MutualProtectionPact` | Mutual Protection Pact | Propose an MPP with another country |
+### Inline variables and scripts
 
-> **Note:** `ResourceConcession` and `MutualProtectionPact` were observed on `/en/country-administration/Poland/{page}` during a law crawl of eDay 6,748--6,819 (2026-07-23). Additional law types likely still exist (e.g., Embargo, Tax Change, Impeachment). The CSS class on the `<a>` tag follows the pattern `taxStyle {LawType}`.
->
-> The law type class is the **only locale-independent way to classify a law** -- the [law detail page](law.md) can render in a foreign locale, so never classify by question wording. Carry this class into the detail fetch.
+| Variable | Value |
+|----------|-------|
+| `SERVER_culture` | `"en"` |
+| `SERVER_token` | CSRF token |
+| `txt_no_bod` | `No Campaign of the Day is currently set.` |
+| `txt_set_success` | `Successfully set as Campaign of the Day` |
+| `txt_unset_success` | `This campaign is no longer Campaign of the Day` |
+| `COUNTRY_ADMINISTRATION_TEXTS` | `{set_text: 'Set', unset_text: 'Unset'}` |
 
-**Status icons:**
+Scripts: `battle_of_td.js`, `countryPage.js`, `countrySelector.js`.
 
-| Status | Icon File | Alt Text |
-|--------|----------|----------|
-| Pending | `icon-law_empty.gif` | `Pending` |
-| Accepted | `icon-law_valid.gif` | `Accepted` |
-| Rejected | `icon-law_invalid.gif` | `Rejected` |
-
-> **Note:** Additional statuses may exist (e.g., Expired) with corresponding icon files.
-
-Example law proposals data (USA, eDay 6654, page 1):
-
-| Law Type | Law ID | Date | Status |
-|----------|--------|------|--------|
-| Donate | 327910 | Day 6,653, 21:35 | Pending |
-| Natural Enemy | 327868 | Day 6,653, 06:28 | Pending |
-| Donate | 327847 | Day 6,652, 21:10 | Accepted |
-| Donate | 327788 | Day 6,651, 21:08 | Accepted |
-| Donate | 327725 | Day 6,650, 21:02 | Accepted |
-| Donate | 327676 | Day 6,649, 20:59 | Accepted |
-| Donate | 327619 | Day 6,648, 20:09 | Accepted |
-| Donate | 327561 | Day 6,647, 19:13 | Accepted |
-| Donate | 327504 | Day 6,646, 18:36 | Accepted |
-| Donate | 327437 | Day 6,645, 18:30 | Accepted |
-
-> **Observation:** The first row has `class="first"` on all `<td>` elements -- subsequent rows do not have this class. This is purely for CSS styling (top border).
-
-## JavaScript on this Page
-
-| Variable | Value | Description |
-|----------|-------|-------------|
-| `SERVER_culture` | `"en"` | Language/culture code |
-| `SERVER_token` | `"{csrfToken}"` | CSRF token (same as `csrfToken` global) |
-| `txt_no_bod` | `"No Campaign of the Day is currently set."` | Campaign of the Day empty state text |
-| `txt_set_success` | `"Successfully set as Campaign of the Day"` | Campaign of the Day set confirmation |
-| `txt_unset_success` | `"This campaign is no longer Campaign of the Day"` | Campaign of the Day unset confirmation |
-| `COUNTRY_ADMINISTRATION_TEXTS` | `{set_text: 'Set', unset_text: 'Unset'}` | Button labels for Campaign of the Day |
-
-The `countrySelector` variable uses `urlTab: "country-administration"` (note: hyphenated, not `/country/administration`).
-
-| Script | Purpose |
-|--------|---------|
-| `battle_of_td.js` | Campaign of the Day (Battle of the Day) functionality |
-| `countryPage.js` | General country page interactions |
-| `countrySelector.js` | Country dropdown selector |
-
-> **Campaign of the Day:** The JS variables and `battle_of_td.js` script reveal a feature where the Country President can set a military campaign as the "Campaign of the Day" to prioritize it for citizens. This feature is likely only visible/functional when logged in as president.
-
-## Useful URL Patterns Discovered
-
-| URL Pattern | Description |
-|-------------|-------------|
-| `/en/country-administration/{countryName}/{page}` | Administration page (paginated) |
-| `/en/main/law/{countryName}/{lawId}` | Law proposal details page -- **requires auth** (302 when logged out), see [law.md](law.md) |
-
-## Notes
-
-- This is an **HTML page endpoint**, not a JSON API endpoint
-- The page is accessible **without authentication** -- but shows reduced functionality with the message "You are not a president or a congress member in this country"
-- **Different URL pattern** from other country tabs: uses `/en/country-administration/{countryName}/{page}` instead of `/en/country/{tab}/{countryName}`
-- The `{page}` parameter is **required** (not optional) -- must be at least `1`
-- Law proposals are **paginated** -- `ul.pager` contains pagination links when there are more laws than fit on one page
-- Law IDs are **sequential integers** across all countries (e.g., `327910`, `327868`) -- they can be used with `/en/main/law/{countryName}/{lawId}`
-- The `class="first"` on `<td>` elements only appears on the first row -- it's for CSS top-border styling
-- The **Campaign of the Day** and **Deploy allied forces** features are only functional for the Country President (button is `disabled` for other viewers)
-- Law types observed so far: `Donate`, `NaturalEnemy`, `Airstrike`, `DeclareWar`, `ResourceConcession`, `MutualProtectionPact`. Additional types likely exist (Embargo, Tax changes, Impeachment)
-- The listing is readable **anonymously**, but the per-law `Details` link is **not** -- `/en/main/law/{countryName}/{lawId}` 302s to `/en` without a session ([law.md](law.md))
-- The administration tab link in the country tabs uses the full URL with page number: `/en/country-administration/USA/1`
-- Additional CSS: `country.{buildId}.css` (instead of `war_list.css` used by military tab)
+**Source:** real request, 2026-11-27.
 
 ---
 
-## See Also
+## Campaign of the Day
 
-- [Law Detail Page](law.md) -- the `/en/main/law/{countryName}/{lawId}` target of every `Details` link
-- [Country Society Page](society.md)
-- [Country Economy Page](economy.md)
-- [Country Politics Page](politics.md)
-- [Country Military Page](military.md)
-- [Congressional Donations](congress.md) -- propose donation endpoint
+`POST /en/mark-battle` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Sets or removes the country's Campaign of the Day.
+
+Sent by `.mark-battle` buttons, which were not present for a citizen without the role.
+
+| Name | Type | Required | Description |
+|------|------|----------|-------------|
+| `_token` | string | Yes | `SERVER_token` |
+| `id` | number | Yes | `data-battle-id` of the button |
+| `remove` | number | Yes | `1` to unset (button has class `unset`), else `0` |
+
+The client reads `success` and `battleOfTheDay` (boolean: now set) from the JSON response.
+
+**Source:** `battle_of_td.js` (version 1698060179).
+
+---
+
+## Citizenship applications
+
+`GET /en/country/{country}/citizenship/applications/{page}` · Auth required · ✅ Verified 2026-11-27
+
+Pending requests for citizenship, linked from the [Society](society.md#society-page) tab. Tabs: **Pending** and **Approved**.
+
+```bash
+curl 'https://www.erepublik.com/en/country/Poland/citizenship/applications/1' \
+  -H 'Cookie: erpk=YOUR_SESSION_TOKEN'
+```
+
+One `tbody.status-Pending` per request in `table.c_approved`:
+
+```html
+<tr class="citizenship-application citizenship-application-pending citizenshipApplication{applicationId}">
+  <td rowspan="2" class="ca_citizen"><a href="/en/citizen/profile/{citizenId}">PlayerName</a></td>
+  <td class="ca_reason"><p class="teaser">Applicant's message</p></td>
+</tr>
+<tr class="citizenshipApplication{applicationId}">
+  <td colspan="2" class="ca_info">
+    <a href="/en/country/society/{currentCountry}">Current country</a>
+    <a class="report citizenshiprequest report-trigger" href="//www.erepublik.com/en/main/tickets-report/{applicationId}/citizenship-application">Report request</a>
+  </td>
+</tr>
+```
+
+A citizen without the role sees no accept button.
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Approved applications
+
+`GET /en/country/{country}/citizenship/applications/approved/{page}` · Auth required · ✅ Verified 2026-11-27
+
+Table rows `tr.c_app` with columns **Citizen**, **Approved on** (`29 July 2009`) and **Approved by**. The first page showed 2009 entries.
+
+**Source:** real request, 2026-11-27.
+
+---
+
+## Accept an application
+
+`POST {data-accept-url}` · Auth required · 🔍 From code
+
+> [!WARNING]
+> Grants citizenship.
+
+The URL is taken from `a.acceptApplication[data-accept-url]` in `td.ca_accept`; `data-application-id` names the row. The body is only `_token`. The client expects JSON with a truthy `status` and decrements a counter in `.c_stat strong`.
+
+**Source:** `citizenship/listPending.js`.
+
+---
+
+## Cancel an application
+
+`GET {href}` · Auth required · 🔍 From code
+
+> [!WARNING]
+> This `GET` changes state: it cancels a citizenship application after a browser confirmation. Do not follow the link while crawling.
+
+The URL is the `href` of `a.ca_cancel`. The response body is ignored.
+
+**Source:** `citizenship/listPending.js`.
+
+---
+
+## Resign from Congress
+
+`POST /en/{country}/resign-congress` · Auth required (Congress member) · ❔ Unconfirmed
+
+> [!WARNING]
+> Gives up a seat in Congress.
+
+Only the path is known. Its parameters were not seen; party resignation, a similar form, sends [`_token`](parties.md#resign-from-a-party).
+
+**Source:** path list of the 2026-11-27 survey; not found again in the pages or scripts read for this document.
+
+---
+
+## Open questions
+
+| Topic | Notes |
+|-------|-------|
+| Role-only controls | President and Congress views were not seen; proposing laws from them is not documented |
+| `/en/country/resourceDraft` | Not an endpoint: it returns `404`. `country/resourceDraft` is a `countrySelector.urlTab` value that redirects to [`/en/main/resource-wars/{country}/1`](../military/wars.md) |
+| Rejected status | Seen on 2026-11-27; earlier notes listed the icon only |
